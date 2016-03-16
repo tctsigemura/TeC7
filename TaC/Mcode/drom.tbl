@@ -1,0 +1,109 @@
+; 
+; TaC OPECODE DOCODE TABLE
+;    Tokuyama kousen Educational Computer 16bit Ver.
+;
+; Copyright (C) 2002-2010 by
+;                      Dept. of Computer Science and Electronic Engineering,
+;                      Tokuyama College of Technology, JAPAN
+;
+;   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+; 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+; コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+; 布することを無償で許諾する．
+;
+;   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+; 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+; も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+; る損害に関しても，その責任を負わない．
+;
+;
+; drom.tbl : 命令デコード ROM のソース
+;
+; 2012.07.03           : 2段階デコードに対応
+; 2010.07.20           : Subversion による管理を開始
+;
+; $Id: drom.tbl 12 2010-08-06 10:03:08Z sigemura $
+;
+;
+; OPECODE DOCODE TABLE
+; 0X
+fetch	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	operr	operr
+Drt	ld	Idx	ld	Imm	ld	Fpr	ld
+ldr	operr	ld	operr	Ind	ld	BInd	ld
+; 1X
+stDrt	operr	stIdx	operr	operr	operr	stFpr	operr
+ldf	operr	operr	operr	stInd	operr	stBInd	operr
+Drt	add	Idx	add	Imm	add	Fpr	add
+Reg	add	add	operr	Ind	add	BInd	add
+; 2X
+Drt	sub	Idx	sub	Imm	sub	Fpr	sub
+Reg	sub	sub	operr	Ind	sub	BInd	sub
+Drt	cmp	Idx	cmp	Imm	cmp	Fpr	cmp
+Reg	cmp	cmp	operr	Ind	cmp	BInd	cmp
+; 3X
+Drt	and	Idx	and	Imm	and	Fpr	and
+Reg	and	and	operr	Ind	and	BInd	and
+Drt	or	Idx	or	Imm	or	Fpr	or
+Reg	or	or	operr	Ind	or	BInd	or
+; 4X
+Drt	xor	Idx	xor	Imm	xor	Fpr	xor
+Reg	xor	xor	operr	Ind	xor	BInd	xor
+Drt	adds	Idx	adds	Imm	adds	Fpr	adds
+Reg	adds	adds	operr	Ind	adds	BInd	adds
+; 5X
+Drt	mul	Idx	mul	Imm	mul	Fpr	mul
+Reg	mul	mul	operr	Ind	mul	BInd	mul
+Drt	div	Idx	div	Imm	div	Fpr	div
+Reg	div	div	operr	Ind	div	BInd	div
+; 6X
+Drt	mod	Idx	mod	Imm	mod	Fpr	mod
+Reg	mod	mod	operr	Ind	mod	BInd	mod
+Drt	mull	Idx	mull	Imm	mull	Fpr	mull
+Reg	mull	mull	operr	Ind	mull	BInd	mull
+; 7X
+Drt	divl	Idx	divl	Imm	divl	Fpr	divl
+Reg	divl	divl	operr	Ind	divl	BInd	divl
+operr	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	operr	operr
+; 8X
+Drt	sft	Idx	sft	Imm	sft	Fpr	sft
+Reg	sft	sft	operr	Ind	sft	BInd	sft
+Drt	sft	Idx	sft	Imm	sft	Fpr	sft
+Reg	sft	sft	operr	Ind	sft	BInd	sft
+; 9X
+Drt	sft	Idx	sft	Imm	sft	Fpr	sft
+Reg	sft	sft	operr	Ind	sft	BInd	sft
+Drt	sft	Idx	sft	Imm	sft	Fpr	sft
+Reg	sft	sft	operr	Ind	sft	BInd	sft
+; AX
+jmpDrt	operr	jmpIdx	operr	operr	operr	operr	operr
+operr	operr	operr	operr	jmpInd	operr	operr	operr
+callDrt	operr	callIdx	operr	operr	operr	operr	operr
+operr	operr	operr	operr	callInd	operr	operr	operr
+; BX
+inDrt	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	inInd	operr	inBInd	operr
+outDrt	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	outInd	operr	outBInd	operr
+; CX
+psh	operr	operr	operr	operr	operr	operr	operr
+pop	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	operr	operr
+; DX
+ret	operr	operr	operr	operr	operr	operr	operr
+reti	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	operr	operr
+; EX
+ei	operr	operr	operr	operr	operr	operr	operr
+di	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	operr	operr
+; FX
+svc	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	operr	operr
+operr	operr	operr	operr	operr	operr	halt	operr
+; END TABLE

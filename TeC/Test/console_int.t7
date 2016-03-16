@@ -1,0 +1,45 @@
+;
+; console_int.t7 : ボタンを押すと0.3秒間ブザーが鳴る
+;
+buz	equ	00h	; ブザー
+tmrvct	equ	0dch	; タイマ割込みベクタ
+convct	equ	0dfh	; タイマ割込みベクタ
+tmrcnt	equ	4	; タイマ・カウンタ(周期)
+tmrctr	equ	5	; タイマ・コントロール
+conctr	equ	6	; コンソール・コントロール
+
+start
+	ld	sp,#0dch	; SP初期化
+	ld	g0,#conint	; コンソール割込み
+	st	g0,convct	; ルーチン登録
+	ld	g0,#01h		; コンソール割込み
+	out	g0,conctr	; 許可
+	ld	g0,#tmrint	; タイマ割込み
+	st	g0,tmrvct	; ルーチン登録
+	ld	g0,#25		; 周期=0.3Sec
+	out	g0,tmrcnt	; タイマ周期セット
+	ei
+wait
+	jmp	wait		; 無限ループ
+
+	; コンソール割込ルーチン
+conint	pushf			; コンテキストを
+	push	g0		; 保存する
+	ld	g0,#01h		; 
+	out	g0,buz		; beep on
+	ld	g0,#81h		;
+	out	g0,tmrctr	; timer start
+	pop	g0		; コンテキストを
+	popf			; 復旧する
+	reti			; 戻る
+
+	; タイマ割込ルーチン
+tmrint	pushf			; コンテキストを
+	push	g0		; 保存する
+	ld	g0,#00h		; 
+	out	g0,buz		; beep off
+	ld	g0,#00h		;
+	out	g0,tmrctr	; timer stop
+	pop	g0		; コンテキストを
+	popf			; 復旧する
+	reti			; 戻る

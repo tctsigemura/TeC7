@@ -1,0 +1,146 @@
+; 次に空行の例
+
+;siod	equ	02h  コメント行の例
+
+; 以下数式のテスト
+a	equ	1+6*3/2*(2+3)-5	; 数式
+a2	equ	(a+3)/4
+a3	equ	1+2+3+4+5+6
+b	equ	-a
+c	equ	a+-b
+d	equ	'a'+5*(1+1)
+e equ d+'A'
+
+;パス１エラーのテスト
+;f	equ	a+a2+g			; 未定義ラベル
+;	dc	'a			; クオートがバランスしていない
+
+; パス２エラーのテスト
+;f	ld	g0,(a+b+c,g1		; 括弧がバランスしていない
+;	in	g0,x			; 未定義ラベル
+;e	in	g0,x			; ラベル２重定義
+;g	in	g0			; カンマがない
+;h	in	g0,			; 式が無い
+
+; プログラム先頭の ORG
+	org	0eh
+d1	dc	1
+; プログラム途中の ORG
+	org	1fh+1
+d2	dc	2
+i	equ	3
+	ds	i*2
+d3	dc	3
+d4	dc	'A'			; 大文字
+d5	dc	'a'			; 小文字
+d6	dc	d1+1			; 式
+d7	dc	"abcdeABCDE"		; 文字列
+d8	dc	'1','2','3','4'		; 複数の文字
+d9	dc	d6,d7,d8,d9+'1'		; 複数の式
+
+; 機械語のテスト
+l1	ld	g0,d1
+;	ld	g0,d1+0,g0
+	ld	g0,d1+1,g1
+	ld	g0,d1+2,g2
+;	ld	g0,d1+2,sp
+	ld	g0,#d1+3
+l2	st	g0,d1
+;	st	g0,d1+0,g0
+	st	g1,d1+1,g1
+	st	sp,d1+2,g2
+;	st	sp,d1+2,sp
+;	st	g1,#d1+3
+l3	add	g1,d1
+	add	g1,d1+1,g1
+	add	g1,d1+2,g2
+	add	g1,#d1+3
+l4	sub	sp,d1
+	sub	sp,d1+1,g1
+	sub	sp,d1+2,g2
+	sub	sp,#d1+3
+l5	cmp	g0,d1
+	cmp	g0,d1+1,g1
+	cmp	g0,d1+2,g2
+	cmp	g0,#d1+3
+l6	and	g0,d1
+	and	g0,d1+1,g1
+	and	g0,d1+2,g2
+	and	g0,#d1+3
+l7	or	g0,d1
+	or	g0,d1+1,g1
+	or	g0,d1+2,g2
+	or	g0,#d1+3
+l8	xor	g0,d1
+	xor	g0,d1+1,g1
+	xor	g0,d1+2,g2
+	xor	g0,#d1+3
+l9	shla	g0
+	shla	g1
+	shla	g2
+	shla	sp
+la	shll	g0
+	shll	g1
+	shll	g2
+	shll	sp
+lb	shra	g0
+	shra	g1
+	shra	g2
+	shra	sp
+lc
+	shrl	g0
+	shrl	g1
+	shrl	g2
+	shrl	sp
+ld	jmp	lc
+;	jmp	lc,g0
+	jmp	lc,g1
+	jmp	lc,g2
+;	jmp	lc,sp
+;	jmp	lc,#10
+le	jz	ld
+	jz	ld,g1
+	jz	ld,g2
+lf	jc	lh
+	jc	lh,g1
+	jc	lh,g2
+lg	jm	lc
+	jm	lc,g1
+	jm	lc,g2
+lh	call	lc
+	call	lc,g1
+	call	lc,g2
+	jnz	ld
+	jnz	ld,g1
+	jnz	ld,g2
+	jnc	lh
+	jnc	lh,g1
+	jnc	lh,g2
+	jnm	lc
+	jnm	lc,g1
+	jnm	lc,g2
+li	in	g0,a
+	in	g1,a
+	in	g2,a
+	in	sp,a
+lj	out	g0,a
+	out	g1,a
+	out	g2,a
+	out	sp,a
+lk	push	g0
+	push	g1
+	push	g2
+	push	sp
+ll	pushf
+lm	pop	g0
+	pop	g1
+	pop	g2
+	pop	sp
+ln	popf
+	ei
+	di
+	ret
+	reti
+end	halt	
+			; 余計な空白
+ 			; 改行無しのEOF

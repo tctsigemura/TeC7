@@ -1,0 +1,12 @@
+start	ld	g0,#0
+	ld	g1,#1
+loop	st	g1,tmp
+	add	g0,tmp
+	add	g1,#1
+	cmp	g1,#11
+	jnz	loop
+	st	g0,sum
+	halt
+
+tmp	ds	1
+sum	ds	1

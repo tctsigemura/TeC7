@@ -1,0 +1,5 @@
+loop	in	g0,7	; 入力ポート
+	in	g1,8	; ADC CH0
+	in	g2,0
+	out	g2,7
+	jmp	loop

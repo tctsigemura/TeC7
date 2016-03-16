@@ -1,0 +1,64 @@
+;
+; servo.t7 : サーボモータのテスト
+;   周期(1/75s = 1.333s)
+;   パルス幅が (500+100*DSW)us になる
+;
+dsw	equ	00h	; データスイッチ
+pio	equ	07h	; PIO
+tmrvct	equ	0dch	; タイマ割込みベクタ
+tmrcnt	equ	4	; タイマ・カウンタ(周期)
+tmrctr	equ	5	; タイマ・コントロール
+
+start
+	ld	sp,#0dch
+	ld	g0,#tmrint	; Int Routine
+	st	g0,tmrvct	; Vector
+	ld	g0,#0		; (13ms)
+	out	g0,tmrcnt	; Set Period
+	ld	g0,#81h
+	out	g0,tmrctr	; TIMER START
+	ei
+l0
+	ld	g0,flg
+	cmp	g0,#0
+	jz	l0		; wait flg
+
+	ld	g0,#80h		; out 1
+	out	g0,pio
+	call	us100
+	call	us100
+	call	us100
+	call	us100
+	call	us100		; 500us
+
+	in	g0,dsw
+l1
+	cmp	g0,#0
+	jz	l2
+	call	us100		; 100*dsw us
+	sub	g0,#1
+	jmp	l1
+l2
+	out	g0,pio		; out 0
+	st	g0,flg		; clear flg
+	jmp	l0
+
+; wait 100us
+us100	push	g0		; 6
+	ld	g0,#14		; 5
+wait	sub	g0,#1		; 5
+	jz	fin		; 4/5
+	jmp	wait		; 5
+fin	pop	g0		; 6
+	ret			; 6
+
+flg	dc	0
+
+; timer interrupt
+tmrint	pushf
+	push	g0
+	ld	g0,#1
+	st	g0,flg
+	pop	g0
+	popf
+	reti

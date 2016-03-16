@@ -1,0 +1,17 @@
+;
+; echo プログラム
+;
+siod	equ	02h
+sios	equ	03h
+tbit	equ	80h
+rbit	equ	40h
+
+start	in	g0,sios
+	and	g0,#rbit
+	jz	start
+	in	g0,siod
+wait	in	g1,sios
+	and	g1,#tbit
+	jz	wait
+	out	g0,siod
+	jmp	start

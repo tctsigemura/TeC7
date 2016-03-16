@@ -1,0 +1,16 @@
+start	ld	g0,#1
+	cmp	g0,#0
+	jnm	l1
+	halt
+l1	add	g0,#128
+	jnm	end
+	jnc	l2
+	halt
+l2	add	g0,#129
+	jnc	end
+	jnz	l3
+	halt
+l3	sub	g0,#1
+	jnz	end
+	halt
+end	halt

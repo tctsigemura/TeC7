@@ -1,0 +1,92 @@
+/*
+ * TaC IPL Source Code
+ *    Tokuyama kousen Educational Computer 16bit Ver.
+ *
+ * Copyright (C) 2012 - 2016 by
+ *                      Dept. of Computer Science and Electronic Engineering,
+ *                      Tokuyama College of Technology, JAPAN
+ *
+ *   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+ * 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+ * コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+ * 布することを無償で許諾する．
+ *
+ *   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+ * 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+ * も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+ * る損害に関しても，その責任を負わない．
+ *
+ *
+ */
+
+/*
+ * mmcspi.cmm(MMCカードSPIモード用ドライバ、ブロックサイズは５１２バイト固定)
+ *
+ * 2016.01.07  v3.0.0 : 重村版に統合
+ * 2014.01.21  v3.0.0 : uSD制御のハードウェア化に対応(川部卒研)
+ * 2012.09.28  v2.0.0 : バッファの型を char[] から void[] へ変更
+ *                      sendData、witeBlk、writeSct を省略
+ * 2012.01.01  v0.0.0 : 初期バージョン
+ *
+ * $Id$
+ *
+ */
+
+#include "crt0.h"
+#include "mmcspi.h"
+
+#define SD_STAT		0x10
+#define SD_CTRL		0x10
+#define MEM_ADDR	0x12
+#define BLK_ADDR_H	0x14
+#define BLK_ADDR_L	0x16
+
+#define IDLE		0x0080
+#define ERROR		0x0040
+
+#define INT_ENA		0x0080
+#define INIT		0x0004
+#define READ		0x0002
+#define WRITE		0x0001
+
+/*----------------------------------------------------------------------------
+ * public function
+ *---------------------------------------------------------------------------*/
+/*
+ * initMccSpi : initialize
+ */
+public void initMmcSpi() {
+	out(SD_CTRL, INIT);
+	while (in(SD_STAT) == 0) 
+		;
+}
+
+/*
+ *  readSct : read block
+ *  h   : block address upper
+ *  l   : block address lower
+ *  buf : data buffer
+ */
+public void readSct(int h, int l, void[] buf) {
+	out(MEM_ADDR, _AtoI(buf));
+	out(BLK_ADDR_H, h);
+	out(BLK_ADDR_L, l);
+	out(SD_CTRL, READ);
+	while (in(SD_STAT) == 0) 
+		;
+}
+
+/*
+ *  writeSct : write block
+ *  h   : block address upper
+ *  l   : block address lower
+ *  buf : data buffer
+ */
+public void writeSct(int h, int l, void[] buf) {
+	out(MEM_ADDR, _AtoI(buf));
+	out(BLK_ADDR_H, h);
+	out(BLK_ADDR_L, l);
+	out(SD_CTRL, WRITE);
+	while (in(SD_STAT) == 0) 
+		;
+}

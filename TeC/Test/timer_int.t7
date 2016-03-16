@@ -1,0 +1,40 @@
+;
+; timer_int.t7 : 割込みを使用して1秒間隔でブザーをON/OFFする
+;
+dsw	equ	00h	; データスイッチ
+buz	equ	00h	; ブザー
+tmrvct	equ	0dch	; タイマ割込みベクタ
+tmrcnt	equ	4	; タイマ・カウンタ(周期)
+tmrctr	equ	5	; タイマ・コントロール
+
+start
+	ld	sp,#0dch
+	ld	g0,#tmrint	; Int Routine
+	st	g0,tmrvct	; Vector
+	ld	g0,#74		; 1Sec
+	out	g0,tmrcnt	; Set Period
+	ld	g0,#81h
+	out	g0,tmrctr	; TIMER START
+	ei
+wait
+	ld	g0,flg
+	cmp	g0,#0
+	jz	wait		; wait flg
+	ld	g0,val
+	xor	g0,#01h
+	st	g0,val
+	out	g0,buz
+	ld	g0,#0		; clear flg
+	st	g0,flg
+	jmp	wait
+
+flg	dc	0
+val	dc	0
+
+tmrint	pushf
+	push	g0
+	ld	g0,#1
+	st	g0,flg
+	pop	g0
+	popf
+	reti

@@ -1,0 +1,291 @@
+/*
+ * TaC IPL Source Code
+ *    Tokuyama kousen Educational Computer 16bit Ver.
+ *
+ * Copyright (C) 2009-2016 by
+ *                      Dept. of Computer Science and Electronic Engineering,
+ *                      Tokuyama College of Technology, JAPAN
+ *
+ *   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+ * 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+ * コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+ * 布することを無償で許諾する．
+ *
+ *   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+ * 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+ * も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+ * る損害に関しても，その責任を負わない．
+ *
+ *
+ */
+
+/*
+ * loader.cmm(ブートローダ)： FAT16 のルートディレクトリから KERNEL ファイルを
+ *                            探し読み込む
+ *
+ * 2016.01.07  v3.0.0   : 重村版に統合
+ * 2014.04.26  v2.0.1   : 第２パーティション以降からのブート機能復活
+ * 2012.09.14  v2.0.0   : TaC-CPU V2 に対応し、IPL の一部とする
+ *                      : (ファイル名も boot.cmm から loader.cmm に変更)
+ * 2012.03.02  v1.0.0   : TaC-OS の一部とする(crt0, util は共通化)
+ * 2012.03.01           : 種類に関係なく第１パーティションからブートする
+ * 2012.01.18           : TeC7 用に書き換える
+ * 2010.07.20           : Subversion による管理を開始
+ * 2010.06.18           : Makefile 中 cpp に std=c99 オプション追加
+ * 2010.03.12  v0.0.3   : public 修飾子を追加
+ * 2009.11.05  v0.0.2   : バイト配列関係の関数を util.cmm へ移動
+ * 2009.06.05  v0.0.1   : fillBuf 中、次のクラスタ番号の求め方のバグを修正
+ * 2009.04.18  v0.0.0   : 初期バージョン
+ *
+ * $Id$
+ *
+ */
+
+#include "crt0.h"
+#include "console.h"
+#include "mmcspi.h"
+#include "loader.h"
+
+/*
+ * IPL は ROM 化されるのでスタティク変数の配置セグメントに注意が必要
+ */
+
+char[] buf = array(512);                 // 1セクタ分のバッファ
+
+// 以下の int[] は 32bit int 型のつもり
+int[] tmp  = array(2);                   // 一時使用領域
+int[] one  = { 0, 1 };                   // 32bit の 1
+
+/*
+ * エラーメッセージを表示して停止する
+ */
+void error(char[] msg) {
+  putstr( msg );                         // エラーメッセージ表示
+  putch('\n');
+  for(;;) halt();                        // CPU を停止する
+}
+
+void notSupported() {
+  error("not supported");
+}
+
+void badFile() {
+  error("bad kernel file");
+}
+
+// バイト配列からリトルエンディアン(Intel, MS-DOS)で 1 ワード読み出す
+int word(char[] buf, int idx)  {
+    return ((ord(buf[idx+1])<<8) | ord(buf[idx]));
+}
+
+/*
+ * MBR を読み込み最初のアクティブな FAT パーティションの bpb を求める
+ */
+int[] bpb  = array(2);                   // BPB の開始セクタ
+
+char[] ac=array(2);
+
+void readMBR() {
+  readSct(0,0,buf);                      // MBR を読み込む
+
+  for (int i=446; i<510; i=i+16) {       // パーティションテーブルについて
+ // int active = ord(buf[i]);            // アクティブフラグ
+    int fType  = ord(buf[i+4]);          // ファイルシステムタイプ
+
+    if (/*(active & 0x80)!=0 &&*/
+         fType==0x06) {                  //アクティブなFAT16 パーティション
+      Ld32(bpb, word(buf,i+10), word(buf,i+8)); // パーティションの開始 LBA
+      return;
+    }
+  }
+  error("can't find active FAT16 partition!\n");
+}
+
+/*
+ * BPB から、いくつかの情報を読み取る
+ */
+int   sctPrClst;                         // クラスタあたりのセクタ数(BSS)
+int[] fat  = array(2);                   // FAT の開始セクタ
+int[] root = array(2);                   // ルートディレクトリの開始セクタ
+int[] data = array(2);                   // データ領域の開始セクタ
+
+void readBPB() {
+  readSct(bpb[0], bpb[1], buf);          // BPB を読み込む
+
+  if (word(buf,11) != 512) notSupported(); // セクタ長は 512 バイトだけサポート
+
+  sctPrClst = ord(buf[13]);              // クラスタあたりのセクタ数
+
+  // FAT 開始位置(セクタ)の計算
+  Ld32(fat, 0, word(buf,14));            // fat <= 予約セクタ数
+  add32(fat,bpb);                        // fat <= fat + bpb
+
+  // ルートディレクトリ位置(セクタ)の計算
+  int numSct = word(buf,22);             // numSct <= FATあたりセクタ数
+  if (numSct == 0) notSupported();       // numSct==0 は FAT32
+
+  Ld32(root, 0, ord(buf[16]));           // root <= FAT数
+  add32(mul32(root, numSct),fat);        // root <= root * numSct + fat
+  
+  // データの開始位置(セクタ)の計算
+  Ld32(data, 0, word(buf, 17) / 16);     // data <= ルートディレクトリサイズ
+  add32(data, root);                     // data <= data + root
+
+  // 総クラスタ数をチェックする
+  /*
+  int totalSct = word(buf, 19);          // 総セクタ数の格納方法は２種類
+  if (totalSct != 0)
+    Ld32(tmp, 0, totalSct);
+  else
+    Ld32(tmp, word(buf, 34), word(buf, 32));
+
+  div32(tmp, sctPrClst);                 // クラスタ数に変換
+  if (tmp[0]<0x1000) notSupported();
+  */
+}
+
+/*
+ * 文字列比較の変形バージョン
+ *   s1   : ディレクトリから読み出したデータ
+ *   offs : s1 中の着目している文字列の開始位置
+ *   s2   : 比較する文字列
+ *   len  : 比較する文字数
+ */
+int strnncmp(char[] s1, int offs, char[] s2, int len) {
+  for(int i=0; i<len; i=i+1) {
+    int t = ord(s1[offs+i]) - ord(s2[i]);
+    if (t!=0) return t;
+  }
+  return 0;
+}
+
+/*
+ * dst の方が小さい
+ */
+boolean lessThan32(int[] dst, int[] src) {
+  if (_uCmp(dst[0], src[0])<0) return true;  // 上位16ビットが小さい
+  if (dst[0]==src[0] &&                      // 上位16ビットが同じで
+     _uCmp(dst[1], src[1])<0) return true;   //   下位16ビットが小さい
+  return false;                              //  大きいか等しい
+}
+
+/*
+ * ファイルをルートディレクトリから探し fLen, nClst を決める
+ */
+int[] fLen = array(2);                   // 読み込み中のファイルのサイズ
+int   nClst;                             // 読み込み中のクラスタ(BSS)
+
+boolean srchDir(char[] fname, char[] ext) {
+  Ld32(tmp, root[0], root[1]);           // ルートディレクトリの先頭セクタ位置
+  while (lessThan32(tmp,data)) {         // data 領域より前のセクタについて
+    readSct(tmp[0], tmp[1], buf);        //   セクタを読み込み
+    for (int i=0; i<512; i=i+32) {       //   セクタ長 512 バイトについて
+      if ((ord(buf[i+11]) & 0x1a)==0 &&  //    ファイル(隠しファイルも)で
+          strnncmp(buf,i,fname,8)==0 &&  //     fname が一致
+	  strnncmp(buf,i+8,ext,3)==0) {  //     ext   が一致するものがあったら
+        nClst = word(buf,i+26);          //       先頭クラスタ番号を読み出す
+	Ld32(fLen,word(buf,i+30),word(buf,i+28)); // ファイルサイズを読み出す
+	return true;                     // ファイルが見つかった
+      }
+    }
+    add32(tmp, one);                     // セクタ番号を進める
+  }
+  return false;                          // ファイルが見つからない
+}
+
+/*
+ * クラスタのセクタを順に読む。
+ * クラスタの最後になったら FAT を参照し次のクラスタ番号を求めておく。
+ */
+int[] fatCch = array(256);               // FATのキャッシュ領域
+int[] curSct = array(2);                 // 次に読むデータセクタ
+int   sctCnt;                            // クラスタ内のセクタカウンタ
+int   fSct;                              // キャッシュしているFATセクタ
+
+void fillBuf() {
+  if (sctCnt == 0) {                    // 新しいクラスタなら
+    Ld32(curSct, 0, nClst-2);           //   クラスタの先頭セクタ番号を計算
+    mul32(curSct, sctPrClst);           //   curSect=(nClst-2)*sctPrClst+data
+    add32(curSct, data);                //   (クラスタ番号は２オフセットしてる)
+  }
+  readSct(curSct[0], curSct[1], buf);   // セクタを読む
+  add32(curSct, one);                   // 次のセクタに進む(32bit)
+  sctCnt = sctCnt + 1;                  // 次のセクタに進む(16bit)
+  if (sctCnt >= sctPrClst) {            // クラスタの最後まで行ったなら
+    int s = (nClst >> 8) & 0xff;        //   FAT内のセクタ番号を求める
+    if (fSct != s) {                    //   現在のキャッシュと一致しないなら
+      Ld32(tmp, 0, s);                  //     セクタ番号を 32bit にする
+      add32(tmp, fat);                  //     FAT領域の先頭セクタを足す
+      readSct(tmp[0], tmp[1], fatCch);  //     FATセクタを読む
+      fSct = s;                         //     現在キャッシュしているFATセクタ
+    }
+    int offs = nClst & 0xff;            //   キャッシュ中のオフセット
+    nClst = fatCch[offs];               //   FATから次のクラスタ番号を求める
+    sctCnt = 0;                         //   クラスタ内のセクタ位置をリセット
+  }
+}
+
+/*
+ * ファイルから 1 ワード単位で順に読み込む
+ */
+int bufCnt;                             // buf 内のワードカウンタ
+
+int readWord() {
+  void[] t = buf;                       // バイト配列を
+  int[] wbuf = t;                       //   ワード配列に読みかえる
+  if (bufCnt==0) fillBuf();             // バッファが空なら読み込む
+  int v = wbuf[bufCnt];                 // バッファから 1 ワード取り出し
+  bufCnt = bufCnt + 1;                  // カウンタを進める
+  if (bufCnt>=256) bufCnt = 0;          // 最後まで行ったら 0 に戻す
+  return v;                              // ワードを返す
+}
+
+/*
+ * nClst から fLen の bin 形式をメモリにロードしロードアドレスを返す
+ */
+int readKern() {
+  if (fLen[0]==0 && _uCmp(fLen[1],6)<0)  // カーネルファイルは最低 6 バイト
+    badFile();
+  int[] mem = _ItoA(readWord());         // カーネルのロードアドレス
+  int   len = readWord();                // カーネルのバイト数
+  if (fLen[0]!=0||fLen[1]!=len+4)        // ファイルとカーネルサイズが異なる
+    badFile();
+
+  len = (len + 1) / 2;                   // ワード単位に変換
+  for (int i=0; _uCmp(i,len)<0; i=i+1)   // カーネルサイズは 32kB 以下
+    mem[i] = readWord();
+
+  return _AtoI(mem);                     // ロードアドレスを返す
+}
+
+/*
+ * 変数などの初期化を行う
+ */
+public void initLoader() {
+  initMmcSpi();                          // uSD ドライバ初期化
+  readMBR();                             // MBR を読み込み最初のアクティブな
+                                         // FAT パーティションの bpb を求める
+  readBPB();                             // BPB を読み込み fat, root, data,
+                                         // sctPrClst を決める
+  // fillBuf の変数
+  curSct[0] = 0;                         // 次に読むデータセクタ
+  curSct[1] = 0;                         // 次に読むデータセクタ
+  sctCnt = 0;                            // クラスタ内のセクタカウンタ
+  fSct   = -1;                           // キャッシュしているFATセクタ
+
+  // readWord の変数
+  bufCnt = 0;                            // buf 内のワードカウンタ
+}
+
+/*
+ * カーネルを読み込む
+ */
+public int load(char[] fname, char[] ext) {
+  if (!srchDir(fname, ext)) {            // カーネルファイルを探す
+    error("kernel not found\n");         // 見つからないときはエラー
+  }
+  // ここに来たら srchDir が fLen, nClst を決定済み
+  int addr = readKern();                 // nClst から fLen の bin 形式を
+  					 // メモリにロードする
+  return addr;                           // カーネルのロードアドレス
+}
