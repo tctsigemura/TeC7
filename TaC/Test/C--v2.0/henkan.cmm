@@ -1,0 +1,35 @@
+/*
+ * henkan.cmm : 型変換演算子 + sizeof,addrof 演算子のテスト
+ */
+
+boolean b;
+char    c;
+int     i;
+char[]  a;
+
+struct A {char i; char j;};
+
+public void main() {
+  i = sizeof(boolean);
+  i = sizeof(char);
+  i = sizeof(int);
+  i = sizeof(void[]);
+  i = sizeof(A);
+  //a = addrof(a);
+  i = addrof(a);
+  // i = b;
+  i = ord(b);
+  // i = c;
+  i = ord(c);
+  // c = i;
+  c = chr(i);
+  // b = 1;
+  b = bool(i);
+  // i = a;
+  // i = ord(a);
+  // a = 100;
+  // ord(i);
+  // bool(b);
+  // chr(b);
+}
+  

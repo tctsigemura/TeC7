@@ -1,0 +1,30 @@
+/*
+ * postop.cmm : 配列アクセスのテスト
+ */
+
+struct A { char a, b, c; };
+
+A a = {'a','b','c'};
+char[] b = {'a','b','c'};
+char[] c = array(3);
+int[] d = array(3);
+char[][] e = { array(3), array(2), null};
+char x;
+int  i;
+
+public void main() {
+  x = a.a;
+  x = a.b;
+  a.c = x;
+
+  x = b[0];
+  x = b[1];
+  b[2] = x;
+
+  i = d[0];
+  i = d[1];
+  d[2] = i;
+
+  d[i+2];
+  e[i+3][i+1]=' ';
+}

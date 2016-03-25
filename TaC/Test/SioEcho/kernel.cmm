@@ -1,0 +1,200 @@
+/*
+ * TaC カーネルの原型
+ *
+ * 2010.06.18 :	Makefile 中 cpp に std=c99 オプション追加
+ * 2010.03.12 : main に public を書き加える
+ * 2009.11.05 : SIO と同時に PS/2 からの入力も受け付ける
+ * 2009.11.03 : 割込みルーチンを C-- の interrupt 関数で記述
+ * 2009.05.13 : 割込みとリングバッファを使った SIO 入出力ルーチンを作成
+ *              (SIO 割込みが C-- ルーチンから扱えることを確認)
+ */
+
+#include "util.h"
+#define  BSIZE   256
+#define  EOF     (0xffff)
+
+/*
+ * SIO 等で使用できるリングバッファと管理ルーチン
+ */
+// リングバッファ型
+struct RingBuf {
+  char[] buf;                             // バッファ
+  int    head, tail;                      // ポインタ
+};
+
+RingBuf rcvBuf = { null, 0, 0 };          // リングバッファインスタンス
+RingBuf trsBuf = { null, 0, 0 };
+
+int nextIdx(int idx) {                    // 直後の添字を求める
+  int next = idx + 1;
+  if (next>=BSIZE) next = 0;
+  return next;
+}
+
+int prevIdx(int idx) {                    // 直前の添字を求める
+  int next = idx - 1;
+  if (next<0) next = BSIZE - 1;
+  return next;
+}
+
+// リングバッファは空か
+#define ISEmpty(buf) ((buf).head==(buf).tail)
+
+// リングバッファは満か
+#define ISFull(buf) (nextIdx((buf).head)==(buf).tail)
+
+// リングバッファに 1 文字追加
+boolean putBuf(RingBuf buf, char c) {
+  if (!ISFull(buf)) {                     // バッファがパンク！(無視？)
+    int next = nextIdx(buf.head);
+    buf.buf[buf.head] = c;
+    buf.head = next;
+    return true;
+  }
+  return false;
+}
+
+int getBuf(RingBuf buf) {                 // リングバッファから1文字取り出し
+  if (ISEmpty(buf)) return EOF;           //  空の 場合は EOF
+  int tail = buf.tail;
+  buf.tail = nextIdx(buf.tail);           // tail を進めて
+  return  buf.buf[tail];                  // 一文字返す
+}
+
+/*
+ *  SIO ハードウエア制御
+ */
+
+// SIO 送信関係
+boolean trsIdle;                          // トランスミッタがアイドル状態
+
+// SIO 送信割込み処理ルーチン
+interrupt sioTrs() {
+  if (ISEmpty(trsBuf)) {                  // 送信すべきデータがないなら
+    out(0x0001,0x0040);                   // 送信割込み禁止
+    trsIdle = true;
+  } else {                                // そうでなければ
+    int c = getBuf(trsBuf);               // 送信バッファから一文字取り出す
+    out(0x0000,c);                        // データを送信
+//    putch(c);                             // 画面にも(デバッグ用)
+  }
+}
+
+// SIO へ１文字出力
+void putSio(char c) {
+  di();                                   // 割込み禁止状態で
+  if (trsIdle) {                          // 送信中でなければ
+    out(0x0001,0x00c0);                   // 割込みを許可し
+    out(0x0000, c);                       // 送信を始める
+//    putch(c);                             // 画面にも(デバッグ用)
+    trsIdle = false;
+  } else {
+    putBuf(trsBuf, c);                    // 送信バッファに１文字追加
+  }
+  ei();
+}
+
+// 受信関係
+boolean enterFlag;                        // エンターが入力された
+
+// SIO / PS/2 から入力された文字をバッファに格納する
+void rcvData(char c) {
+  if (0x0020 <= c && c <= 0x007e) {       // 印刷可能な ASCII 文字なら
+    if(putBuf(rcvBuf, c))                 // バッファへ転記
+      putSio(c);                          // 転記できた場合はエコーバック
+    return;
+  }
+
+  if (c=='\10') {                         // BS
+    if(!ISEmpty(rcvBuf)) {                // 受信バッファにデータがあれば
+      putSio('\10');                      // 画面から１文字消去し
+      putSio(' ');
+      putSio('\10');
+      rcvBuf.head = prevIdx(rcvBuf.head); // バッファから１文字取り消し
+    }
+    return;
+  }
+
+  if (c=='\r') {                          // Enter
+    if (putBuf(rcvBuf, '\0')) {           // バッファの文字列完成
+      enterFlag = true;                   // フラグを立てて
+      putSio('\r');                       // 画面を改行
+      putSio('\n');
+    }
+    return;
+  }
+
+  // 以上のどれでもなければ無視する
+}
+
+// SIO 受信割込み処理ルーチン
+interrupt sioRcv() {
+  char c = in(0x0000);                    // 受信データを入力する
+
+  rcvData(c);
+}
+
+// PS/2 受信割込み処理ルーチン
+interrupt ps2Rcv() {
+  char c = in(0x0004);                    // 受信データを入力する
+
+  rcvData(c);
+}
+
+// 受信した１行を取り出す
+void getSioStr(char[] buf) {
+  di();
+  char c;
+  int  i = 0;
+  while ((c=rcvBuf.buf[rcvBuf.tail])!='\0') {
+    buf[i] = c;
+    rcvBuf.tail = nextIdx(rcvBuf.tail);
+    i = i + 1;
+  }
+  rcvBuf.tail = nextIdx(rcvBuf.tail);
+  buf[i] = '\0';
+  ei();
+}
+  
+// ここからはクリティカルセクションを含まない
+void putSioStr(char[] str) {         // SIO へ文字列を出力
+  for (int i=0; str[i]!='\0'; i=i+1)
+    putSio(str[i]);
+}
+
+void initIO() {
+  rcvBuf.buf = malloc(BSIZE);
+  trsBuf.buf = malloc(BSIZE);
+  out(0x0001,0x0040);                // SIO受信割込み許可、送信割込み禁止
+  out(0x0005,0x0040);                // PS2受信割込み許可、送信割込み禁止
+  trsIdle   = true;                  // トランスミッタはアイドル状態
+  enterFlag = false;                 // 入力は完了していない
+}
+
+char[] comBuf = array(BSIZE);      // コマンド解析用バッファ
+void command() {
+  getSioStr(comBuf);
+  putSioStr(comBuf);
+  putSio('\r');
+  putSio('\n');
+}
+
+public void main() {
+  int[] vect = __ItoA(0xfff0);       // 割込みベクタの配列
+  vect[8] = addrof(sioRcv);          // #8(sio受信)ベクタの初期化
+  vect[9] = addrof(sioTrs);          // #9(sio送信)ベクタの初期化
+  vect[10] = addrof(ps2Rcv);         // #10(PS/2受信)ベクタの初期化
+
+  initIO();         // IO の初期化
+
+  ei();             // 割込み許可
+
+  putSioStr("TaC-OS(^^;;;\tVer.0.1.1\r\n");
+
+  for(;;){          // カーネルは止まれない
+    if (enterFlag) {
+      enterFlag = false;
+      command();
+   }
+  }
+}

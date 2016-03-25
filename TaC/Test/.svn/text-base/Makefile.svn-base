@@ -1,0 +1,6 @@
+all:
+	(cd App; make)
+	(cd Basic; make)
+	(cd Boot; make)
+	(cd IPL; make)
+

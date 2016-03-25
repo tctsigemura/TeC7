@@ -1,0 +1,101 @@
+/*
+ * TaC Test Source Code
+ *    Tokuyama kousen Educational Computer 16bit Ver.
+ *
+ * Copyright (C) 2009-2010 by
+ *                      Dept. of Computer Science and Electronic Engineering,
+ *                      Tokuyama College of Technology, JAPAN
+ *
+ *   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+ * 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+ * コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+ * 布することを無償で許諾する．
+ *
+ *   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+ * 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+ * も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+ * る損害に関しても，その責任を負わない．
+ *
+ *
+ */
+
+/*
+ * main.cmm : テストプログラムの main
+ *
+ * 2013.01.07 v.1.0     : TeC-CPU V2 対応
+ * 2012.01.11 v.0.0     : 初期バージョン
+ *
+ * $Id$
+ *
+ */
+
+#include "util.h"
+
+void putSIO(char c) {                       // SIO への出力
+  while((in(0x0a) & 0x80)==0)
+    ;
+  out(0x08, ord(c));
+}
+
+// 1文字表示ルーチン
+public void putch(char c) {                 // SIO へ出力する
+  if (c=='\n') putSIO('\r');
+  putSIO(c);
+}
+
+// 文字列出力
+public void putstr(char[] str) {
+  for (int i=0; str[i]!='\0'; i=i+1)
+    putch(str[i]);
+}
+
+// 16進数出力
+char[] hstr = "0123456789abcdef";
+public void puthex(int x) {
+  putch(hstr[(x>>12)&0x000f]);
+  putch(hstr[(x>>8 )&0x000f]);
+  putch(hstr[(x>>4 )&0x000f]);
+  putch(hstr[(x    )&0x000f]);
+}
+ 
+// エラー終了
+void error() {
+  putstr("error!\n");                    // エラー
+  halt();
+}
+
+void wait(int n) {
+  for (int i=0; i<n; i=i+1)
+   wait1m();
+}
+
+// ここからスタート
+boolean flg1 = false;
+boolean flg2 = false;
+
+interrupt tmrInt1() { flg1 = true; }
+interrupt tmrInt2() { flg2 = true; }
+
+public void main() {
+  int[] Vector = _ItoA(0xffe0);
+  Vector[0] = addrof(tmrInt1);
+  Vector[1] = addrof(tmrInt2);
+  out(0x0000,   1000);                   // タイマー1,周期 1s
+  out(0x0002, 0x8001);                   // タイマー1,スタート
+  out(0x0004,    300);                   // タイマー2,周期 300ms
+  out(0x0006, 0x8001);                   // タイマー2,スタート
+  setPri(0x00c0);                        // 割込み許可
+
+  putstr("Timer test start\n");
+
+  for(;;) {
+    if (flg1) {
+      flg1 = false;
+      putstr("*");
+    }
+    if (flg2) {
+      flg2 = false;
+      putstr("@");
+    }
+  }
+}

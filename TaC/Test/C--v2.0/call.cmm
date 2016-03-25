@@ -1,0 +1,16 @@
+//
+// スタックに順番に積まれるかテスト
+//
+void f(int v, char w, int x, char y, int z);
+
+int[] a = { 1+1, 2 };
+char[] b = array(10);
+char[] c = "aaaa";
+char[] d = "aaaa";
+char[] e = {'A','B','C','\0'};
+
+
+public void main() {
+  char c = ' ';
+  f(a[1],b[2],a[3],c,1);
+}
