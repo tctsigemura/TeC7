@@ -72,10 +72,6 @@ TaC上では
 |     |
 |     + Mcode   マイクロプログラム
 |     |
-|     + Serial	Windows 用のダウンロードプログラム
-|     |
-|     + Tsend7	UNIX, MacOS 用のダウンロードプログラム
-|     |
 |     + Test    デモプログラム等
 |
 + TaC +         TaCモード関連のユーティリティ等
@@ -86,7 +82,7 @@ TaC上では
 |     |
 |     + Test    TaC の I/O 動作テスト等で使用するプログラム
 |
-+ Util			    TeC,TaC両方のIPL,Mcodeの生成に必要なツール
++ Util          TeC,TaC両方のIPL,Mcodeの生成に必要なツール
 |
 + VHDL          TeC7 VHDL ソース
 ```
