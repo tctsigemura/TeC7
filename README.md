@@ -66,6 +66,16 @@ TaC上では
 ```
 + README.md     このファイル
 |
++ Doc +         ドキュメント
+|     |
+|     + TaC.jpg 動作中のTaCの写真
+|     |
+|     + TeC7.jpg 動作中のTeC7の写真
+|     |
+|     + TeC7a.pdf TeC7の基板回路図
+|     |
+|     + TeC7aピンコネ.xlsx TeC7のFPGA(Spartan-6)のピンコネ
+|
 + TeC +         TeCモード関連のユーティリティ等
 |     |
 |     + Ipl     Ipl(シリアル通信でプログラムをダウンロード)
