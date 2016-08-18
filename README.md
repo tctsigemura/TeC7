@@ -68,13 +68,13 @@ TaC上では
 |
 + Doc +         ドキュメント
 |     |
-|     + TaC.jpg 動作中のTaCの写真
+|     + Arch    TeC, TaC の命令表
 |     |
-|     + TeC7.jpg 動作中のTeC7の写真
+|     + PCB     TeC7 の回路図、ピンコネ
 |     |
-|     + TeC7a.pdf TeC7の基板回路図
+|     + Photos  TeC7 の写真
 |     |
-|     + TeC7aピンコネ.xlsx TeC7のFPGA(Spartan-6)のピンコネ
+|     + VHDL    TeC7 のブロック図・タイミング図等
 |
 + TeC +         TeCモード関連のユーティリティ等
 |     |
@@ -83,6 +83,10 @@ TaC上では
 |     + Mcode   マイクロプログラム
 |     |
 |     + Test    デモプログラム等
+|     |
+|     + Tsend7  Mac, UNIX 用のダウンロードプログラム
+|     |
+|     + Serial  Windows 用のダウンロードプログラム
 |
 + TaC +         TaCモード関連のユーティリティ等
 |     |
