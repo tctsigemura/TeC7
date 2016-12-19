@@ -1,8 +1,8 @@
 /*
- * TaC Kernel Source Code
- *    Tokuyama kousen Educational Computer 16bit Ver.
+ * TacOS Source Code
+ *    Tokuyama kousen Advanced educational Computer
  *
- * Copyright (C) 2008-2010 by
+ * Copyright (C) 2008-2016 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -20,132 +20,103 @@
  */
 
 /*
- * util.cmm : C-- が動くために必要な関数群
+ * util/util.cmm : C-- が動くために必要な関数群
  *
- * 2010.07.20           : Subversion による管理を開始
- * 2010.03.12 v0.0.3    : public 修飾子を追加
- * 2009.11.05 v0.0.2    : バイト配列関係の関数を追加
- * 2009.04.16 v0.0.1    : Boot 用に書き換え
- * 2008.08              : Kernel 用初期バージョン
+ * 2016.01.11 : panic() が #ifdef DEGUB 以外で printf() を使用しないように変更
+ * 2016.01.11 : 一部関数をキャメルケースに統一
+ * 2016.01.06 : コメント体裁を清書
+ * 2015.01.05 : isUpper, isLower, isDigit, isPrint を削除(util.h のマクロに変更)
+ * 2015.12.21 : _uCmp32() を追加
+ * 2015.12.14 : strncmp() を dirAccess.cmm に移植
+ * 2015.09.07 : strlen(), strcpy() を追加, MEM 配列を復活(重村)
+ * 2015.09.04 : panic が標準で PID とリターンアドレスを表示するように変更
+ *              getPid() を使用するように変更(重村)
+ * 2015.08.20 : toUpper() と strncpy() を移植
+ * 2014.05.07 : 村田開発開始、コメントを追加
+ * 2013.01.08 : setPri() の引数を記号定数に変更
+ * 2013.01.05 : カーネルモードに対応(setPri() の引数)
+ * 2012.12.27 : 文字関係のルーチンを追加
+ * 2012.12.26 : Ipl の console.cmm をシンボリックリンクして利用する
+ * 2012.09.19 : TaC-CPU V2 対応
+ * 2011.05.25 : malloc、free を削除(TaC-OS のシステムコールに変更)
+ * 2011.05.14 : panic() を追加
+ * 2010.07.20 : Subversion による管理を開始
+ * 2010.03.12 : public 修飾子を追加
+ * 2009.11.05 : バイト配列関係の関数を追加
+ * 2009.04.16 : Boot 用に書き換え
+ * 2008.08    : Kernel 用初期バージョン
  *
  * $Id$
  *
  */
 
-#include "util.h"
+//#include <kernel.hmm>
+#include "util.hmm"
+#include "console.hmm"
 
-struct __mblock {                               /* malloc がメモリを管理する*/
-  __mblock next;                                /* ためのデータ構造         */
-  int     size;
-};
-
-__mblock __mempool;                             /* 空き領域リストのルート   */
-
-public void __cstart() {                        /* プログラム起動前の初期化 */
-  __mempool = __end();                          /* 空き領域リストに番兵を   */
-  __mempool.size = 0;                           /* 作る．size=0によって結合 */
-                                                /* される可能性がなくなる   */
-  __mempool.next = __AddrAdd(__mempool,2);      /* 空き領域 */
-  __mempool.next.size = __memsize() - 2;        /* 空きメモリサイズ */
-  __mempool.next.next = null;
+// util の初期化ルーチン
+public void utilInit() {
+  MEM = _ItoA(0);         // 0x0000 を指す char[] 参照（主記憶を意味する)
+  consInit();
 }
 
-/*
- * メモリ管理ルーチン
- */
-public void[] malloc(int s) {                   /* メモリ割り当て           */
-  s=s+2;                                        /* 制御データ分大きく       */
-  if (s<2) {                                    /* 32Kw 以上の割り当て不可  */
-    putstr("malloc: size error\n");             /* (負とみなすので)         */
-    for (;;)
-      ;
-    //_exit(1);
-  }
-
-  __mblock p = __mempool;                       /* 直前の領域     */
-  __mblock m = p.next;                          /* 対象となる領域 */
-
-  while (__ucmp(m.size,s)<0) {                  /* 領域が小さい間 */
-    p = m;                                      /* リストを手繰る */
-    m = m.next;
-    if (m==null) {                              /* リストの最後まできた */
-      putstr("malloc: no enough memory\n");
-      for (;;)
-        ;
-      //_exit(1);
-    }
-  }
-
-  if (m.size==s) {                              /* ピッタリの領域を見つけた */
-    p.next = m.next;
-  } else {                                      /* 領域を分割する必要がある */
-    int ss = m.size - s;
-    __mblock q = __AddrAdd(m, s);               /* 残り領域 */
-    q.next = m.next;
-    q.size = ss;
-    p.next = q;
-    m.size = s;
-    m.next = __end();
-  }
-
-  return __AddrAdd(m, 2);                       /* 管理領域を除いて返す     */
+// 32bit の大小比較(第1引数の方が大きいとき1、等しいとき0、小さいとき-1)
+public int _uCmp32(int[] a, int[] b) {
+  int t = _uCmp(a[0],b[0]);
+  if (t!=0) return t;
+  return _uCmp(a[1],b[1]);
 }
 
-void __badaddr() {
-   putstr("free: bad address\n");
-   for (;;)
-     ;
-    //_exit(1);
+// --------------------------------- 文字関係 -------------------------------
+// toUpper : アルファベット小文字を大文字へ変換
+public char toUpper(char c) {
+  if (isLower(c)) c = chr(ord(c) - 0x20);
+  return c;
 }
 
-public void free(void[] t) {                    /* 領域解放 */
-  __mblock q  = __AddrAdd(t, -2);               /* 解放する領域 */
-  __mblock p = __mempool;                       /* 直前の空き領域 */
-  __mblock m = p.next;                          /* 直後の空き領域 */
-
-  if (q.next!=__end()) __badaddr();             /* 領域マジックナンバー確認  */
-
-  while (__acmp(m, q)<0) {                      /* 解放する領域の位置を探る  */
-    p = m;
-    m = m.next;
-    if (m==null) break;
-  }
-
-  void[] ql = __AddrAdd(q,q.size);              /* 解放する領域の最後 */
-  void[] pl = __AddrAdd(p,p.size);              /* 直前の領域の最後 */
-
-  if (__acmp(q,pl)<0||m!=null&&__acmp(m,ql)<0)  /* 未割り当て領域では？ */
-    __badaddr();
-
-  if (pl==q) {                                  /* 直前の領域に隣接している */
-    p.size = p.size + q.size;
-    if (ql==m) {                                /* 直後の領域とも隣接してる */
-      p.size = p.size + m.size;
-      p.next = m.next;
-    }
-    return;
-  }
-
-  if (m==null) {                                /* ヒープの最後の部分       */
-    p.next = q;
-    q.next = null;
-    return;
-  }
-
-  if (ql==m) {                                  /* 直後の領域に隣接している */
-    q.size = q.size + m.size;
-    q.next = m.next;
-    p.next = q;
-    return;
-  }
-
-  p.next = q;
-  q.next = m;
+// --------------------------------- 文字列関係 ------------------------------
+// strLen : 文字列の長さを計算する('\0'はカウントしない)
+// 返り値 : 文字列の長さ
+// 引数 s : 長さを計算する文字列
+public int strLen(char[] s) {
+  int len = 0;
+  while (s[len]!='\0')                              // 終端記号まで
+    len = len + 1;
+  return len;                                       // 長さを返す
 }
 
-/*
- * 入出力ルーチン
- */
+// strCpy   : 文字列をコピーする('\0'もコピーする)
+// 返り値   : コピーした文字列
+// 引数 dst : コピー先文字列
+//      src : コピー元文字列
+public char[] strCpy(char[] dst, char[] src) {
+  int len = 0;
+  while (true) {
+    dst[len] = src[len];
+    if (dst[len]=='\0') break;
+    len = len + 1;
+  }
+  return dst;                                       // コピー先を返す
+}
+
+// -------------------------------- 入出力ルーチン --------------------------
+
+// 1文字出力
+public void putCh(char c) {			    // VGA と SIO の両方へ出力
+#ifdef SIO
+  if (c=='\n') putSIO('\r');
+  putSIO(c);
+#endif
+  putVGA(c);
+}
+
+// 文字列出力
+public void putStr(char[] str) {
+  for (int i=0; str[i]!='\0'; i=i+1)
+    putCh(str[i]);
+}
+
+#ifdef DEBUG
 char[] __hstr = "0123456789abcdef";
 int  __putnum_w;
 int  __putnum_b;
@@ -155,28 +126,34 @@ boolean __putnum_m;
 void __putnum_sub(int x, int n) {
   if (x!=0) {
     __putnum_sub(x/__putnum_b, n+1);
-    putch(__hstr[x%__putnum_b]);
+    putCh(__hstr[x%__putnum_b]);
   } else {
-    if (__putnum_m&&__putnum_p!=' ') putch('-');
+    if (__putnum_m&&__putnum_p!=' ') putCh('-');
     if (n==0) __putnum_w = __putnum_w - 1;
     while (__putnum_w>n) {
-      putch(__putnum_p);
+      putCh(__putnum_p);
       __putnum_w = __putnum_w - 1;
     }
-    if (__putnum_m&&__putnum_p==' ') putch('-');
-    if (n==0) putch('0');
+    if (__putnum_m&&__putnum_p==' ') putCh('-');
+    if (n==0) putCh('0');
   }
 }
-    
+
+// グローバル変数を使用するため割り込み禁止(本来なら割り込み禁止する必要はない)
 void __uputnum(int x, int w, char p, int base) {
+  int r =setPri(DI|KERN);			     // 割り込み禁止 
   __putnum_b = base;
   __putnum_m = false;
   __putnum_w = w;
   __putnum_p = p;
   __putnum_sub(x,0);
+  setPri(r);					     // 割り込み復元
 }
 
+// グローバル変数を使用するため割り込み禁止(本来なら割り込み禁止する必要はない)
 void __sputnum(int x, int w, char p, int base) {
+  int r =setPri(DI|KERN);			     // 割り込み禁止
+  
   __putnum_b = base;
   __putnum_m = false;
   if (x<0) {
@@ -187,29 +164,23 @@ void __sputnum(int x, int w, char p, int base) {
   __putnum_w = w;
   __putnum_p = p;
   __putnum_sub(x,0);
+
+  setPri(r);					     // 割り込み復元
 }
 
-public void putdec(int x, int w, char p) {
-  __sputnum(x,w,p,10);
-}
-
-public void puthex(int x, int w, char p) {
-  __uputnum(x,w,p,16);
-}
-
-public int printf(char[] fmt, ...) {
-  int[] args = __args();
-  int n=0;
+public int printF(char[] fmt, ...) {  
+  int[] args = _args();
+  int n = 0;
   int arg = args[0];
   for (int i=0; fmt[i]!='\0'; i=i+1) {
     char c = fmt[i];
     if (c=='%') {
       c = fmt[i=i+1];
-      int  p = ' ';
+      char  p = ' ';
       if (c=='0') p='0';
       int  w = 0;
-      while ('0'<=c && c<='9') {
-        w = w * 10 + c - '0';
+      while (isDigit(c)) {
+        w = w * 10 + (ord(c) - ord('0'));
 	c = fmt[i=i+1];
       }
       if (c=='\0') {
@@ -224,29 +195,42 @@ public int printf(char[] fmt, ...) {
         __uputnum(arg,w,p,16);
 	arg = args[n=n+1];
       } else if (c=='c') {
-        putch(arg);
+        putCh(chr(arg));
 	arg = args[n=n+1];
       } else if (c=='s') {
-        putstr(__ItoA(arg));
+        putStr(_ItoA(arg));
 	arg = args[n=n+1];
       } else if (c=='%') {
-        putch('%');
+        putCh('%');
       } else {
-        putch(c);
+        putCh(c);
       }
     } else 
-      putch(c);
+      putCh(c);
   }
   return n;
 }
+#endif
 
-/*
- * 16bit int 配列をバイト配列とみなして 1 バイト読み出す
- */
-public int byte(int[] b, int x) {
-  int v = b[ x >> 1 ];
-  if ((x & 1) == 0)                      // 偶数アドレスは
-    return v & 0x00ff;                   // 下位アドレス
-  return (v >> 8) & 0x00ff;              // 奇数番は上位アドレス
+// ------------------------------- エラー表示 ----------------------------
+public void panic(char[] msg, ...) {
+  setPri(DI|KERN);				    // 割り込み禁止
+
+#ifdef DEBUG
+  int[] args = _args();
+  printF("### panic(PID=%d(", getPid());
+  int[] fp = _addrAdd(args, -6);
+  for (int i=0; i<3; i=i+1) {                       // 関数のトレースを3階層
+    printF("<-(%04x)",fp[1]);
+    fp = _ItoA(fp[0]);
+  }
+  printF(")) ###\n");
+  printF(msg, args[0], args[1], args[2]);
+
+#else
+  putStr(msg);
+#endif
+
+  putCh('\n');
+  while (true) halt();				    // システムを停止する
 }
-
