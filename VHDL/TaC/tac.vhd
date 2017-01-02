@@ -83,6 +83,12 @@ entity TaC is
          P_EXT_OUT  : out  std_logic_vector (7 downto 0);
          P_EXT_IN   : in  std_logic_vector (7 downto 0);
          
+         -- COM
+         P_COM_CTR      : out   std_logic;
+         P_CONSOLE_CTR  : out  std_logic;
+         P_SERIAL_CTR   : out  std_logic;
+         P_COM_LINE     : out  std_logic_vector (18 downto 0);
+         
          -- uSD
          P_SPI_SCLK  : out   std_logic;
          P_SPI_DIN   : in    std_logic;
@@ -149,6 +155,7 @@ signal i_iow            : std_logic;
 signal i_en_sio         : std_logic;
 signal i_en_spi         : std_logic;
 signal i_en_pio         : std_logic;
+signal i_en_com         : std_logic;
 signal i_en_ps2         : std_logic;
 signal i_en_tmr0        : std_logic;
 signal i_en_tmr1        : std_logic;
@@ -342,6 +349,21 @@ component TAC_PIO
          );
 end component;
 
+component TAC_COM
+    Port ( P_CLK          : in  std_logic;
+           P_RESET        : in  std_logic;
+           P_EN           : in  std_logic;
+           P_IOW          : in  std_logic;
+           P_ADDR         : in  std_logic_vector (1 downto 0);
+           P_DIN          : in  std_logic_vector (7 downto 0);
+
+           P_COM_CTR      : out   std_logic;
+           P_CONSOLE_CTR  : out  std_logic;
+           P_SERIAL_CTR   : out  std_logic;
+           P_COM_LINE     : out  std_logic_vector (18 downto 0)
+         );
+end component;
+
 component TAC_PS2 is
     Port ( P_CLK     : in std_logic;                       -- 50MHz
            P_RESET   : in std_logic;                       -- Reset
@@ -446,6 +468,7 @@ begin
   i_en_ps2    <= '1' when (i_addr(7 downto 2)="000011") else '0'; -- 0c~0f
   i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10~17
   i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18~1f
+  i_en_com    <= '1' when (i_addr(7 downto 3)="00101" and i_addr(2 downto 1)/="11")  else '0'; -- 28~2d
   i_en_vga    <= '1' when (i_addr(15 downto 12)="1110") else '0'; -- e000~efff
   i_vga_we    <= '1' when (i_en_vga and i_mr and i_rw)='1' else '0';
  
@@ -604,6 +627,21 @@ begin
          P_EXT_IN   => P_EXT_IN,
          P_EXT_OUT  => P_EXT_OUT,
          P_MODE     => P_MODE
+        );
+
+  TAC_COM1 : TAC_COM
+  port map (
+         P_CLK          => P_CLK0,
+         P_RESET        => i_reset,
+         P_EN           => i_en_com,
+         P_IOW          => i_iow,
+         P_ADDR         => i_addr(2 downto 1),
+         P_DIN          => i_dout_cpu(7 downto 0),
+
+         P_COM_CTR      => P_COM_CTR,
+         P_CONSOLE_CTR  => P_CONSOLE_CTR,
+         P_SERIAL_CTR   => P_SERIAL_CTR,
+         P_COM_LINE     => P_COM_LINE
         );
 
   TAC_PS21: TAC_PS2

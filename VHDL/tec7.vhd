@@ -115,6 +115,11 @@ signal i_out         : std_logic_vector(43 downto 0);
 signal i_out_tec     : std_logic_vector(43 downto 0);
 signal i_out_tac     : std_logic_vector(43 downto 0);
 
+signal i_com_ctr     : std_logic;                      -- TaCがTeCのコンソール入出力するための切り替え信号線（追記：2016/10/6）
+signal i_console_ctr : std_logic;                      -- TacOS上でコンソール入出力をTeCモードに変更するための切り替え信号線（追記：2016/10/6）
+signal i_serial_ctr  : std_logic;                      -- TeC/TaCがシリアル通信するための切り替え信号線（追記：2016/9/5）
+signal i_com_line    : std_logic_vector(18 downto 0);  -- TaCによるTeCのコンソール打ち込み用(追記：2016/8/30)
+
 component IBUFG
     port ( I         : in     std_logic;
            O         : out    std_logic
@@ -245,6 +250,12 @@ component TAC
            P_EXT_OUT  : out  std_logic_vector (7 downto 0);
            P_EXT_IN   : in  std_logic_vector (7 downto 0);
 
+           -- COM
+           P_COM_CTR     : out  std_logic;
+           P_CONSOLE_CTR : out  std_logic;
+           P_SERIAL_CTR  : out  std_logic;
+           P_COM_LINE    : out  std_logic_vector (18 downto 0);
+
            -- uSD
            P_SPI_SCLK : out  std_logic;
            P_SPI_DIN  : in  std_logic;
@@ -313,21 +324,27 @@ begin
   -- I/O Switch (select TeC/TaC)
   -- INPUT
   i_in(27 downto 20) <= EXT_IN;
-  i_in(19 downto 12) <= DATA_SW;
-  i_in(11) <= RESET_SW;
-  i_in(10) <= SETA_SW;
-  i_in(9) <= INCA_SW;
-  i_in(8) <= DECA_SW;
-  i_in(7) <= WRITE_SW;
-  i_in(6) <= STEP_SW;
-  i_in(5) <= BREAK_SW;
-  i_in(4) <= STOP_SW;
-  i_in(3) <= RUN_SW;
-  i_in(2) <= RIGHT_SW;
-  i_in(1) <= LEFT_SW;
+  -- TeC/TaC通信用の接続線選択部分(追記：2016/8/30)
+  i_in(19 downto 1) <= i_com_line when i_com_ctr='1' else
+                       DATA_SW  & -- i_in(19 downto 12)
+                       RESET_SW & -- i_in(11)
+                       SETA_SW  & -- i_in(10)
+                       INCA_SW  & -- i_in(9)
+                       DECA_SW  & -- i_in(8)
+                       WRITE_SW & -- i_in(7)
+                       STEP_SW  & -- i_in(6)
+                       BREAK_SW & -- i_in(5)
+                       STOP_SW  & -- i_in(4)
+                       RUN_SW   & -- i_in(3)
+                       RIGHT_SW & -- i_in(2)
+                       LEFT_SW;   -- i_in(1)
   i_in(0) <= SIO_RXD;
-  i_in_tec <= "0000000000000000000000000000" when i_mode="01" else i_in;
-  i_in_tac <= i_in when i_mode="01" else "0000000000000000000000000000";
+  i_in_tec(27 downto 1) <= "000000000000000000000000000" when (i_mode="01" and i_console_ctr='0') else i_in(27 downto 1);
+  i_in_tac(27 downto 1) <= i_in(27 downto 1) when (i_mode="01" and i_console_ctr='0') else "000000000000000000000000000";
+  
+  -- TaCをターミナルソフトとして利用する際の切り替え
+  i_in_tec(0) <= i_out_tac(0) when i_serial_ctr='1' else i_in(0);
+  i_in_tac(0) <= i_out_tec(0) when i_serial_ctr='1' else i_in(0);
   
   -- OUTPUT
   ADC_REF <= i_out(43 downto 36);
@@ -345,8 +362,8 @@ begin
   PC_LED <= not i_out(3);
   MM_LED <= not i_out(2);
   SPK_OUT <= i_out(1);
-  SIO_TXD <= i_out(0);
-  i_out <= i_out_tac when i_mode="01" else i_out_tec;
+  SIO_TXD <= i_out(0) when i_serial_ctr='0' else '0';
+  i_out <= i_out_tac when (i_mode="01" and i_console_ctr='0') else i_out_tec;
 
   TEC1     : TEC
     port map(
@@ -384,7 +401,7 @@ begin
          P_BUZ      => i_out_tec(1),                        -- BUZZER OUT
 
          -- SIO
-         P_SIO_RXD  => i_in_tec(0),                         -- SIO Receive
+         P_SIO_RXD  => i_in_tec(0),                            -- SIO Receive
          P_SIO_TXD  => i_out_tec(0),                        -- SIO Transmit
 
          -- PIO
@@ -432,8 +449,14 @@ begin
 
          -- SIO
          P_SIO_RXD  => i_in_tac(0),                     -- SIO Receive
-         P_SIO_TXD  => i_out_tac(0),                    -- SIO Transmit
-         
+         P_SIO_TXD  => i_out_tac(0),                     -- SIO Transmit
+
+         -- COM
+         P_COM_CTR      => i_com_ctr,
+         P_CONSOLE_CTR  => i_console_ctr,
+         P_SERIAL_CTR   => i_serial_ctr,
+         P_COM_LINE     => i_com_line,
+
          -- I/O
          P_EXT_IN   => i_in_tac(27 downto 20),
          P_ADC_REF  => i_out_tac(43 downto 36),
