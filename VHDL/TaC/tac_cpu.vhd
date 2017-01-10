@@ -56,6 +56,7 @@ entity TAC_CPU is
          P_HL    : out std_logic;                        -- Halt Instruction
          P_BT    : out std_logic;                        -- Byte to
          P_PR    : out std_logic;                        -- privilege Mode
+         P_IOPR  : out std_logic;                        -- IO privilege Mode
          P_INTR  : in  std_logic;                        -- Intrrupt
          P_STOP  : in  std_logic                         -- Panel RUN F/F
         );
@@ -132,6 +133,7 @@ constant JMP_PCR  : std_logic_vector(3 downto 0) := "1010";
 constant JMP_IM   : std_logic_vector(3 downto 0) := "1011";
 constant JMP_NPRV : std_logic_vector(3 downto 0) := "1100";
 constant JMP_ZERO : std_logic_vector(3 downto 0) := "1101";
+constant JMP_NIOPR: std_logic_vector(3 downto 0) := "1110";
 
 -- レジスタファイル
 signal I_G0  : std_logic_vector(15 downto 0);  -- G0
@@ -155,6 +157,7 @@ signal I_TMP : std_logic_vector(15 downto 0);  -- TMP
 -- フラグ
 signal I_E   : std_logic;                     -- Interrupt Enable
 signal I_P   : std_logic;                     -- Privilege
+signal I_IOP : std_logic;                     -- IO Privilege
 signal I_V   : std_logic;                     -- Over Flow
 signal I_C   : std_logic;                     -- Carry
 signal I_S   : std_logic;                     -- Sign
@@ -302,6 +305,7 @@ begin
   P_HL     <= M_HL;
   P_BT     <= M_BT;
   P_PR     <= I_P;
+  P_IOPR   <= I_IOP;
 
   -- data bus
   P_DOUT(7 downto 0)  <= I_OPR( 7 downto 0);
@@ -351,7 +355,7 @@ begin
     end if;
   end process;
 
-  process(M_JP, I_RX, I_JMP, P_Intr, P_STOP, I_E,I_CT,I_P,I_Z, I_DR(3 downto 0))
+  process(M_JP, I_RX, I_JMP, P_Intr, P_STOP, I_E,I_CT,I_P,I_IOP,I_Z, I_DR(3 downto 0))
   begin                                 -- JCC_C 部分
     case M_JP is
       when JMP_ALL  =>                                       -- JMP
@@ -405,13 +409,19 @@ begin
           I_MPCLDAB <= "0X";
         end if;
       when JMP_NPRV =>                                       -- Jcc(NPRV)
-        if  (I_P='0') then		                     --   non Privilege
+        if  (I_P='0') then                                   --   non Privilege
           I_MPCLDAB <= "10";
         else
           I_MPCLDAB <= "0X";
-	end if;
+        end if;
       when JMP_ZERO =>                                       -- Jcc(ZERO)
         if  (I_Z='1') then
+          I_MPCLDAB <= "10";
+        else
+          I_MPCLDAB <= "0X";
+        end if;
+      when JMP_NIOPR =>                                      -- Jcc(NIOPR)
+        if  (I_IOP='0' and I_P='0') then                     --   non IO Privilege
           I_MPCLDAB <= "10";
         else
           I_MPCLDAB <= "0X";
@@ -575,6 +585,7 @@ begin
     if (P_RESET='0') then
       I_E <= '0';
       I_P <= '1';                       -- 特権モードで始まる
+      I_IOP <= '0';
       I_V <= '0';
       I_C <= '0';
       I_S <= '0';
@@ -583,6 +594,7 @@ begin
       if (I_WRA="110001") then
         I_E <= I_ALU(7);
         I_P <= I_ALU(6);
+        I_IOP <= I_ALU(5);
         I_V <= I_ALU(3);
         I_C <= I_ALU(2);
         I_S <= I_ALU(1);
@@ -622,7 +634,7 @@ begin
   -- 読みだし制御
   process(I_G0, I_G1, I_G2, I_G3, I_G4, I_G5, I_G6, I_G7, I_G8, I_G9, I_G10,
           I_G11, I_G12, I_SSP, I_USP, I_PC, I_TMP,
-          I_E, I_P, I_V, I_C, I_S, I_Z, I_RRA)
+          I_E, I_P, I_IOP, I_V, I_C, I_S, I_Z, I_RRA)
   begin
     case I_RRA is
       when "00000" => I_RRD <= I_G0;
@@ -645,7 +657,7 @@ begin
                       end if;
       when "01110" => I_RRD <= I_USP;
       when "01111" => I_RRD <= I_PC;
-      when "10001" => I_RRD <= "00000000"&I_E&I_P&"00"&I_V&I_C&I_S&I_Z;
+      when "10001" => I_RRD <= "00000000"&I_E&I_P&I_IOP&'0'&I_V&I_C&I_S&I_Z;
       when others  => I_RRD <= I_TMP;
     end case;
   end process;
