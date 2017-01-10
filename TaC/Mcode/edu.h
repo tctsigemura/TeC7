@@ -2,7 +2,7 @@
  * TaC  Micro Code Assembler Program
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2002-2010 by
+ * Copyright (C) 2002-2017 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,7 @@
 /*
  * edu.h : マイクロコードアセンブラで使用する定数等
  *
+ * 2017.01.10           : Jcc(NIOPR) を追加
  * 2012.07.14           : REG(FP), STP, CLP, ALU(INC2,DEC2),Jcc(NPRV,ZERO),
  *                        BUS(HALT,MEMRB,MEMWB,IORB,IOWB) を追加・変更
  * 2011.09.06           : PCR を追加, BUS 命令を変更(エンコード)
@@ -82,6 +83,7 @@
 #define J_IM	11
 #define J_NPRV  12
 #define J_ZERO  13
+#define J_NIOPR 14
 
 /* Bus 命令 */
 #define B_NO    0
