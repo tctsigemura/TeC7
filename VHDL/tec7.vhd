@@ -363,7 +363,8 @@ begin
   MM_LED <= not i_out(2);
   SPK_OUT <= i_out(1);
   SIO_TXD <= i_out(0) when i_serial_ctr='0' else '0';
-  i_out <= i_out_tac when (i_mode="01" and i_console_ctr='0') else i_out_tec;
+  i_out(43 downto 1) <= i_out_tac(43 downto 1) when (i_mode="01" and i_console_ctr='0') else i_out_tec(43 downto 1);
+  i_out(0) <= i_out_tac(0) when (i_mode="01") else i_out_tec(0);
 
   TEC1     : TEC
     port map(
