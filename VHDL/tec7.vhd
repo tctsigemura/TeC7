@@ -338,7 +338,7 @@ begin
                        RUN_SW   & -- i_in(3)
                        RIGHT_SW & -- i_in(2)
                        LEFT_SW;   -- i_in(1)
-  i_in(0) <= SIO_RXD;
+  i_in(0) <= EXT_IN(7) when (i_mode="01") else SIO_RXD;
   i_in_tec(27 downto 1) <= "000000000000000000000000000" when (i_mode="01" and i_console_ctr='0') else i_in(27 downto 1);
   i_in_tac(27 downto 1) <= i_in(27 downto 1) when (i_mode="01" and i_console_ctr='0') else "000000000000000000000000000";
   
@@ -348,7 +348,7 @@ begin
   
   -- OUTPUT
   ADC_REF <= i_out(43 downto 36);
-  EXT_OUT <= i_out(35 downto 28);
+  EXT_OUT <= i_out(0) & "0000001" when (i_mode="01") else i_out(35 downto 28);
   ADDR_LED <= not i_out(27 downto 20);
   DATA_LED <= not i_out(19 downto 12);  
   RUN_LED <= not i_out(11);
@@ -362,7 +362,7 @@ begin
   PC_LED <= not i_out(3);
   MM_LED <= not i_out(2);
   SPK_OUT <= i_out(1);
-  SIO_TXD <= i_out(0) when i_serial_ctr='0' else '0';
+  SIO_TXD <= '0' when (i_mode="01") else i_out(0);
   i_out(43 downto 1) <= i_out_tac(43 downto 1) when (i_mode="01" and i_console_ctr='0') else i_out_tec(43 downto 1);
   i_out(0) <= i_out_tac(0) when (i_mode="01") else i_out_tec(0);
 
