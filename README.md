@@ -1,6 +1,6 @@
 # Tokuyama Educational Computer Ver.7 (TeC7)
 
-![TeC7の写真](https://github.com/tctsigemura/TeC7/blob/master/Doc/TeC7.jpg?raw=true "写真")
+![TeC7の写真](https://github.com/tctsigemura/TeC7/blob/master/Doc/Photos/TeC7.jpg?raw=true "写真")
 
 TeC7は徳山高専で開発した教育用コンピュータです。
 TeC7の最大の特徴はコンピュータの内部を２進数でアクセスすることができるコンソールパネルを持っていることです。
@@ -59,7 +59,7 @@ TaC上では
 近い将来にはTacOS上でセルフ開発ができるようになる予定です。
 
 ### TaCとして動作中の写真(OS起動前の状態)
-![TaCとして動作中](https://github.com/tctsigemura/TeC7/blob/master/Doc/TaC.jpg?raw=true "写真")
+![TaCとして動作中](https://github.com/tctsigemura/TeC7/blob/master/Doc/Photos/TaC.jpg?raw=true "写真")
 
 ### ディレクトリ構成
 
