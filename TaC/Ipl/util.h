@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2012 by
+ * Copyright (C) 2009-2017 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -20,17 +20,17 @@
  */
 
 /*
- * console.h : TaC IPL の画面制御部分
+ * util.h : TaC IPL 便利ルーチン
  *
- * 2012.02.29           : cls を追加
- * 2012.01.08 v1.0.0    : console.cmm の外部インタフェース
+ * 2017.05.11 v.4.0.0     : 新規作成
  *
  * $Id$
  *
  */
 
-public void cls();                          // 画面クリア
-public void putch(char c);                  // 1文字表示
-public void putstr(char[] str);             // 文字列表示
-public void _puthex(int x);                 // 16進数4桁で表示
-public void consInit();                     // 画面出力の初期化
+public void putFT232(char c);        // FT232RL への出力
+public void putTeC(char c);          // TeC への出力
+public void putRN4020(char c);       // RN4020 への出力
+public void putch(char c);           // 1文字出力
+public void putstr(char[] str);      // 文字列出力
+public void _puthex(int x);          // 16進数出力

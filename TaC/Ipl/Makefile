@@ -2,7 +2,7 @@
 # TaC IPL Source Code
 #    Tokuyama kousen Educational Computer 16 bit Version
 #
-# Copyright (C) 2009-2016 by
+# Copyright (C) 2009-2017 by
 #                      Dept. of Computer Science and Electronic Engineering,
 #                      Tokuyama College of Technology, JAPAN
 #
@@ -19,6 +19,7 @@
 #
 # Makefile : IPL の makefile
 #
+# 2017.05.09 Ver.4.0.0 : TeC7b に対応, cm2e を使用するように変更
 # 2016.01.07 Ver.3.0.0 : 川部版と統合
 # 2016.01.07           : c-- に -K オプション追加
 # 2012.09.25           : objbin-- がメモリマップを出力するように変更
@@ -30,26 +31,23 @@
 # $Id$
 #
 
-VER=\"3.0.0\"
+VER=\"`cat VERSION`\"
 DATE="\"`date`\""
 
-BSS=0xda00            # 0xda00 - ...    : bss
-STK=0xe000            # ...    - 0xdfff : stack
-VRAM=0xe000           # 0xe000 - 0xefff : V-RAM
+BSS=0xea00            # 0xea00 - ...    : bss
+STK=0xf000            # ...    - 0xefff : stack
 TEXT=0xf000           # 0xf000 - 0xffdf : ipl rom
 
-OBJS=crt0.o ipl.o loader.o console.o mmcspi.o
-#CPP=llvm-cpp-4.2 -std=c99		# プリプロセッサ
-CPP=cc -E -std=c99 -		# プリプロセッサ
+OBJS=crt0.o ipl.o loader.o mmcspi.o util.o
 UTILDIR=../../Util
+
 .SUFFIXES: .o .cmm .s
 
 .s.o:
 	as-- $*.s
 
-.cmm.s:
-	${CPP} -DDATE=${DATE} -DVER=${VER} -DSIO \
-	-DVRAM=${VRAM} < $*.cmm | c-- -K > $*.s
+.cmm.o:
+	cm2e -K -c -DDATE=${DATE} -DVER=${VER} $*.cmm
 
 all : tac_ram.txt
 

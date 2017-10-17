@@ -42,7 +42,7 @@
  */
 
 #include "crt0.h"
-#include "console.h"
+#include "util.h"
 #include "mmcspi.h"
 #include "loader.h"
 
