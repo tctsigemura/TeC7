@@ -1,4 +1,4 @@
-/*
+an/*
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
@@ -22,6 +22,7 @@
 /*
  * ipl.cmm : C-- 言語版の TaC IPL
  *
+ * 2017.12.15           : RN4020のリセット機能を追加
  * 2017.05.11 v4.0.0    : TaC7b 用に変更
  * 2016.01.10 v3.0.1    : メッセージ表示後止まるように変更
  * 2016.01.07 v3.0.0    : 川部版と統合
@@ -60,8 +61,23 @@ void tecMode() {
   }
 }
 
-// DEMO モードでは TaC が通信(RN4020<=>FT232RL)を中継
-void demoMode() {
+// TaC モードでは TaC に tacOS をロードし全てを任せる
+void tacMode() {
+  putstr("Push \"RUN\" to boot the kernel\n");
+  halt();
+  putstr("Load kernel ... ");
+
+  initLoader();                         // カーネルローダ初期化
+  int addr = load("KERNEL  ", "BIN");   // "KERNEL.BIN" をロード
+
+  putstr("(Start kernel@0x");
+  _puthex( addr );
+  putstr(")\n");
+  jump(addr);
+}
+
+// DEMO モード１では TaC が通信(RN4020<=>FT232RL)を中継
+void demoMode1() {
   boolean esc = false;
   while(true) {
     if ((in(0x0a) & 0x40)!=0) { // FT232RL
@@ -76,27 +92,23 @@ void demoMode() {
         putRN4020(chr(c));
       }
     }
-    if ((in(0x2a) & 0x40)!=0) { // RN4020
+    if ((in(0x2a) & 0x40)!=0) {    // RN4020
       int c = in(0x28);
       putFT232(chr(c));
     }
   }
 }
 
-// TaC モードでは TaC に tacOS をロードし全てを任せる
-void tacMode() {
-  putstr("Push \"RUN\" to boot the kernel\n");
-  halt();
-  putstr("Load kernel ... ");
-
-  initLoader();                         // カーネルローダ初期化
-  int addr = load("KERNEL  ", "BIN");   // "KERNEL.BIN" をロード
-
-  putstr("(Start kernel@0x");
-  _puthex( addr );
-  putstr(")\n");
- jump(addr);
+// DEMO モード２では RN4020 を工場出荷時リセットする
+void demoMode2() {
+  for(int i=0;i<10; i=i+1){
+    out(0x2c, 7);
+    putstr("reset now !!");        // 時間調整
+    out(0x2c, 3);
+    putstr("reset now !!");        // 時間調整
+  }
 }
+
 
 // ここからスタート
 public void main() {
@@ -108,11 +120,13 @@ public void main() {
   putstr(")\n");
   putstr("Copyright(c) 2009-2017 Tokuyama College of Technology\n");
   putstr("All rights reserved.\n\n");
-
   int mode = in(0x1e);
   if (mode==0) tecMode();
   else if (mode==1) tacMode();
-  else demoMode();
+  else if (mode==2) demoMode1();
+  else if (mode==3) demoMode2();
 
-  // ここには実行されないハズ
- }
+  while (true) {                   // demoMode2()以外ではここまで来ないはず
+      halt();                      // ここまで来たらTaCを停止する
+  }
+}

@@ -328,17 +328,17 @@ begin
     end process;
 
   -- FT232RL
-    i_ft_txd  <= FT232RL_TXD;
-    i_ft_rxd  <= FT232RL_RXD;
+    i_ft_txd    <= FT232RL_TXD;
+    FT232RL_RXD <= i_ft_rxd;
   
   -- RN4020
-    i_rn_tx  <= RN4020_TX;
-    i_rn_rx  <= RN4020_RX;
-    i_rn_sw  <= RN4020_SW;
-    i_rn_cmd <= RN4020_CMD;
-    i_rn_cts <= RN4020_CTS;
-    i_rn_hw  <= RN4020_HW;
-    i_rn_rts <= RN4020_RTS;
+    i_rn_tx    <= RN4020_TX;
+    RN4020_RX  <= i_rn_rx;
+    RN4020_SW  <= i_rn_sw;
+    RN4020_CMD <= i_rn_cmd;
+    RN4020_CTS <= i_rn_cts;
+    RN4020_HW  <= i_rn_hw;
+    i_rn_rts   <= RN4020_RTS;
   
   -- I/O Switch (select TeC/TaC)
   -- INPUT
