@@ -2,7 +2,7 @@
 -- TaC VHDL Source Code
 --    Tokuyama kousen Educational Computer 16 bit Version
 --
--- Copyright (C) 2002-2017 by
+-- Copyright (C) 2002-2012 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,7 +21,6 @@
 --
 --  TaC/tac_sio.vhd : RS-232C(シリアルパラレル変換モジュール)
 --
--- 2017.05.06           : ハードウェアフロー制御追加
 -- 2012.01.22           : entity 名、見直し
 -- 2010.07.20           : Subversion による管理を開始
 --
@@ -45,17 +44,11 @@ entity TAC_SIO is
          P_INT_RxD : out std_logic;                      -- SIO 受信割り込み
 
          P_TxD     : out std_logic;                      -- シリアル出力
-         P_RxD     : in  std_logic;                      -- シリアル入力
-         P_CTS     : in  std_logic;                      -- Clear To Send
-         P_RTS     : out std_logic;                      -- Request To Send
-
-         P_BAUDIV  : in  std_logic_vector(12 downto 0)   -- Baud Divsior
-         -- 49.1520MHz / 9600   = 5120  (0001 0100 0000 0000b)
-         -- 49.1520MHz / 19200  = 2560  (0000 1010 0000 0000b)
-         -- 49.1520MHz / 38400  = 1280  (0000 0101 0000 0000b)
-         -- 49.1520MHz / 115200 = 426.7 (0000 0001 1010 1011b)
+         P_RxD     : in  std_logic                       -- シリアル入力
        );
 end TAC_SIO;
+
+-- 49.1520MHz / 9600 = 5120(0001 0100 0000 0000b)
 
 architecture RTL of TAC_SIO is
 
@@ -82,11 +75,9 @@ signal Rx_Ena     : std_logic;
 signal Rx_Cnt1    : std_logic_vector(12 downto 0);
 signal Rx_Cnt2    : std_logic_vector(3  downto 0);
 signal Rx_Int_Ena : std_logic;
-signal Rx_Busy    : std_logic;
 
 signal I_RxD1     : std_logic;
 signal I_RxD2     : std_logic;
-signal I_CTS      : std_logic;
 
 begin
     IOW_SIO_Dat <= P_IOW and  P_EN and not P_ADDR;
@@ -97,7 +88,6 @@ begin
     P_TXD       <= Tx_Out or (not Tx_Ena);
     P_INT_TxD   <= (not Tx_Full) and Tx_Int_Ena;
     P_INT_RxD   <=      Rx_Full  and Rx_Int_Ena;
-    P_RTS       <= not ((Rx_Full  and Rx_Ena) or Rx_Busy);
 
     -- Data Bus
     process (IOR_SIO_Dat, IOR_SIO_Sta, Rx_D_Reg, Tx_Full, Rx_Full)
@@ -140,7 +130,7 @@ begin
             if (IOW_SIO_Dat='1') then
                 Tx_D_Reg <= P_DIN;
                 Tx_Full  <= '1';
-            elsif (Tx_Ena='0' and I_CTS='1') then
+            elsif (Tx_Ena='0') then
                 Tx_Full  <= '0';
             end if;
         end if;
@@ -155,9 +145,8 @@ begin
              Tx_Cnt1    <= "0000000000000";
              Tx_Cnt2    <= "0000";
          elsif (P_CLK' event and P_CLK='1') then
-             I_CTS <= P_CTS;
              if (Tx_Ena='1') then
-                 if (Tx_Cnt1=P_BAUDIV) then
+                 if (Tx_Cnt1="1010000000000") then
                      Tx_OUT               <= Tx_S_Reg(0);
                      Tx_S_Reg(6 downto 0) <= Tx_S_Reg(7 downto 1);
                      Tx_S_Reg(7)          <= '1';
@@ -171,7 +160,7 @@ begin
                  else
                      Tx_Cnt1              <= Tx_Cnt1 + 1;
                  end if;
-             elsif (Tx_Full='1' and I_CTS='1') then
+             elsif (Tx_Full='1') then
                  Tx_S_Reg <= Tx_D_Reg;
                  Tx_Out   <= '0';
                  Tx_Ena   <= '1';
@@ -184,13 +173,14 @@ begin
      process (P_CLK, P_RESET)
      begin
          if (P_RESET='0') then
+             Rx_Full  <= '0';
              I_RxD1   <= '0';
              I_RxD2   <= '0';
-             Rx_Full  <= '0';
          elsif (P_CLK'event and P_CLK='1') then
              I_RxD1   <= P_RxD;
              I_RxD2   <= I_RxD1;
-             if (Rx_Cnt1='0'&P_BAUDIV(12 downto 1) and Rx_Cnt2="1001") then
+             
+             if (Rx_Cnt1="0101000000000" and Rx_Cnt2="1001") then
                  Rx_Full <= '1';
              elsif (IOR_SIO_Dat='1') then
                  Rx_Full <= '0';
@@ -206,28 +196,23 @@ begin
              Rx_Ena   <= '0';
              Rx_Cnt1  <= "0000000000000";
              Rx_Cnt2  <= "0000";
-             Rx_Busy  <= '0';
          elsif (P_CLK'event and P_CLK='1') then
              if (Rx_Ena='1') then
-                 if (Rx_Cnt1='0'&P_BAUDIV(12 downto 1)) then
+                 if (Rx_Cnt1="0101000000000") then
+                     Rx_S_Reg(6 downto 0) <= Rx_S_Reg(7 downto 1);
+                     Rx_S_Reg(7)          <= I_RxD2;
                      if (Rx_Cnt2="0000" and I_RxD2='1') then
-                         Rx_Ena <= '0';
+                         Rx_Ena           <= '0';
+                         Rx_Cnt2          <= "0000";
                      elsif (Rx_Cnt2="1001") then
-                         if (Rx_Full='0') then
-                             Rx_Ena <= '0';
-                             Rx_D_Reg <= Rx_S_Reg;
-                             Rx_Cnt2 <= "0000";
-                             Rx_Busy <= '0';
-                         else
-                             Rx_Busy <= '1';
-                         end if;
+                         Rx_Ena           <= '0';
+                         Rx_D_Reg         <= Rx_S_Reg;
+                         Rx_Cnt2          <= "0000";
                      else
-                         Rx_S_Reg(6 downto 0) <= Rx_S_Reg(7 downto 1);
-                         Rx_S_Reg(7) <= I_RxD2;
-                         Rx_Cnt2 <= Rx_Cnt2 + 1;
+                         Rx_Cnt2          <= Rx_Cnt2 + 1;
                      end if;
                  end if;
-                 if (Rx_Cnt1=P_BAUDIV) then
+                 if (Rx_Cnt1="1010000000000") then
                    Rx_Cnt1 <= "0000000000000";
                  else
                    Rx_Cnt1 <= Rx_Cnt1 + 1;

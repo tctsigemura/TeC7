@@ -336,9 +336,9 @@ begin
     RN4020_RX  <= i_rn_rx;
     RN4020_SW  <= i_rn_sw;
     RN4020_CMD <= i_rn_cmd;
-    RN4020_CTS <= i_rn_cts;
+    RN4020_CTS <= not i_rn_cts;
     RN4020_HW  <= i_rn_hw;
-    i_rn_rts   <= RN4020_RTS;
+    i_rn_rts   <= not RN4020_RTS;
   
   -- I/O Switch (select TeC/TaC)
   -- INPUT

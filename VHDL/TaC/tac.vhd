@@ -279,11 +279,7 @@ component TAC_SIO
          P_INT_RxD : out std_logic;                      -- SIO 受信割り込み
 
          P_TxD     : out std_logic;                      -- シリアル出力
-         P_RxD     : in  std_logic;                      -- シリアル入力
-         P_CTS     : in  std_logic;  -- Clear To Send
-         P_RTS     : out std_logic;  -- Request To Send
-
-         P_BAUDIV  : in  std_logic_vector(12 downto 0)   -- Baud Divsior
+         P_RxD     : in  std_logic                       -- シリアル入力
        );
 end component;
 
@@ -530,9 +526,7 @@ begin
          P_INT_TxD  => i_int_bit(5),
          P_INT_RxD  => i_int_bit(4),
          P_TxD      => P_FT232RL_RXD,
-         P_RxD      => P_FT232RL_TXD,
-         P_CTS      => '1',
-         P_BAUDIV   => "1010000000000"  -- 9600baud
+         P_RxD      => P_FT232RL_TXD
        );
 
   TAC_SIO2 : TAC_SIO                    -- TeC
@@ -548,9 +542,7 @@ begin
          P_INT_TxD  => i_int_bit(7),
          P_INT_RxD  => i_int_bit(6),
          P_TxD      => P_TEC_RXD,
-         P_RxD      => P_TEC_TXD,
-         P_CTS      => '1',
-         P_BAUDIV   => "1010000000000"  -- 9600baud
+         P_RxD      => P_TEC_TXD
        );
 
   TAC_RN1 : TAC_RN4020                    -- TeC
