@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2012 by
+-- Copyright (C) 2012-2018 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac_pio.vhd : TaC PIO
 --
+-- 2018.07.13           : モードを3ビットに変更
 -- 2012.01.10           : 新規作成
 --
 -- $Id
@@ -47,7 +48,7 @@ entity TAC_PIO is
            P_ADC_REF : out  std_logic_vector(7 downto 0);
            P_EXT_IN  : in   std_logic_vector(7 downto 0);
            P_EXT_OUT : out  std_logic_vector(7 downto 0);
-           P_MODE    : in   std_logic_vector(1 downto 0)
+           P_MODE    : in   std_logic_vector(2 downto 0)
          );
 end TAC_PIO;
 
@@ -72,7 +73,7 @@ begin
       end if;
     end process;
       
-  P_DOUT <= P_EXT_IN when (P_ADDR(0)='0') else "000000" & P_MODE;
+  P_DOUT <= P_EXT_IN when (P_ADDR(0)='0') else "00000" & P_MODE;
   P_ADC_REF <= i_adc;
   P_EXT_OUT <= i_out;
   P_INT <= '0';

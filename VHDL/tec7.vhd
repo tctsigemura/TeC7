@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2016 by
+-- Copyright (C) 2002-2018 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -17,8 +17,10 @@
 -- る損害に関しても，その責任を負わない．
 --
 --
--- tec7.vhd : TeC7 Top Level
+-- tec7b.vhd : TeC7b Top Level
 --
+-- 2018.07.13 : モードを3ビットに変更
+-- 2017.05.09 : TeC7b 用に VGA, PS/2 削除，RN4020 関連追加
 -- 2016.01.08 : P_PS2_CLK を inout に変更(バグ訂正)
 --
 
@@ -63,10 +65,6 @@ entity TeC7 is
            MM_LED    : out  std_logic;
            SPK_OUT   : out  std_logic;
 
-           -- SIO
-           SIO_RXD   : in   std_logic;
-           SIO_TXD   : out  std_logic;
-
            -- PIO
            EXT_IN    : in   std_logic_vector (7 downto 0);
            ADC_REF   : out  std_logic_vector (7 downto 0);
@@ -78,24 +76,26 @@ entity TeC7 is
            SPI_DOUT  : out  std_logic;
            SPI_CS    : out  std_logic;
            ACC_LED   : out  std_logic;
-			  
-           -- PS/2
-           PS2_CLK   : inout std_logic;
-           PS2_DAT   : inout std_logic;
 
-           -- VGA
-           VGA_RED   : out  std_logic;
-           VGA_GREEN : out  std_logic;
-           VGA_BLUE  : out  std_logic;
-           VGA_HSYNC : out  std_logic;
-           VGA_VSYNC : out  std_logic
+           -- FT232RL
+           FT232RL_TXD : in   std_logic;
+           FT232RL_RXD : out  std_logic;
+
+           -- RN4020
+           RN4020_RTS : in  std_logic;
+           RN4020_HW  : out std_logic;
+           RN4020_CTS : out std_logic;
+           RN4020_CMD : out std_logic;
+           RN4020_SW  : out std_logic;
+           RN4020_RX  : out std_logic;
+           RN4020_TX  : in std_logic
          );
 end TeC7;
 
 architecture Behavioral of TeC7 is
 signal i_reset_tec   : std_logic;
 signal i_reset_tac   : std_logic;
-signal i_mode        : std_logic_vector (1 downto 0);  -- mode
+signal i_mode        : std_logic_vector (2 downto 0);  -- mode
 signal i_locked_tac  : std_logic;
 signal i_locked_delay: std_logic;
 signal i_locked_tec  : std_logic;
@@ -107,13 +107,30 @@ signal i_25_1221MHz  : std_logic;
 signal i_49_1520MHz0 : std_logic;
 signal i_49_1520MHz90: std_logic;
 
-signal i_in          : std_logic_vector(27 downto 0);
-signal i_in_tec      : std_logic_vector(27 downto 0);
-signal i_in_tac      : std_logic_vector(27 downto 0);
+signal i_in          : std_logic_vector(27 downto 1);
+signal i_in_tec      : std_logic_vector(27 downto 1);
+signal i_in_tac      : std_logic_vector(27 downto 1);
 
-signal i_out         : std_logic_vector(43 downto 0);
-signal i_out_tec     : std_logic_vector(43 downto 0);
-signal i_out_tac     : std_logic_vector(43 downto 0);
+signal i_out         : std_logic_vector(43 downto 1);
+signal i_out_tec     : std_logic_vector(43 downto 1);
+signal i_out_tac     : std_logic_vector(43 downto 1);
+
+-- TeC <= SIO => Tac
+signal i_tec_rxd     : std_logic;
+signal i_tec_txd     : std_logic;
+
+-- FT232RL
+signal i_ft_rxd      : std_logic;
+signal i_ft_txd      : std_logic;
+
+-- RN4020
+signal i_rn_tx       : std_logic;
+signal i_rn_rx       : std_logic;
+signal i_rn_sw       : std_logic;
+signal i_rn_cmd      : std_logic;
+signal i_rn_cts      : std_logic;
+signal i_rn_hw       : std_logic;
+signal i_rn_rts      : std_logic;
 
 component IBUFG
     port ( I         : in     std_logic;
@@ -150,7 +167,7 @@ component MODE
     port ( P_CLK    : in    std_logic;
            P_LOCKED : in    std_logic;
            P_JP     : inout std_logic_vector(1 downto 0);
-           P_MODE   : out   std_logic_vector(1 downto 0);
+           P_MODE   : out   std_logic_vector(2 downto 0);
            P_RESET  : out   std_logic
           );
 end component;
@@ -203,8 +220,7 @@ end component;
 component TAC
     Port ( P_CLK0     : in std_logic;                         -- 49.152MHz 0'
            P_CLK90    : in std_logic;                         -- 49.152MHz 90'
-           P_CLK_VGA  : in std_logic;                         -- 25.1221MHz
-           P_MODE     : in std_logic_vector(1 downto 0);      -- 0:TeC,1:TaC,
+           P_MODE     : in std_logic_vector(2 downto 0);      -- 0:TeC,1:TaC,
            P_RESET    : in std_logic;                         -- 2,3:Demo1,2
 
            -- CONSOLE(INPUT)
@@ -236,32 +252,34 @@ component TAC
            P_MM_LED   : out   std_logic;                      -- MM    LED
            P_BUZ      : out   std_logic;                      -- BUZZER OUT
 
-           -- SIO
-           P_SIO_RXD  : in    std_logic;                      -- SIO Receive
-           P_SIO_TXD  : out   std_logic;                      -- SIO Transmit
-
            -- PIO
            P_ADC_REF  : out  std_logic_vector (7 downto 0);
            P_EXT_OUT  : out  std_logic_vector (7 downto 0);
-           P_EXT_IN   : in  std_logic_vector (7 downto 0);
+           P_EXT_IN   : in   std_logic_vector (7 downto 0);
 
            -- uSD
            P_SPI_SCLK : out  std_logic;
-           P_SPI_DIN  : in  std_logic;
+           P_SPI_DIN  : in   std_logic;
            P_SPI_DOUT : out  std_logic;
            P_SPI_CS   : out  std_logic;
            P_ACC_LED  : out  std_logic;
 
-           -- PS/2
-           P_PS2_CLK  : inout  std_logic;
-           P_PS2_DAT  : inout  std_logic;
+           -- TEC
+           P_TEC_RXD  : out  std_logic;                      -- to TeC SIO RXD
+           P_TEC_TXD  : in   std_logic;                      -- to TeC SIO TXD
 
-           -- VGA
-           P_VGA_RED  : out  std_logic;
-           P_VGA_GREEN: out  std_logic;
-           P_VGA_BLUE : out  std_logic;
-           P_VGA_HSYNC: out  std_logic;
-           P_VGA_VSYNC: out  std_logic
+           -- FT232RL
+           P_FT232RL_RXD : out std_logic;                    -- to FT SIO RXD
+           P_FT232RL_TXD : in  std_logic;                    -- to FT SIO TXD
+
+           -- RN4020
+           P_RN4020_RTS : in std_logic;
+           P_RN4020_HW  : out std_logic;
+           P_RN4020_CTS : out std_logic;
+           P_RN4020_CMD : out std_logic;
+           P_RN4020_SW  : out std_logic;
+           P_RN4020_RX  : out std_logic;
+           P_RN4020_TX  : in std_logic
     );
 end component;
 
@@ -287,13 +305,13 @@ begin
   DCM_TEC1 : DCM_TEC
     port map ( CLK_IN1  => i_9_8304MHz,
                CLK_OUT1 => i_2_4576MHz,
-               CLK_OUT2 => i_25_1221MHz,
+--               CLK_OUT2 => i_25_1221MHz,
                LOCKED   => i_locked_tec
              );
 
   i_locked <= i_locked_tac and i_locked_delay and i_locked_tec;
 
-  -- Determin TeC/TaC/DEMO1/DEMO2 mode
+  -- Determin TeC/TaC/DEMO1/DEMO2/RESET mode
   MODE1 : MODE
     port map ( P_CLK     => i_2_4576MHz,
                P_LOCKED  => i_locked,
@@ -302,7 +320,7 @@ begin
                P_RESET   => i_reset_tec
              );
 
-  -- Synchronize TaC reset with TaC closk
+  -- Synchronize TaC reset with TaC clock
   process(i_49_1520MHz0)
     begin
       if (i_49_1520MHz0'event and i_49_1520MHz0='1') then
@@ -310,6 +328,19 @@ begin
       end if;
     end process;
 
+  -- FT232RL
+    i_ft_txd    <= FT232RL_TXD;
+    FT232RL_RXD <= i_ft_rxd;
+  
+  -- RN4020
+    i_rn_tx    <= RN4020_TX;
+    RN4020_RX  <= i_rn_rx;
+    RN4020_SW  <= i_rn_sw;
+    RN4020_CMD <= i_rn_cmd;
+    RN4020_CTS <= not i_rn_cts;
+    RN4020_HW  <= i_rn_hw;
+    i_rn_rts   <= not RN4020_RTS;
+  
   -- I/O Switch (select TeC/TaC)
   -- INPUT
   i_in(27 downto 20) <= EXT_IN;
@@ -325,9 +356,8 @@ begin
   i_in(3) <= RUN_SW;
   i_in(2) <= RIGHT_SW;
   i_in(1) <= LEFT_SW;
-  i_in(0) <= SIO_RXD;
-  i_in_tec <= "0000000000000000000000000000" when i_mode="01" else i_in;
-  i_in_tac <= i_in when i_mode="01" else "0000000000000000000000000000";
+  i_in_tec <= "000000000000000000000000000" when i_mode="001" else i_in;
+  i_in_tac <= i_in when i_mode="001" else "000000000000000000000000000";
   
   -- OUTPUT
   ADC_REF <= i_out(43 downto 36);
@@ -345,13 +375,12 @@ begin
   PC_LED <= not i_out(3);
   MM_LED <= not i_out(2);
   SPK_OUT <= i_out(1);
-  SIO_TXD <= i_out(0);
-  i_out <= i_out_tac when i_mode="01" else i_out_tec;
+  i_out <= i_out_tac when i_mode="001" else i_out_tec;
 
   TEC1     : TEC
     port map(
          P_RESET    => i_reset_tec,                         -- CLK が有効
-         P_MODE     => i_mode,                              -- 1-2:TeC 3:TaC
+         P_MODE     => i_mode(1 downto 0),                  -- 0:TeC 1:TaC
          P_CLK      => i_2_4576MHz,                         -- 2.4576MHz
             
          -- CONSOLE(INPUT)
@@ -384,8 +413,8 @@ begin
          P_BUZ      => i_out_tec(1),                        -- BUZZER OUT
 
          -- SIO
-         P_SIO_RXD  => i_in_tec(0),                         -- SIO Receive
-         P_SIO_TXD  => i_out_tec(0),                        -- SIO Transmit
+         P_SIO_RXD  => i_tec_rxd,                           -- SIO Receive
+         P_SIO_TXD  => i_tec_txd,                           -- SIO Transmit
 
          -- PIO
          P_EXT_IN   => i_in_tec(27 downto 20),
@@ -397,8 +426,7 @@ begin
     port map (
          P_CLK0     => i_49_1520MHz0,                       -- 49.152MHz 0'
          P_CLK90    => i_49_1520MHz90,                      -- 49.152MHz 90'
-         P_CLK_VGA  => i_25_1221MHz,                        -- 25.1221MHz
-         P_MODE     => i_mode,                              -- 0-2:TeC 3:TaC
+         P_MODE     => i_mode,                              -- 0:TeC 1:TaC
          P_RESET    => i_reset_tac,
 
          -- CONSOLE(INPUT)
@@ -430,10 +458,6 @@ begin
          P_MM_LED   => i_out_tac(2),                    -- MM    LED
          P_BUZ      => i_out_tac(1),                    -- BUZZER OUT
 
-         -- SIO
-         P_SIO_RXD  => i_in_tac(0),                     -- SIO Receive
-         P_SIO_TXD  => i_out_tac(0),                    -- SIO Transmit
-         
          -- I/O
          P_EXT_IN   => i_in_tac(27 downto 20),
          P_ADC_REF  => i_out_tac(43 downto 36),
@@ -446,16 +470,22 @@ begin
          P_SPI_CS   => SPI_CS,
          P_ACC_LED  => ACC_LED,
 
-         -- PS/2
-         P_PS2_CLK  => PS2_CLK,
-         P_PS2_DAT  => PS2_DAT,
+         -- TEC
+         P_TEC_RXD  => i_tec_rxd,                       -- SIO Receive
+         P_TEC_TXD  => i_tec_txd,                       -- SIO Transmit
+         
+         -- FT232RL
+         P_FT232RL_RXD => i_ft_rxd,
+         P_FT232RL_TXD => i_ft_txd,
 
-         -- VGA
-         P_VGA_RED   => VGA_RED,
-         P_VGA_GREEN => VGA_GREEN,
-         P_VGA_BLUE  => VGA_BLUE,
-         P_VGA_HSYNC => VGA_HSYNC,
-         P_VGA_VSYNC => VGA_VSYNC
+         -- RN4020
+         P_RN4020_RTS => i_rn_rts,
+         P_RN4020_HW  => i_rn_hw,
+         P_RN4020_CTS => i_rn_cts,
+         P_RN4020_CMD => i_rn_cmd,
+         P_RN4020_SW  => i_rn_sw,
+         P_RN4020_RX  => i_rn_rx,
+         P_RN4020_TX  => i_rn_tx
     );
 
   end Behavioral;
