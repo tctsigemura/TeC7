@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2017 by
+ * Copyright (C) 2009-2018 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,7 @@
 /*
  * ipl.cmm : C-- 言語版の TaC IPL
  *
+ * 2018.07.13           : RN4020のリセット用のモードを追加
  * 2017.12.15           : RN4020のリセット機能を追加
  * 2017.05.11 v4.0.0    : TaC7b 用に変更
  * 2016.01.10 v3.0.1    : メッセージ表示後止まるように変更
@@ -76,8 +77,8 @@ void tacMode() {
   jump(addr);
 }
 
-// DEMO モード１では TaC が通信(RN4020<=>FT232RL)を中継
-void demoMode1() {
+// DEMO モードでは TaC が通信(RN4020<=>FT232RL)を中継
+void demoMode() {
   boolean esc = false;
   while(true) {
     if ((in(0x0a) & 0x40)!=0) { // FT232RL
@@ -99,8 +100,8 @@ void demoMode1() {
   }
 }
 
-// DEMO モード２では RN4020 を工場出荷時リセットする
-void demoMode2() {
+// RESET モードでは RN4020 を工場出荷時リセットする
+void resetMode() {
   for(int i=0;i<10; i=i+1){
     out(0x2c, 7);
     putstr("reset now !!");        // 時間調整
@@ -118,15 +119,16 @@ public void main() {
   putstr("(build date : ");
   putstr( DATE );
   putstr(")\n");
-  putstr("Copyright(c) 2009-2017 Tokuyama College of Technology\n");
+  putstr("Copyright(c) 2009-2018 Tokuyama College of Technology\n");
   putstr("All rights reserved.\n\n");
   int mode = in(0x1e);
-  if (mode==0) tecMode();
-  else if (mode==1) tacMode();
-  else if (mode==2) demoMode1();
-  else if (mode==3) demoMode2();
+  if (mode==0) tecMode();          // tecMode() は戻らない
+  else if (mode==1) tacMode();     // tacMode() は戻らない
+  else if (mode==7) resetMode();   // resetMode() は戻る
 
-  while (true) {                   // demoMode2()以外ではここまで来ないはず
+  demoMode();                      // DEMO1, DEMO2, RESET は demoMode() を実行
+
+  while (true) {                   // ここまで来ないはず
       halt();                      // ここまで来たらTaCを停止する
   }
 }

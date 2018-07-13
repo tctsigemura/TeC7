@@ -21,6 +21,8 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2018.07.13           : モードを3ビットに変更
+-- 2018.07.13           : RN4020の受信バッファ（FIFO）追加
 -- 2017.05.11           : TeC7b 対応
 -- 2016.01.07           : 川部版と統合
 -- 2012.09.26           : TaC-CUP V2 対応完了
@@ -42,7 +44,7 @@ entity TAC is
   port (
          P_CLK0       : in   std_logic;                      -- 49.1520MHz 0'
          P_CLK90      : in   std_logic;                      -- 49.1520MHz 90'
-         P_MODE       : in   std_logic_vector(1 downto 0);   -- 0:TeC,1:TaC
+         P_MODE       : in   std_logic_vector(2 downto 0);   -- 0:TeC,1:TaC
          P_RESET      : in   std_logic;                      --   2,3:DEMO1,2
 
          -- CONSOLE(INPUT)
@@ -300,29 +302,29 @@ component TAC_SPI
          P_RW_DMA   : out std_logic;
          P_MR_DMA   : out std_logic;
          
-         P_SCLK    : out STD_LOGIC;
-         P_DI      : in  STD_LOGIC;
-         P_DO      : out STD_LOGIC;
-         P_CS      : out STD_LOGIC;
-         P_ACC     : out STD_LOGIC
+         P_SCLK     : out STD_LOGIC;
+         P_DI       : in  STD_LOGIC;
+         P_DO       : out STD_LOGIC;
+         P_CS       : out STD_LOGIC;
+         P_ACC      : out STD_LOGIC
        );
 end component;
 
 component TAC_PIO
-    Port ( P_CLK : in  STD_LOGIC;
-           P_RESET : in  STD_LOGIC;
-           P_EN : in  STD_LOGIC;
-           P_IOR : in  STD_LOGIC;
-           P_IOW : in  STD_LOGIC;
-           P_INT : out  STD_LOGIC;
-           P_ADDR : in  STD_LOGIC_VECTOR (1 downto 0);
-           P_DIN : in  STD_LOGIC_VECTOR (7 downto 0);
-           P_DOUT : out  STD_LOGIC_VECTOR (7 downto 0);
+    Port ( P_CLK     : in  STD_LOGIC;
+           P_RESET   : in  STD_LOGIC;
+           P_EN      : in  STD_LOGIC;
+           P_IOR     : in  STD_LOGIC;
+           P_IOW     : in  STD_LOGIC;
+           P_INT     : out  STD_LOGIC;
+           P_ADDR    : in  STD_LOGIC_VECTOR (1 downto 0);
+           P_DIN     : in  STD_LOGIC_VECTOR (7 downto 0);
+           P_DOUT    : out  STD_LOGIC_VECTOR (7 downto 0);
               
            P_ADC_REF : out  STD_LOGIC_VECTOR(7 downto 0);
            P_EXT_IN  : in   STD_LOGIC_VECTOR(7 downto 0);
            P_EXT_OUT : out  STD_LOGIC_VECTOR(7 downto 0);
-           P_MODE    : in   STD_LOGIC_VECTOR(1 downto 0)
+           P_MODE    : in   STD_LOGIC_VECTOR(2 downto 0)
          );
 end component;
 

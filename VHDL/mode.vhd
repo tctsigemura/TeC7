@@ -22,6 +22,7 @@
 --  mode.vhd : ジャンパーのセッティングからモードを決める
 --
 --
+-- 2018.07.13           : RN4020の工場出荷時リセット用のモードを追加
 -- 2011.09.18           : 新規作成
 --
 -- $Id
@@ -36,26 +37,27 @@ entity MODE is
          P_CLK    : in    std_logic;
          P_LOCKED : in    std_logic;
          P_JP     : inout std_logic_vector(1 downto 0);
-         P_MODE   : out   std_logic_vector(1 downto 0);
+         P_MODE   : out   std_logic_vector(2 downto 0);
          P_RESET  : out   std_logic
        );
 end MODE;
 
 architecture RTL of MODE is
   -- FSM state
-  constant INIT  : std_logic_vector(2 downto 0) := "000";
-  constant TEMP  : std_logic_vector(2 downto 0) := "001";
-  constant TeC   : std_logic_vector(2 downto 0) := "100";
-  constant TaC   : std_logic_vector(2 downto 0) := "101";
-  constant DEMO1 : std_logic_vector(2 downto 0) := "110";
-  constant DEMO2 : std_logic_vector(2 downto 0) := "111";
+  constant INIT  : std_logic_vector(3 downto 0) := "0000";
+  constant TEMP  : std_logic_vector(3 downto 0) := "0001";
+  constant TeC   : std_logic_vector(3 downto 0) := "1000";
+  constant TaC   : std_logic_vector(3 downto 0) := "1001";
+  constant DEMO1 : std_logic_vector(3 downto 0) := "1010";
+  constant DEMO2 : std_logic_vector(3 downto 0) := "1011";
+  constant RESET : std_logic_vector(3 downto 0) := "1111";
 
   -- FSM
-  signal i_fsm   : std_logic_vector(2 downto 0);
+  signal i_fsm   : std_logic_vector(3 downto 0);
 
   begin
-    P_RESET <= i_fsm(2);                           -- mode is determined
-    P_MODE  <= i_fsm(1 downto 0);                  -- mode
+    P_RESET <= i_fsm(3);                           -- mode is determined
+    P_MODE  <= i_fsm(2 downto 0);                  -- mode
 
     process(P_CLK, P_LOCKED)
       begin
@@ -68,6 +70,8 @@ architecture RTL of MODE is
               i_fsm <= TeC;                        -- TeC mode
             elsif (P_JP="01") then
               i_fsm <= TaC;                        -- TaC mode
+            elsif (P_JP="00") then
+              i_fsm <= RESET;                      -- RN4020 Factory Reset
             else
               i_fsm <= TEMP;                       -- DEMO mode candidate
               P_JP <= "0Z";                        -- output to jumper
@@ -83,4 +87,3 @@ architecture RTL of MODE is
         end if;
       end process;
 end RTL;
-

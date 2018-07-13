@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2017 by
+-- Copyright (C) 2002-2018 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -19,6 +19,7 @@
 --
 -- tec7b.vhd : TeC7b Top Level
 --
+-- 2018.07.13 : モードを3ビットに変更
 -- 2017.05.09 : TeC7b 用に VGA, PS/2 削除，RN4020 関連追加
 -- 2016.01.08 : P_PS2_CLK を inout に変更(バグ訂正)
 --
@@ -94,7 +95,7 @@ end TeC7;
 architecture Behavioral of TeC7 is
 signal i_reset_tec   : std_logic;
 signal i_reset_tac   : std_logic;
-signal i_mode        : std_logic_vector (1 downto 0);  -- mode
+signal i_mode        : std_logic_vector (2 downto 0);  -- mode
 signal i_locked_tac  : std_logic;
 signal i_locked_delay: std_logic;
 signal i_locked_tec  : std_logic;
@@ -166,7 +167,7 @@ component MODE
     port ( P_CLK    : in    std_logic;
            P_LOCKED : in    std_logic;
            P_JP     : inout std_logic_vector(1 downto 0);
-           P_MODE   : out   std_logic_vector(1 downto 0);
+           P_MODE   : out   std_logic_vector(2 downto 0);
            P_RESET  : out   std_logic
           );
 end component;
@@ -219,7 +220,7 @@ end component;
 component TAC
     Port ( P_CLK0     : in std_logic;                         -- 49.152MHz 0'
            P_CLK90    : in std_logic;                         -- 49.152MHz 90'
-           P_MODE     : in std_logic_vector(1 downto 0);      -- 0:TeC,1:TaC,
+           P_MODE     : in std_logic_vector(2 downto 0);      -- 0:TeC,1:TaC,
            P_RESET    : in std_logic;                         -- 2,3:Demo1,2
 
            -- CONSOLE(INPUT)
@@ -310,7 +311,7 @@ begin
 
   i_locked <= i_locked_tac and i_locked_delay and i_locked_tec;
 
-  -- Determin TeC/TaC/DEMO1/DEMO2 mode
+  -- Determin TeC/TaC/DEMO1/DEMO2/RESET mode
   MODE1 : MODE
     port map ( P_CLK     => i_2_4576MHz,
                P_LOCKED  => i_locked,
@@ -355,8 +356,8 @@ begin
   i_in(3) <= RUN_SW;
   i_in(2) <= RIGHT_SW;
   i_in(1) <= LEFT_SW;
-  i_in_tec <= "000000000000000000000000000" when i_mode="01" else i_in;
-  i_in_tac <= i_in when i_mode="01" else "000000000000000000000000000";
+  i_in_tec <= "000000000000000000000000000" when i_mode="001" else i_in;
+  i_in_tac <= i_in when i_mode="001" else "000000000000000000000000000";
   
   -- OUTPUT
   ADC_REF <= i_out(43 downto 36);
@@ -374,12 +375,12 @@ begin
   PC_LED <= not i_out(3);
   MM_LED <= not i_out(2);
   SPK_OUT <= i_out(1);
-  i_out <= i_out_tac when i_mode="01" else i_out_tec;
+  i_out <= i_out_tac when i_mode="001" else i_out_tec;
 
   TEC1     : TEC
     port map(
          P_RESET    => i_reset_tec,                         -- CLK が有効
-         P_MODE     => i_mode,                              -- 1-2:TeC 3:TaC
+         P_MODE     => i_mode(1 downto 0),                  -- 0:TeC 1:TaC
          P_CLK      => i_2_4576MHz,                         -- 2.4576MHz
             
          -- CONSOLE(INPUT)
@@ -425,7 +426,7 @@ begin
     port map (
          P_CLK0     => i_49_1520MHz0,                       -- 49.152MHz 0'
          P_CLK90    => i_49_1520MHz90,                      -- 49.152MHz 90'
-         P_MODE     => i_mode,                              -- 0-2:TeC 3:TaC
+         P_MODE     => i_mode,                              -- 0:TeC 1:TaC
          P_RESET    => i_reset_tac,
 
          -- CONSOLE(INPUT)
