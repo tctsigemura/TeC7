@@ -1,5 +1,5 @@
 all : 55.bin console_int.bin echo.bin jnz.bin \
-      pio.bin servo.bin sound.bin test.bin timer_int.bin
+      pio.bin servo.bin sound.bin test.bin timer_int.bin sigemura.bin
 
 55.bin : 55.t7
 	tasm7 55.t7
@@ -27,6 +27,9 @@ test.bin : test.t7
 
 timer_int.bin : timer_int.t7
 	tasm7 timer_int.t7
+
+sigemura.bin : sigemura.t7
+	tasm7 sigemura.t7
 
 clean :
 	rm -f *.bin *.lst *~

@@ -19,6 +19,7 @@
 #
 # Makefile : IPL の makefile
 #
+# 2018.07.17 Ver.4.1.0 : BSSを広くする, RN4020のリセットモード追加
 # 2017.05.09 Ver.4.0.0 : TeC7b に対応, cm2e を使用するように変更
 # 2016.01.07 Ver.3.0.0 : 川部版と統合
 # 2016.01.07           : c-- に -K オプション追加
@@ -34,7 +35,7 @@
 VER=\"`cat VERSION`\"
 DATE="\"`date`\""
 
-BSS=0xea00            # 0xea00 - ...    : bss
+BSS=0xe000            # 0xe000 - ...    : bss
 STK=0xf000            # ...    - 0xefff : stack
 TEXT=0xf000           # 0xf000 - 0xffdf : ipl rom
 
