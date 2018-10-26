@@ -2,7 +2,7 @@
  * TeC7 Tsend7 Program
  *    Tokuyama kousen Educational Computer Ver.7
  *
- * Copyright (C) 2002-2011 by
+ * Copyright (C) 2002-2018 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -35,7 +35,7 @@ void errexit(char *s) {
   exit(1);
 }
 
-main(int argc, char **argv) {
+int main(int argc, char **argv) {
   struct termios st, stb;
   char   buf;
   int    fd,c;
@@ -89,7 +89,8 @@ main(int argc, char **argv) {
       perror("write");
       exit(1);
     }
-  }
+    usleep(1050);            // 2018.7.17 書き込みがオーバーランする現象が
+  }                          // 何かの条件で起こることがあった．
   printf("\n");
 
   /* もとに戻す。 */
@@ -97,4 +98,5 @@ main(int argc, char **argv) {
     errexit(com);
 
   close(fd);
+  return 0;
 }
