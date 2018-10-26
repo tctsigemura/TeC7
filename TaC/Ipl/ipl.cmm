@@ -22,6 +22,8 @@
 /*
  * ipl.cmm : C-- 言語版の TaC IPL
  *
+ * 2018.10.26 v4.1.1    : DEMO1モードでTaCは単純なRN<=>FT中継機能
+ *                        DEMO2とリセットモードTaCはポート操作もできる中継機能
  * 2018.07.13 v4.1.0    : RN4020のリセット用のモードを追加
  * 2017.12.15           : RN4020のリセット機能を追加
  * 2017.05.11 v4.0.0    : TaC7b 用に変更
@@ -77,8 +79,24 @@ void tacMode() {
   jump(addr);
 }
 
-// DEMO モードでは TaC が通信(RN4020<=>FT232RL)を中継
-void demoMode() {
+// DEMO1 モードでは TaC が通信(RN4020<=>FT232RL)を中継
+void demo1Mode() {
+  boolean esc = false;
+  while(true) {
+    if ((in(0x0a) & 0x40)!=0) {    // FT232RL
+      int c = in(0x08);
+      putRN4020(chr(c));
+    }
+    if ((in(0x2a) & 0x40)!=0) {    // RN4020
+      int c = in(0x28);
+      putFT232(chr(c));
+    }
+  }
+}
+
+// DEMO2 モードでは TaC が通信(RN4020<=>FT232RL)を中継
+// （[ESC],[数字] でポートを上げ下げできる．）
+void demo2Mode() {
   boolean esc = false;
   while(true) {
     if ((in(0x0a) & 0x40)!=0) { // FT232RL
@@ -121,12 +139,16 @@ public void main() {
   putstr(")\n");
   putstr("Copyright(c) 2009-2018 Tokuyama College of Technology\n");
   putstr("All rights reserved.\n\n");
-  int mode = in(0x1e);
-  if (mode==0) tecMode();          // tecMode() は戻らない
-  else if (mode==1) tacMode();     // tacMode() は戻らない
-  else if (mode==7) resetMode();   // resetMode() は戻る
 
-  demoMode();                      // DEMO1, DEMO2, RESET は demoMode() を実行
+  int mode = in(0x1e);
+  if (mode==0) tecMode();          // TeCモード：tecMode() は戻らない
+  else if (mode==1) tacMode();     // TaCモード：tacMode() は戻らない
+  else if (mode==2) demo1Mode();   // DEMO1モード：demo1Mode() は戻らない
+  else if (mode==3) demo2Mode();   // DEMO2モード：demo2Mode() は戻らない
+  else if (mode==7) {
+    resetMode();                   // RESETモード：resetMode() は戻る
+    demo2Mode();                   //              demo2Mode() は戻らない
+  }
 
   while (true) {                   // ここまで来ないはず
       halt();                      // ここまで来たらTaCを停止する
