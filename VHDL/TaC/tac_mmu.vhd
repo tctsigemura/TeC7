@@ -36,12 +36,12 @@ entity tac_mmu is
            P_IOR : in  STD_LOGIC;
            P_IOW : in  STD_LOGIC;
            P_INT : out  STD_LOGIC;
-           P_ADDR : in  STD_LOGIC;                          --
-			  P_MMU_ADDR : in  STD_LOGIC_VECTOR (15 downto 0);    --
-           P_DIN : in  STD_LOGIC_VECTOR (15 downto 0);      --
-           P_DOUT : out  STD_LOGIC_VECTOR (15 downto 0);    --
-           P_B : out  STD_LOGIC_VECTOR (15 downto 0);       --
-           P_L : out  STD_LOGIC_VECTOR (15 downto 0));      --
+           P_ADDR : in  STD_LOGIC;                              -- 仮想アドレス
+	   P_MMU_ADDR : in  STD_LOGIC_VECTOR (15 downto 0);     -- I/O用アドレス
+           P_DIN : in  STD_LOGIC_VECTOR (15 downto 0);          -- B,Lの値
+           P_DOUT : out  STD_LOGIC_VECTOR (15 downto 0);        -- 物理アドレス
+           P_B : out  STD_LOGIC_VECTOR (15 downto 0);           -- Bレジスタへの出力
+           P_L : out  STD_LOGIC_VECTOR (15 downto 0));          -- Lレジスタへの出力
 end tac_mmu;
 
 architecture Behavioral of tac_mmu is
@@ -65,9 +65,9 @@ begin
 			end if;
 		end process;
 
-	P_DOUT <= "0000000000000000"; -- 
+	P_DOUT <= "0000000000000000"; -- 今のところ未設定
 	P_B <= i_b;
 	P_L <= i_l;
-	P_INT <= '0';
+	P_INT <= '0'; -- 今のところ未設定
 
 end Behavioral;
