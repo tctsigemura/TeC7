@@ -1,31 +1,35 @@
-----------------------------------------------------------------------------------
--- Company:
--- Engineer:
 --
--- Create Date:    15:18:28 11/27/2018
--- Design Name:
--- Module Name:    tac_mmu - Behavioral
--- Project Name:
--- Target Devices:
--- Tool versions:
--- Description:
+-- TeC7 VHDL Source Code
+--    Tokuyama kousen Educational Computer Ver.7
 --
--- Dependencies:
+-- Copyright (C) 2012-2018 by
+--                      Dept. of Computer Science and Electronic Engineering,
+--                      Tokuyama College of Technology, JAPAN
 --
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
-----------------------------------------------------------------------------------
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含ﾟて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
+--
+--
+
+--
+-- TaC/tac_mmu.vhd : TaC MMU
+--
+-- 2018.11.27           : 新規作成
+--
+-- $Id
+--
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
 --use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
