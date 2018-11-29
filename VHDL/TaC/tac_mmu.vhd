@@ -43,12 +43,13 @@ entity tac_mmu is
 	   P_DIN : in  STD_LOGIC_VECTOR (15 downto 0);          -- B,Lの値
 	   P_DOUT : out  STD_LOGIC_VECTOR (15 downto 0);        -- 物理アドレス
 	   P_B : out  STD_LOGIC_VECTOR (15 downto 0);           -- Bレジスタへの出力
-	   P_L : out  STD_LOGIC_VECTOR (15 downto 0));          -- Lレジスタへの出力
+	   P_L : out  STD_LOGIC_VECTOR (15 downto 0)            -- Lレジスタへの出力
+       );
 end tac_mmu;
 
 architecture Behavioral of tac_mmu is
-	signal i_b : STD_LOGIC_VECTOR (15 downto 0);
-	signal i_l : STD_LOGIC_VECTOR (15 downto 0);
+signal i_b : STD_LOGIC_VECTOR (15 downto 0);
+signal i_l : STD_LOGIC_VECTOR (15 downto 0);
 
 begin
   process(P_RESET, P_CLK)
