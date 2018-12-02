@@ -58,7 +58,6 @@ end TAC_RAM;
 architecture BEHAVE of TAC_RAM is
   subtype Word is std_logic_vector(15 downto 0);
   subtype Byte is std_logic_vector(7 downto 0);
-  type Mem32kB is array(0 to 32767) of Byte;           -- 32kB
   type Mem16kB is array(0 to 16383) of Byte;           -- 16kB
   type Mem8kB  is array(0 to  8191) of Byte;           --  8kB
   type Mem4kB  is array(0 to  4095) of Byte;           --  4kB
@@ -267,8 +266,8 @@ architecture BEHAVE of TAC_RAM is
     csB1_dma <=  P_AIN2(14) and (not P_AIN2(13));      -- 8000H - BFFFH
     csB2_dma <=  P_AIN2(14) and P_AIN2(13)
                   and (not P_AIN2(12));                -- C000H - DFFFH
-    csB3_dma <=  P_AIN2(14) and P_AIN1(13) and
-                  P_AIN1(12) and (not P_AIN1(11));     -- E000H - EFFFH
+    csB3_dma <=  P_AIN2(14) and P_AIN2(13) and
+                  P_AIN2(12) and (not P_AIN2(11));     -- E000H - EFFFH
 
     -- write control(DMA)
     weB0_dma <= csB0_dma and P_MR2 and P_RW2;
