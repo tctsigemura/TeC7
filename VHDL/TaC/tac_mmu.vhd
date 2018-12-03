@@ -12,17 +12,20 @@ entity tac_mmu is
     P_EN : in  STD_LOGIC;
     P_IOR : in  STD_LOGIC;
     P_IOW : in  STD_LOGIC;
+    P_MMU_RW : in  STD_LOGIC;
+    P_EXE_MODE : in  STD_LOGIC;
     P_INT : out  STD_LOGIC;
-    P_IO_ADDR : in  STD_LOGIC;                           -- I/O address (i_addr(2))
-    P_MMU_ADDR : out  STD_LOGIC_VECTOR (15 downto 0);    -- Virtual address
-    P_ADDR : in  STD_LOGIC_VECTOR (15 downto 0);         -- Physical address
-    P_DIN : in  STD_LOGIC_VECTOR (15 downto 0);          -- B,L register (input)
-    P_B : out  STD_LOGIC_VECTOR (15 downto 0);           -- B register (output)
-    P_L : out  STD_LOGIC_VECTOR (15 downto 0)            -- L register (output)
+    P_RW : out  STD_LOGIC;
+    P_IO_ADDR : in  STD_LOGIC;                           -- I/O address (i_addr(1))
+    P_ADDR : out  STD_LOGIC_VECTOR (15 downto 0);         -- Virtual address
+    P_MMU_ADDR : in  STD_LOGIC_VECTOR (15 downto 0);     -- Physical address
+    P_DIN : in  STD_LOGIC_VECTOR (15 downto 0)           -- B,L register (input)
   );
 end tac_mmu;
 
 architecture Behavioral of tac_mmu is
+signal i_rw : STD_LOGIC ;
+signal i_intr : STD_LOGIC ;
 signal i_b : STD_LOGIC_VECTOR (15 downto 0);             -- B register
 signal i_l : STD_LOGIC_VECTOR (15 downto 0);             -- L register
 signal i_addr : STD_LOGIC_VECTOR (15 downto 0);          -- Calculation register
@@ -43,11 +46,11 @@ begin
       end if;
     end if;
   end process;
-
-  P_B <= i_b;
-  P_L <= i_l;
-  i_addr <= P_ADDR;
-  P_MMU_ADDR <= i_addr; -- not yet undefined
+  
+  i_intr <= '0' when (P_MMU_ADDR >= i_l)
+            else '1' ;
+  i_addr <= P_MMU_ADDR;
+  P_ADDR <= i_addr; -- not yet undefined
   P_INT <= '0'; -- not yet undefined
 
 end Behavioral;
