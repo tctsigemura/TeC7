@@ -1,5 +1,6 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use ieee.std_logic_unsigned.all;
 
 --use IEEE.NUMERIC_STD.ALL;
 --library UNISIM;
@@ -17,7 +18,7 @@ entity tac_mmu is
     P_INT : out  STD_LOGIC;
     P_RW : out  STD_LOGIC;
     P_IO_ADDR : in  STD_LOGIC;                           -- I/O address (i_addr(1))
-    P_ADDR : out  STD_LOGIC_VECTOR (15 downto 0);         -- Virtual address
+    P_ADDR : out  STD_LOGIC_VECTOR (15 downto 0);        -- Virtual address
     P_MMU_ADDR : in  STD_LOGIC_VECTOR (15 downto 0);     -- Physical address
     P_DIN : in  STD_LOGIC_VECTOR (15 downto 0)           -- B,L register (input)
   );
@@ -47,10 +48,11 @@ begin
     end if;
   end process;
   
+  i_addr <= (P_MMU_ADDR + i_b) when (P_MMU_ADDR >= i_l)
+            else "0000000000000000" ;                    -- not yet undefined
   i_intr <= '0' when (P_MMU_ADDR >= i_l)
             else '1' ;
-  i_addr <= P_MMU_ADDR;
-  P_ADDR <= i_addr; -- not yet undefined
-  P_INT <= '0'; -- not yet undefined
+  P_ADDR <= i_addr;
+  P_INT <= i_intr;
 
 end Behavioral;
