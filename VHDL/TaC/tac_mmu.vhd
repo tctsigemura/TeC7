@@ -14,6 +14,7 @@ entity tac_mmu is
     P_IOR : in  STD_LOGIC;
     P_IOW : in  STD_LOGIC;
     P_MMU_RW : in  STD_LOGIC;
+    P_MMU_MR : in  STD_LOGIC;
     P_EXE_MODE : in  STD_LOGIC;
     P_INT : out  STD_LOGIC;
     P_RW : out  STD_LOGIC;
@@ -29,7 +30,7 @@ signal i_rw : STD_LOGIC ;
 signal i_intr : STD_LOGIC ;
 signal i_b : STD_LOGIC_VECTOR (15 downto 0);             -- B register
 signal i_l : STD_LOGIC_VECTOR (15 downto 0);             -- L register
-signal i_addr : STD_LOGIC_VECTOR (15 downto 0);          -- Calculation register
+signal i_addr : STD_LOGIC_VECTOR (15 downto 0);          -- signal
 
 begin
   process(P_RESET, P_CLK)
