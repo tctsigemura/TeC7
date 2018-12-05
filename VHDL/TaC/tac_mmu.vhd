@@ -15,7 +15,7 @@ entity tac_mmu is
     P_IOW : in  STD_LOGIC;
     P_MMU_RW : in  STD_LOGIC;
     P_MMU_MR : in  STD_LOGIC;
-    P_EXE_MODE : in  STD_LOGIC;                          -- Execution mode
+    P_EXE_MODE : in  STD_LOGIC;                          -- Execution mode (0:user, 1:privilege)
     P_INT : out  STD_LOGIC;
     P_RW : out  STD_LOGIC;
     P_ADDR : out  STD_LOGIC_VECTOR (15 downto 0);        -- Physical address
@@ -48,10 +48,9 @@ begin
     end if;
   end process;
   
-  i_addr <= (P_MMU_ADDR + i_b) when (P_MMU_ADDR >= i_l)
-            else "0000000000000000" ;                    -- not yet undefined
-  i_intr <= '0' when (P_MMU_ADDR >= i_l)
-            else '1' ;
+  i_addr <= (P_MMU_ADDR + i_b) when ((P_MMU_ADDR >= i_l) and (P_EXE_MODE = '0'));
+  i_intr <= '1' when ((P_MMU_ADDR >= i_l) and (P_EXE_MODE = '0'))
+            else '0' ;
   P_ADDR <= i_addr;
   P_INT <= i_intr;
 
