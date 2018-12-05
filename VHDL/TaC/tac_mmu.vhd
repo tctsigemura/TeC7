@@ -15,12 +15,11 @@ entity tac_mmu is
     P_IOW : in  STD_LOGIC;
     P_MMU_RW : in  STD_LOGIC;
     P_MMU_MR : in  STD_LOGIC;
-    P_EXE_MODE : in  STD_LOGIC;
+    P_EXE_MODE : in  STD_LOGIC;                          -- Execution mode
     P_INT : out  STD_LOGIC;
     P_RW : out  STD_LOGIC;
-    P_IO_ADDR : in  STD_LOGIC;                           -- I/O address (i_addr(1))
-    P_ADDR : out  STD_LOGIC_VECTOR (15 downto 0);        -- Virtual address
-    P_MMU_ADDR : in  STD_LOGIC_VECTOR (15 downto 0);     -- Physical address
+    P_ADDR : out  STD_LOGIC_VECTOR (15 downto 0);        -- Physical address
+    P_MMU_ADDR : in  STD_LOGIC_VECTOR (15 downto 0);     -- Virtual address, P_MMU_ADDR(1):I/O address
     P_DIN : in  STD_LOGIC_VECTOR (15 downto 0)           -- B,L register (input)
   );
 end tac_mmu;
@@ -30,7 +29,7 @@ signal i_rw : STD_LOGIC ;
 signal i_intr : STD_LOGIC ;
 signal i_b : STD_LOGIC_VECTOR (15 downto 0);             -- B register
 signal i_l : STD_LOGIC_VECTOR (15 downto 0);             -- L register
-signal i_addr : STD_LOGIC_VECTOR (15 downto 0);          -- signal
+signal i_addr : STD_LOGIC_VECTOR (15 downto 0);          -- for Physical addressÅ@calculation
 
 begin
   process(P_RESET, P_CLK)
@@ -40,7 +39,7 @@ begin
       i_l <= "0000000000000000";
     elsif (P_CLK'event and P_CLK='1') then
       if (P_EN='1' and P_IOW='1') then
-        if (P_IO_ADDR='0') then
+        if (P_MMU_ADDR(1)='0') then
           i_b <= P_DIN;
         else
           i_l <= P_DIN;
