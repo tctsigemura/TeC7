@@ -11,13 +11,13 @@ entity tac_mmu is
     P_CLK : in  STD_LOGIC;
     P_RESET : in  STD_LOGIC;
     P_EN : in  STD_LOGIC;
-    P_IOR : in  STD_LOGIC;
     P_IOW : in  STD_LOGIC;
     P_MMU_RW : in  STD_LOGIC;
     P_MMU_MR : in  STD_LOGIC;
     P_EXE_MODE : in  STD_LOGIC;                          -- Execution mode (0:user, 1:privilege)
     P_INT : out  STD_LOGIC;
     P_RW : out  STD_LOGIC;
+    P_MR : out  STD_LOGIC;
     P_ADDR : out  STD_LOGIC_VECTOR (15 downto 0);        -- Physical address
     P_MMU_ADDR : in  STD_LOGIC_VECTOR (15 downto 0);     -- Virtual address, P_MMU_ADDR(1):I/O address
     P_DIN : in  STD_LOGIC_VECTOR (15 downto 0)           -- B,L register (input)
@@ -26,6 +26,7 @@ end tac_mmu;
 
 architecture Behavioral of tac_mmu is
 signal i_rw : STD_LOGIC ;
+signal i_mr : STD_LOGIC ;
 signal i_intr : STD_LOGIC ;
 signal i_b : STD_LOGIC_VECTOR (15 downto 0);             -- B register
 signal i_l : STD_LOGIC_VECTOR (15 downto 0);             -- L register
@@ -48,10 +49,16 @@ begin
     end if;
   end process;
   
-  i_addr <= (P_MMU_ADDR + i_b) when ((P_MMU_ADDR >= i_l) and (P_EXE_MODE = '0'));
-  i_intr <= '1' when ((P_MMU_ADDR >= i_l) and (P_EXE_MODE = '0'))
+  i_addr <= (P_MMU_ADDR + i_b);                                   -- addition func
+  i_intr <= '1' when ((P_MMU_ADDR >= i_l) and (P_EXE_MODE = '0')) -- comparison func
             else '0' ;
+  i_rw <= not P_MMU_RW when ((P_MMU_ADDR >= i_l) and (P_EXE_MODE = '0') and (P_MMU_RW = '1')) -- comparison func
+          else P_MMU_RW ;
+  i_mr <= not P_MMU_MR when ((P_MMU_ADDR >= i_l) and (P_EXE_MODE = '0') and (P_MMU_MR = '1')) -- comparison func
+          else P_MMU_MR ;
   P_ADDR <= i_addr;
   P_INT <= i_intr;
-
+  P_RW <= i_rw;
+  P_MR <= i_mr;
+  
 end Behavioral;
