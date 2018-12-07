@@ -46,8 +46,9 @@ begin
     end if;
   end process;
   
-  i_addr <= (P_MMU_ADDR + i_b) when (P_EXE_MODE = '1');                                   -- addition func
-  i_intr <= '1' when ((P_MMU_ADDR >= i_l) and (P_EXE_MODE = '0')) -- comparison func
+  i_addr <= (P_MMU_ADDR + i_b) when (P_EXE_MODE = '1')
+            else P_MMU_ADDR ;                                   -- addition func
+  i_intr <= '1' when ((P_MMU_ADDR >= i_l) and (P_EXE_MODE = '0') and (P_MMU_MR = '1')) -- comparison func
             else '0' ;
   i_mr <= P_MMU_MR and (not i_intr);
   P_ADDR <= i_addr;
