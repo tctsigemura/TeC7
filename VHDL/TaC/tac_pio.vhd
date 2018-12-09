@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2012 by
+-- Copyright (C) 2012-2018 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac_pio.vhd : TaC PIO
 --
+-- 2018.12.09           : PIOの出力を最大 12 ビット化
 -- 2012.01.10           : 新規作成
 --
 -- $Id
@@ -44,29 +45,36 @@ entity TAC_PIO is
            P_DIN : in  std_logic_vector (7 downto 0);
            P_DOUT : out  std_logic_vector (7 downto 0);
 
-           P_ADC_REF : out  std_logic_vector(7 downto 0);
-           P_EXT_IN  : in   std_logic_vector(7 downto 0);
-           P_EXT_OUT : out  std_logic_vector(7 downto 0);
-           P_MODE    : in   std_logic_vector(1 downto 0)
+           P_ADC_REF  : out  std_logic_vector(7 downto 0);
+           P_EXT_IN   : in   std_logic_vector(7 downto 0);
+           P_EXT_OUT  : out  std_logic_vector(11 downto 0);
+           P_EXT_MODE : out  std_logic;
+           P_MODE     : in   std_logic_vector(1 downto 0)
          );
 end TAC_PIO;
 
 architecture Behavioral of TAC_PIO is
-  signal i_out  : std_logic_vector(7 downto 0);
+  signal i_ext_out  : std_logic_vector(11 downto 0);
+  signal i_ext_mode : std_logic;
   signal i_adc  : std_logic_vector(7 downto 0);
 
 begin
   process(P_RESET, P_CLK)
     begin
       if (P_RESET='0') then
-        i_out <= "00000000";
+        i_ext_out <= "000000000000";
         i_adc <= "00000000";
       elsif (P_CLK'event and P_CLK='1') then
         if (P_EN='1' and P_IOW='1') then
-          if (P_ADDR(0)='0') then
-            i_out <= P_DIN;
+          if (P_ADDR(1)='0') then
+            if (P_ADDR(0)='0') then
+              i_ext_out(7 downto 0) <= P_DIN;
+            else
+              i_adc <= P_DIN;
+            end if;
           else
-            i_adc <= P_DIN;
+            i_ext_mode <= P_DIN(7);
+            i_ext_out(11 downto 8) <= P_DIN(3 downto 0);
           end if;
         end if;
       end if;
@@ -74,7 +82,8 @@ begin
       
   P_DOUT <= P_EXT_IN when (P_ADDR(0)='0') else "000000" & P_MODE;
   P_ADC_REF <= i_adc;
-  P_EXT_OUT <= i_out;
+  P_EXT_OUT <= i_ext_out;
+  P_EXT_MODE <= i_ext_mode;
   P_INT <= '0';
 end Behavioral;
 

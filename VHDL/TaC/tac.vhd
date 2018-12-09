@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011-2016 by
+-- Copyright (C) 2011-2018 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2018.12.09           : PIO の出力を最大12ビット化
 -- 2016.01.07           : 川部版と統合
 -- 2012.09.26           : TaC-CUP V2 対応完了
 -- 2012.01.22           : TeC とのインタフェースを削除
@@ -80,7 +81,8 @@ entity TaC is
 
          -- PIO
          P_ADC_REF  : out  std_logic_vector (7 downto 0);
-         P_EXT_OUT  : out  std_logic_vector (7 downto 0);
+         P_EXT_OUT  : out  std_logic_vector (11 downto 0);
+         P_EXT_MODE : out  std_logic;
          P_EXT_IN   : in  std_logic_vector (7 downto 0);
          
          -- uSD
@@ -337,7 +339,8 @@ component TAC_PIO
               
            P_ADC_REF : out  STD_LOGIC_VECTOR(7 downto 0);
            P_EXT_IN  : in   STD_LOGIC_VECTOR(7 downto 0);
-           P_EXT_OUT : out  STD_LOGIC_VECTOR(7 downto 0);
+           P_EXT_OUT : out  STD_LOGIC_VECTOR(11 downto 0);
+           P_EXT_MODE: out  STD_LOGIC;
            P_MODE    : in   STD_LOGIC_VECTOR(1 downto 0)
          );
 end component;
@@ -603,6 +606,7 @@ begin
          P_ADC_REF  => P_ADC_REF,
          P_EXT_IN   => P_EXT_IN,
          P_EXT_OUT  => P_EXT_OUT,
+         P_EXT_MODE => P_EXT_MODE,
          P_MODE     => P_MODE
         );
 

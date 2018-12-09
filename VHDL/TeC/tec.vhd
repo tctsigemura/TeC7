@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2012 by
+-- Copyright (C) 2002-2018 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -18,6 +18,9 @@
 --
 --
 -- TeC/tec.vhd : TeC Top Level
+--
+--
+-- 2018.12.08 : PIO の出力を 12 ビット化
 --
 
 library IEEE;
@@ -70,7 +73,8 @@ entity TEC is
          -- PIO
          P_EXT_IN   : in   std_logic_vector (7 downto 0);
          P_ADC_REF  : out  std_logic_vector (7 downto 0);
-         P_EXT_OUT  : out  std_logic_vector (7 downto 0)
+         P_EXT_OUT  : out  std_logic_vector (11 downto 0);
+         P_EXT_MODE : out  std_logic
       );
 end TEC;
 
@@ -233,7 +237,8 @@ component TEC_IO
          P_TXD      : out std_logic;
          P_EXT_IN   : in  std_logic_vector(7 downto 0);
          P_ADC_REF  : out std_logic_vector(7 downto 0);
-         P_EXT_OUT  : out std_logic_vector(7 downto 0)
+         P_EXT_OUT  : out std_logic_vector(11 downto 0);
+         P_EXT_MODE : out std_logic
         );
 end component;
 
@@ -397,7 +402,8 @@ cpu0 : TEC_CPU
                P_RXD      => P_SIO_RXD,
                P_EXT_IN   => P_EXT_IN,
                P_ADC_REF  => P_ADC_REF,
-               P_EXT_OUT  => P_EXT_OUT
+               P_EXT_OUT  => P_EXT_OUT,
+               P_EXT_MODE => P_EXT_MODE
               );
 
   -- データバスでＣＰＵの入力を決定する部分
