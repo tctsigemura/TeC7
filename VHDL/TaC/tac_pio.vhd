@@ -62,6 +62,7 @@ begin
   process(P_RESET, P_CLK)
     begin
       if (P_RESET='0') then
+        i_ext_mode <= '0';
         i_ext_out <= "000000000000";
         i_adc <= "00000000";
       elsif (P_CLK'event and P_CLK='1') then
