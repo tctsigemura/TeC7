@@ -456,7 +456,7 @@ begin
   i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10~17
   i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18~1f
   i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28~2f
-  i_en_mmu    <= '1' when (i_addr(7 downto 2)="111101") else '0'; -- f4~f7
+  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110")  else '0';  -- f0~f7
  
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
                i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
