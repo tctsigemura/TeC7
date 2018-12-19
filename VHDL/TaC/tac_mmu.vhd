@@ -39,7 +39,7 @@ begin
 		i_v <= '0';                             -- 0初期化
     elsif (P_CLK'event and P_CLK='1') then
       if (P_EN='1' and P_IOW='1') then
-		  if (P_MMU_ADDR(0)='1') then
+		  if (P_MMU_ADDR(2)='0') then
 		    i_v <= P_DIN(0);                    -- 入力には0ビット目を使用
 		  elsif (P_MMU_ADDR(1)='0') then
           i_b <= P_DIN;
