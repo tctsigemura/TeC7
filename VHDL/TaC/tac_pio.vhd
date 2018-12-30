@@ -12,7 +12,7 @@
 -- 布することを無償で許諾する．
 --
 --   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
--- 関連機関・個人は本ソースコードに関して，その適用可能性も含゜て，いかなる保証
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
 -- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
 -- る損害に関しても，その責任を負わない．
 --
@@ -45,7 +45,7 @@ entity TAC_PIO is
            P_ADDR     : in  std_logic_vector (1 downto 0);
            P_DIN      : in  std_logic_vector (7 downto 0);
            P_DOUT     : out  std_logic_vector (7 downto 0);
-           
+
            P_ADC_REF  : out  std_logic_vector(7 downto 0);
            P_EXT_IN   : in   std_logic_vector(7 downto 0);
            P_EXT_OUT  : out  std_logic_vector(11 downto 0);
@@ -63,6 +63,7 @@ begin
   process(P_RESET, P_CLK)
     begin
       if (P_RESET='0') then
+        i_ext_mode <= '0';
         i_ext_out <= "000000000000";
         i_adc <= "00000000";
       elsif (P_CLK'event and P_CLK='1') then

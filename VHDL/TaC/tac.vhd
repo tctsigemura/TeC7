@@ -12,7 +12,7 @@
 -- 布することを無償で許諾する．
 --
 --   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
--- 関連機関・個人は本ソースコードに関して，その適用可能性も含゜て，いかなる保証
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
 -- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
 -- る損害に関しても，その責任を負わない．
 --
@@ -327,7 +327,7 @@ component TAC_PIO
            P_EXT_IN  : in   STD_LOGIC_VECTOR(7 downto 0);
            P_EXT_OUT : out  STD_LOGIC_VECTOR(11 downto 0);
            P_EXT_MODE: out  STD_LOGIC;
-           P_MODE    : in   STD_LOGIC_VECTOR(1 downto 0)
+           P_MODE    : in   STD_LOGIC_VECTOR(2 downto 0)
          );
 end component;
 

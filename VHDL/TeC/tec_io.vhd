@@ -407,6 +407,7 @@ begin
   process (P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
+      P_EXT_MODE <= '0';
       P_EXT_OUT <= "000000000000";
     elsif (P_CLK'event and P_CLK='1') then
       if (IOW_EXT_DAT='1') then
