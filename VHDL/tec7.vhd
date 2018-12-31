@@ -113,9 +113,9 @@ signal i_in          : std_logic_vector(27 downto 1);
 signal i_in_tec      : std_logic_vector(27 downto 1);
 signal i_in_tac      : std_logic_vector(27 downto 1);
 
-signal i_out         : std_logic_vector(48 downto 0);
-signal i_out_tec     : std_logic_vector(48 downto 0);
-signal i_out_tac     : std_logic_vector(48 downto 0);
+signal i_out         : std_logic_vector(48 downto 1);
+signal i_out_tec     : std_logic_vector(48 downto 1);
+signal i_out_tac     : std_logic_vector(48 downto 1);
 
 -- TeC <= SIO => Tac
 signal i_tec_rxd     : std_logic;
