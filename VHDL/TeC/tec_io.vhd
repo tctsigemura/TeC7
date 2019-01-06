@@ -19,6 +19,7 @@
 --
 --  TeC/tec_io.vhd : TeC I/O
 --
+--  2018.12.31 : CPU が停止中はタイマーも停止するように変更
 --  2018.12.08 : PIOの出力を最大 12 ビット化
 --  2016.01.08 : ADC の if 条件の書き方変更 (warning を消すため)
 --
@@ -50,7 +51,8 @@ entity TEC_IO is
          P_EXT_IN   : in  std_logic_vector(7 downto 0);
          P_ADC_REF  : out std_logic_vector(7 downto 0);
          P_EXT_OUT  : out std_logic_vector(11 downto 0);
-         P_EXT_MODE  : out std_logic
+         P_EXT_MODE : out std_logic;
+         P_STOP     : in  std_logic
        );
 end TEC_IO;
 
@@ -347,7 +349,7 @@ begin
       -- タイマーのカウンタ制御
       if (IOW_TMR_CTL='1' or I_INT_TMR_P='1') then
         TMR_CNT <= "00000000";        -- Start/Stop、コンペアマッチでリセット
-      elsif (I_75Hz_P='1') then
+      elsif (I_75Hz_P='1' and P_STOP='0') then
         TMR_CNT <= TMR_CNT + 1;       -- それ以外ではカウントアップ
       end if;
 

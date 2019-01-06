@@ -20,6 +20,7 @@
 -- TeC/tec.vhd : TeC Top Level
 --
 --
+-- 2018.12.31 : CPU が停止中はタイマーも停止するように変更
 -- 2018.12.08 : PIO の出力を 12 ビット化
 --
 
@@ -238,7 +239,8 @@ component TEC_IO
          P_EXT_IN   : in  std_logic_vector(7 downto 0);
          P_ADC_REF  : out std_logic_vector(7 downto 0);
          P_EXT_OUT  : out std_logic_vector(11 downto 0);
-         P_EXT_MODE : out std_logic
+         P_EXT_MODE : out std_logic;
+         P_STOP     : in  std_logic
         );
 end component;
 
@@ -403,7 +405,8 @@ cpu0 : TEC_CPU
                P_EXT_IN   => P_EXT_IN,
                P_ADC_REF  => P_ADC_REF,
                P_EXT_OUT  => P_EXT_OUT,
-               P_EXT_MODE => P_EXT_MODE
+               P_EXT_MODE => P_EXT_MODE,
+               P_STOP     => I_STOP
               );
 
   -- データバスでＣＰＵの入力を決定する部分
