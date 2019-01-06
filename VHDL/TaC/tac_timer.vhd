@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2012 - 2016 by
+-- Copyright (C) 2012 - 2018 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac_timer.vhd : TaC TIMER
 --
+-- 2018.12.31 : CPU が停止中はタイマーも停止するように変更
 -- 2016.01.08 : TMR_ENA が無視されるバグを訂正
 -- 2012.03.02 : 新規作成
 --
@@ -41,7 +42,8 @@ entity TAC_TIMER is
            P_ADDR    : in  std_logic;
            P_1kHz    : in  std_logic;              -- 1kHz pulse
            P_DIN     : in  std_logic_vector (15 downto 0);
-           P_DOUT    : out std_logic_vector (15 downto 0)
+           P_DOUT    : out std_logic_vector (15 downto 0);
+           P_STOP    : in  std_logic
          );
 end TAC_TIMER;
 
@@ -92,7 +94,7 @@ begin
       if ((P_EN='1' and P_IOW='1' and
            P_ADDR='1') or I_INT_TMR_P='1') then
         TMR_CNT <= "0000000000000000";  -- Start/Stop、コンペアマッチでリセット
-      elsif (P_1kHz='1' and TMR_Ena='1') then
+      elsif (P_1kHz='1' and TMR_Ena='1' and P_STOP='0') then
         TMR_CNT <= TMR_CNT + 1;         -- それ以外ではカウントアップ
       end if;
     end if;
