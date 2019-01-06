@@ -17,8 +17,9 @@
 -- る損害に関しても，その責任を負わない．
 --
 --
--- tec7b.vhd : TeC7b Top Level
+-- tec7.vhd : TeC7 Top Level
 --
+-- 2018.12.08 : EXT_IN(7 downto 4) を inout にし出力を最大12ビットに変更
 -- 2018.07.13 : モードを3ビットに変更
 -- 2017.05.09 : TeC7b 用に VGA, PS/2 削除，RN4020 関連追加
 -- 2016.01.08 : P_PS2_CLK を inout に変更(バグ訂正)
@@ -66,7 +67,8 @@ entity TeC7 is
            SPK_OUT   : out  std_logic;
 
            -- PIO
-           EXT_IN    : in   std_logic_vector (7 downto 0);
+           EXT_INOUT : inout std_logic_vector (3 downto 0);
+           EXT_IN    : in   std_logic_vector (3 downto 0);
            ADC_REF   : out  std_logic_vector (7 downto 0);
            EXT_OUT   : out  std_logic_vector (7 downto 0);
 
@@ -111,9 +113,9 @@ signal i_in          : std_logic_vector(27 downto 1);
 signal i_in_tec      : std_logic_vector(27 downto 1);
 signal i_in_tac      : std_logic_vector(27 downto 1);
 
-signal i_out         : std_logic_vector(43 downto 1);
-signal i_out_tec     : std_logic_vector(43 downto 1);
-signal i_out_tac     : std_logic_vector(43 downto 1);
+signal i_out         : std_logic_vector(48 downto 1);
+signal i_out_tec     : std_logic_vector(48 downto 1);
+signal i_out_tac     : std_logic_vector(48 downto 1);
 
 -- TeC <= SIO => Tac
 signal i_tec_rxd     : std_logic;
@@ -213,7 +215,8 @@ component TEC
            -- PIO
            P_EXT_IN   : in   std_logic_vector (7 downto 0);
            P_ADC_REF  : out  std_logic_vector (7 downto 0);
-           P_EXT_OUT  : out  std_logic_vector (7 downto 0)
+           P_EXT_OUT  : out  std_logic_vector (11 downto 0);
+           P_EXT_MODE : out  std_logic
          );
 end component;
 
@@ -254,8 +257,9 @@ component TAC
 
            -- PIO
            P_ADC_REF  : out  std_logic_vector (7 downto 0);
-           P_EXT_OUT  : out  std_logic_vector (7 downto 0);
-           P_EXT_IN   : in   std_logic_vector (7 downto 0);
+           P_EXT_OUT  : out  std_logic_vector (11 downto 0);
+           P_EXT_MODE : out  std_logic;
+           P_EXT_IN   : in  std_logic_vector (7 downto 0);
 
            -- uSD
            P_SPI_SCLK : out  std_logic;
@@ -343,7 +347,8 @@ begin
   
   -- I/O Switch (select TeC/TaC)
   -- INPUT
-  i_in(27 downto 20) <= EXT_IN;
+  i_in(27 downto 24) <= EXT_INOUT;
+  i_in(23 downto 20) <= EXT_IN;
   i_in(19 downto 12) <= DATA_SW;
   i_in(11) <= RESET_SW;
   i_in(10) <= SETA_SW;
@@ -360,8 +365,9 @@ begin
   i_in_tac <= i_in when i_mode="001" else "000000000000000000000000000";
   
   -- OUTPUT
-  ADC_REF <= i_out(43 downto 36);
-  EXT_OUT <= i_out(35 downto 28);
+  EXT_INOUT <= "ZZZZ" when i_out(48)='0' else i_out(47 downto 44);
+  EXT_OUT <= i_out(43 downto 36);
+  ADC_REF <= i_out(35 downto 28);
   ADDR_LED <= not i_out(27 downto 20);
   DATA_LED <= not i_out(19 downto 12);  
   RUN_LED <= not i_out(11);
@@ -418,8 +424,9 @@ begin
 
          -- PIO
          P_EXT_IN   => i_in_tec(27 downto 20),
-         P_ADC_REF  => i_out_tec(43 downto 36),
-         P_EXT_OUT  => i_out_tec(35 downto 28)
+         P_ADC_REF  => i_out_tec(35 downto 28),
+         P_EXT_OUT  => i_out_tec(47 downto 36),
+         P_EXT_MODE => i_out_tec(48)
     );
 
   TAC1 : TAC
@@ -460,8 +467,9 @@ begin
 
          -- I/O
          P_EXT_IN   => i_in_tac(27 downto 20),
-         P_ADC_REF  => i_out_tac(43 downto 36),
-         P_EXT_OUT  => i_out_tac(35 downto 28),
+         P_ADC_REF  => i_out_tac(35 downto 28),
+         P_EXT_MODE => i_out_tac(48),
+         P_EXT_OUT  => i_out_tac(47 downto 36),
 
          -- uSD
          P_SPI_SCLK => SPI_SCLK,

@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2016 by
+-- Copyright (C) 2002-2018 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -19,6 +19,7 @@
 --
 --  TeC/tec_io.vhd : TeC I/O
 --
+--  2018.12.08 : PIOの出力を最大 12 ビット化
 --  2016.01.08 : ADC の if 条件の書き方変更 (warning を消すため)
 --
 
@@ -48,7 +49,8 @@ entity TEC_IO is
          P_TXD      : out std_logic;
          P_EXT_IN   : in  std_logic_vector(7 downto 0);
          P_ADC_REF  : out std_logic_vector(7 downto 0);
-         P_EXT_OUT  : out std_logic_vector(7 downto 0)
+         P_EXT_OUT  : out std_logic_vector(11 downto 0);
+         P_EXT_MODE  : out std_logic
        );
 end TEC_IO;
 
@@ -56,7 +58,7 @@ architecture RTL of TEC_IO is
 -- Address Decode
 signal IOW        : std_logic;
 signal IOR        : std_logic;
-signal DEC_OUT    : std_logic_vector(11 downto 0);
+signal DEC_OUT    : std_logic_vector(12 downto 0);
 signal IOR_SIO_DAT: std_logic;
 -- signal IOR_TMR_STA: std_logic;
 signal IOW_BUZ    : std_logic;
@@ -67,6 +69,7 @@ signal IOW_SIO_CTL: std_logic;
 signal IOW_TMR_CNT: std_logic;
 signal IOW_TMR_CTL: std_logic;
 signal IOW_EXT_DAT: std_logic;
+signal IOW_EXT_HI : std_logic;
 
 -- Flip Flop
 signal I_SPK      : std_logic;
@@ -132,19 +135,20 @@ begin
   IOR <= P_IR and not P_RW;
   with P_ADDR select
     DEC_OUT <= 
-    "000000000001" when "0000",
-    "000000000010" when "0001",
-    "000000000100" when "0010",
-    "000000001000" when "0011",
-    "000000010000" when "0100",
-    "000000100000" when "0101",
-    "000001000000" when "0110",
-    "000010000000" when "0111",
-    "000100000000" when "1000",
-    "001000000000" when "1001",
-    "010000000000" when "1010",
-    "100000000000" when "1011",
-    "000000000000" when others;
+    "0000000000001" when "0000",
+    "0000000000010" when "0001",
+    "0000000000100" when "0010",
+    "0000000001000" when "0011",
+    "0000000010000" when "0100",
+    "0000000100000" when "0101",
+    "0000001000000" when "0110",
+    "0000010000000" when "0111",
+    "0000100000000" when "1000",
+    "0001000000000" when "1001",
+    "0010000000000" when "1010",
+    "0100000000000" when "1011",
+    "1000000000000" when "1100",
+    "0000000000000" when others;
 
   IOR_SIO_DAT <= IOR and DEC_OUT(2);
 --IOR_TMR_STA <= IOR and DEC_OUT(5);
@@ -157,6 +161,7 @@ begin
   IOW_TMR_CTL <= IOW and DEC_OUT(5);
   IOW_PINT    <= IOW and DEC_OUT(6);
   IOW_EXT_DAT <= IOW and DEC_OUT(7);
+  IOW_EXT_HI  <= IOW and DEC_OUT(12);
 
   -- ブザー,スピーカ,コンソール割り込み部分
   P_SPK  <= I_SPK xor ((I_BEEP or I_PINT_B) and P_2_4kHz);
@@ -402,10 +407,15 @@ begin
   process (P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
-      P_EXT_OUT <= "00000000";
+      P_EXT_MODE <= '0';
+      P_EXT_OUT <= "000000000000";
     elsif (P_CLK'event and P_CLK='1') then
       if (IOW_EXT_DAT='1') then
-        P_EXT_OUT <= P_DIN;
+        P_EXT_OUT(7 downto 0) <= P_DIN;
+      end if;
+      if (IOW_EXT_HI='1') then
+        P_EXT_OUT(11 downto 8) <= P_DIN(3 downto 0);
+        P_EXT_MODE <= P_DIN(7);
       end if;
     end if;
   end process;

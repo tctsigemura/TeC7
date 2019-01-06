@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011-2017 by
+-- Copyright (C) 2011-2018 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -12,7 +12,7 @@
 -- 布することを無償で許諾する．
 --
 --   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
--- 関連機関・個人は本ソースコードに関して，その適用可能性も含ﾟて，いかなる保証
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
 -- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
 -- る損害に関しても，その責任を負わない．
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2018.12.09           : PIO の出力を最大12ビット化
 -- 2018.07.13           : モードを3ビットに変更
 -- 2018.07.13           : RN4020の受信バッファ（FIFO）追加
 -- 2017.05.11           : TeC7b 対応
@@ -78,7 +79,8 @@ entity TAC is
 
          -- PIO
          P_ADC_REF  : out  std_logic_vector (7 downto 0);
-         P_EXT_OUT  : out  std_logic_vector (7 downto 0);
+         P_EXT_OUT  : out  std_logic_vector (11 downto 0);
+         P_EXT_MODE : out  std_logic;
          P_EXT_IN   : in  std_logic_vector (7 downto 0);
          
          -- uSD
@@ -323,7 +325,8 @@ component TAC_PIO
               
            P_ADC_REF : out  STD_LOGIC_VECTOR(7 downto 0);
            P_EXT_IN  : in   STD_LOGIC_VECTOR(7 downto 0);
-           P_EXT_OUT : out  STD_LOGIC_VECTOR(7 downto 0);
+           P_EXT_OUT : out  STD_LOGIC_VECTOR(11 downto 0);
+           P_EXT_MODE: out  STD_LOGIC;
            P_MODE    : in   STD_LOGIC_VECTOR(2 downto 0)
          );
 end component;
@@ -608,6 +611,7 @@ begin
          P_ADC_REF  => P_ADC_REF,
          P_EXT_IN   => P_EXT_IN,
          P_EXT_OUT  => P_EXT_OUT,
+         P_EXT_MODE => P_EXT_MODE,
          P_MODE     => P_MODE
         );
 
