@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2018.12.31           : CPU が停止中はタイマーも停止するように変更
 -- 2018.12.09           : PIO の出力を最大12ビット化
 -- 2018.07.13           : モードを3ビットに変更
 -- 2018.07.13           : RN4020の受信バッファ（FIFO）追加
@@ -341,7 +342,8 @@ component TAC_TIMER is
            P_ADDR    : in  std_logic;
            P_1kHz    : in  std_logic;
            P_DIN     : in  std_logic_vector (15 downto 0);
-           P_DOUT    : out std_logic_vector (15 downto 0)
+           P_DOUT    : out std_logic_vector (15 downto 0);
+           P_STOP    : in  std_logic
          );
 end component;
 
@@ -626,7 +628,8 @@ begin
       P_ADDR        => i_addr(1),
       P_1kHz        => i_1kHz,
       P_DIN         => i_dout_cpu,
-      P_DOUT        => i_dout_tmr0
+      P_DOUT        => i_dout_tmr0,
+      P_STOP        => i_stop
     );
 
   TAC_TIMER1: TAC_TIMER
@@ -640,7 +643,8 @@ begin
       P_ADDR        => i_addr(1),
       P_1kHz        => i_1kHz,
       P_DIN         => i_dout_cpu,
-      P_DOUT        => i_dout_tmr1
+      P_DOUT        => i_dout_tmr1,
+      P_STOP        => i_stop
     );
 
 end Behavioral;
