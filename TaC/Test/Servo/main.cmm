@@ -33,7 +33,7 @@
 void putSIO(char c) {                       // SIO への出力
   while((in(0x05) & 0x80)==0)
     ;
-  out(0x04, c);
+  out(0x04, ord(c));
 }
 
 // 1文字表示ルーチン

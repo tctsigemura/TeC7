@@ -2,7 +2,7 @@
 # TaC Test Source Code
 #    Tokuyama kousen Educational Computer 16 bit Version
 #
-# Copyright (C) 2009-2010 by
+# Copyright (C) 2009-2019 by
 #                      Dept. of Computer Science and Electronic Engineering,
 #                      Tokuyama College of Technology, JAPAN
 #
@@ -17,29 +17,28 @@
 # る損害に関しても，その責任を負わない．
 #
 #
-# Makefile : PIO テストプログラムの makefile
+# Makefile : MAIN テストプログラムの makefile
 #
+# 2019.01.06         : cm2e を使用するように変更
 # 2012.01.11         : 初期バージョン
 #
 # $Id$
 #
 
-CPP=llvm-cpp-4.2 -std=c99               # プリプロセッサ
-TEXT=0x4000
+TEXT=0x0000
 
-pio.bin: pio
-	objbin-- ${TEXT} pio.bin pio
+kernel.bin: main
+	objbin-- ${TEXT} kernel.bin main | sort > kernel.map
 
-pio: crt0.o pio.o
-	ld-- pio crt0.o pio.o > pio.sym
+main: crt0.o main.o
+	ld-- main crt0.o main.o > main.sym
 
-pio.o: pio.cmm util.h
-	cpp pio.cmm | c-- -O > pio.s
-	as-- pio.s
+main.o: main.cmm util.h
+	cm2e -K -c main.cmm
 
 crt0.o: crt0.s
 	as-- crt0.s
 
 clean:
-	rm -f pio pio.s *.lst *.bin *.o *.hex *.sym *~
+	rm -f main main.s *.lst *.bin *.o *.hex *.sym *.map *~
 

@@ -1,6 +1,7 @@
 /*
  * TaC カーネルの原型
  *
+ * 2019.01.13 :	いくつかのバグを解決
  * 2016.11.09 :	TeC7用に書換え
  * 2010.06.18 :	Makefile 中 cpp に std=c99 オプション追加
  * 2010.03.12 : main に public を書き加える
@@ -20,10 +21,11 @@
 struct RingBuf {
   char[] buf;                             // バッファ
   int    head, tail;                      // ポインタ
+  int    cnt;                             // カウンタ
 };
 
-RingBuf rcvBuf = { null, 0, 0 };          // リングバッファインスタンス
-RingBuf trsBuf = { null, 0, 0 };
+RingBuf rcvBuf = { null, 0, 0, 0 };       // リングバッファインスタンス
+RingBuf trsBuf = { null, 0, 0, 0 };
 
 int nextIdx(int idx) {                    // 直後の添字を求める
   int next = idx + 1;
@@ -38,27 +40,26 @@ int prevIdx(int idx) {                    // 直前の添字を求める
 }
 
 // リングバッファは空か
-#define ISEmpty(buf) ((buf).head==(buf).tail)
+#define ISEmpty(buf) ((buf).cnt==0)
 
 // リングバッファは満か
-#define ISFull(buf) (nextIdx((buf).head)==(buf).tail)
+#define ISFull(buf) ((buf).cnt>=BSIZE)
 
 // リングバッファに 1 文字追加
 boolean putBuf(RingBuf buf, char c) {
-  if (!ISFull(buf)) {                     // バッファがパンク！(無視？)
-    int next = nextIdx(buf.head);
-    buf.buf[buf.head] = c;
-    buf.head = next;
-    return true;
-  }
-  return false;
+  if (ISFull(buf)) return false;          // バッファがパンク！(無視)
+  buf.buf[buf.head] = c;
+  buf.head = nextIdx(buf.head);
+  buf.cnt = buf.cnt + 1;
+  return true;
 }
 
 char getBuf(RingBuf buf) {                // リングバッファから1文字取り出し
-  if (ISEmpty(buf)) return '0';           //  空の 場合は NULL
-  int tail = buf.tail;
+  if (ISEmpty(buf)) return '\0';          //  空の 場合は '\0'
+  char c = buf.buf[buf.tail];             // 一文字取り出し
   buf.tail = nextIdx(buf.tail);           // tail を進めて
-  return  buf.buf[tail];                  // 一文字返す
+  buf.cnt = buf.cnt - 1;                  // cnt を減らす
+  return c;                               // 一文字返す
 }
 
 /*
@@ -76,22 +77,22 @@ interrupt sioTrs() {
   } else {                                // そうでなければ
     int c = ord(getBuf(trsBuf));          // 送信バッファから一文字取り出す
     out(0x0008,c);                        // データを送信
-    //putCh(chr(c));                        // 画面にも(デバッグ用)
+//  putCh(chr(c));                        // 画面にも(デバッグ用)
   }
 }
 
 // SIO へ１文字出力
 void putSio(char c) {
-  setPri(KERN|DI);                        // 割込み禁止状態で
-  if (trsIdle) {                          // 送信中でなければ
-    out(0x000a,0x00c0);                   // 割込みを許可し
-    out(0x0008,ord(c));                   // 送信を始める
-    //putCh(c);                             // 画面にも(デバッグ用)
-    trsIdle = false;
+  int r = setPri(KERN|DI);                // 割込み禁止状態で
+  if (trsIdle) {                          // トランスミッタはアイドル状態
+    out(0x0008,ord(c));                   // 1. 送信を始める    （順序重要）
+    out(0x000a,0x00c0);                   // 2. 割込みを許可する（順序重要）
+//  putCh(c);                             // 画面にも(デバッグ用)
+    trsIdle = false;                      // トランスミッタは動作中
   } else {
     putBuf(trsBuf, c);                    // 送信バッファに１文字追加
   }
-  setPri(KERN|EI);
+  setPri(r);
 }
 
 // 受信関係
@@ -111,16 +112,15 @@ void rcvData(char c) {
       putSio(' ');
       putSio('\10');
       rcvBuf.head = prevIdx(rcvBuf.head); // バッファから１文字取り消し
+      rcvBuf.cnt = rcvBuf.cnt - 1;
     }
     return;
   }
 
   if (c=='\r') {                          // Enter
-    if (putBuf(rcvBuf, '\0')) {           // バッファの文字列完成
-      enterFlag = true;                   // フラグを立てて
-      putSio('\r');                       // 画面を改行
-      putSio('\n');
-    }
+    enterFlag = true;                     // フラグを立てて
+    putSio('\r');                         // 画面を改行
+    putSio('\n');
     return;
   }
 
@@ -139,23 +139,29 @@ interrupt ps2Rcv() {
   rcvData(c);
 }
 
-// 受信した１行を取り出す
+// バッファから１文字入力
+char getSio() {
+  int r = setPri(KERN|DI);                // 割込み禁止状態で
+  char c = getBuf(rcvBuf);
+  setPri(r);
+  return c;
+}
+
+// ここからはクリティカルセクションを含まない
+
+// 受信した１行をバッファから取り出す
 void getSioStr(char[] buf) {
-  setPri(KERN|DI);
   char c;
   int  i = 0;
-  while ((c=rcvBuf.buf[rcvBuf.tail])!='\0') {
+  while ((c=getSio())!='\0') {
     buf[i] = c;
-    rcvBuf.tail = nextIdx(rcvBuf.tail);
     i = i + 1;
   }
-  rcvBuf.tail = nextIdx(rcvBuf.tail);
   buf[i] = '\0';
-  setPri(KERN|EI);
 }
-  
-// ここからはクリティカルセクションを含まない
-void putSioStr(char[] str) {         // SIO へ文字列を出力
+
+// 文字列を出力
+void putSioStr(char[] str) {
   for (int i=0; str[i]!='\0'; i=i+1)
     putSio(str[i]);
 }
@@ -165,13 +171,14 @@ char[] _buf2 = array(BSIZE);
 void initIO() {
   rcvBuf.buf = _buf1;
   trsBuf.buf = _buf2;
+  while ((in(0x000a)&0x80)==0x00){}  // トランスミッタが空になるのを待つ
   out(0x000a,0x0040);                // SIO受信割込み許可、送信割込み禁止
-  out(0x000e,0x0040);                // PS2受信割込み許可、送信割込み禁止
+//out(0x000e,0x0040);                // PS2受信割込み許可、送信割込み禁止
   trsIdle   = true;                  // トランスミッタはアイドル状態
   enterFlag = false;                 // 入力は完了していない
 }
 
-char[] comBuf = array(BSIZE);      // コマンド解析用バッファ
+char[] comBuf = array(BSIZE);        // コマンド解析用バッファ
 void command() {
   getSioStr(comBuf);
   putSioStr(comBuf);
@@ -183,14 +190,14 @@ public void main() {
   int[] vect = _ItoA(0xffe0);        // 割込みベクタの配列
   vect[4] = addrof(sioRcv);          // #4(sio受信)ベクタの初期化
   vect[5] = addrof(sioTrs);          // #5(sio送信)ベクタの初期化
-  vect[6] = addrof(ps2Rcv);          // #6(PS/2受信)ベクタの初期化
+//vect[6] = addrof(ps2Rcv);          // #6(PS/2受信)ベクタの初期化
 
   initIO();                          // IO の初期化
   utilInit();
 
   setPri(KERN|EI);                   // 割込み許可
 
-  putSioStr("TaC-OS(^^;;;\tVer.0.1.1\r\n");
+  putSioStr("TaC-OS(^^;;;\tVer.0.0.0\r\n");
 
   for(;;){          // カーネルは止まれない
     if (enterFlag) {
