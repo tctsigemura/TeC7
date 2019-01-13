@@ -32,20 +32,37 @@
 
 #include "util.h"
 
-// とりあえず８人の王妃問題 (^^;;;
+void putSIO(char c) {                       // SIO への出力
+  while((in(0x0a) & 0x80)==0)
+    ;
+  out(0x08, ord(c));
+}
 
+// 1文字表示ルーチン
+public void putch(char c) {                 // SIO へ出力する
+  if (c=='\n') putSIO('\r');
+  putSIO(c);
+}
+
+// 文字列出力
+public void putstr(char[] str) {
+  for (int i=0; str[i]!='\0'; i=i+1)
+    putch(str[i]);
+}
+
+// とりあえず８人の王妃問題 (^^;;;
 int[] x=array(8);
 boolean[] a=array(8);
 boolean[] b=array(15);
 boolean[] c=array(15);
 
 void print(){
-  printf("\nSolution\n");
+  putstr("\nSolution\n");
   for (int i=0; i<8; i=i+1){
     for (int j=0; j<8; j=j+1)
-      if (j==x[i]) printf(" Q");
-      else printf(" .");
-    printf("\n");
+      if (j==x[i]) putstr(" Q");
+      else putstr(" .");
+    putstr("\n");
   }
 }
 

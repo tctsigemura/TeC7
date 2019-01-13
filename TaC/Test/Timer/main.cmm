@@ -89,11 +89,13 @@ public void main() {
   putstr("Timer test start\n");
 
   for(;;) {
-    if (flg1) {
+    wait(100);                          // 100ms に一度
+    putstr(".");
+    if (flg1) {                         // 1s に一度
       flg1 = false;
       putstr("*");
     }
-    if (flg2) {
+    if (flg2) {                         // 300ms に一度
       flg2 = false;
       putstr("@");
     }

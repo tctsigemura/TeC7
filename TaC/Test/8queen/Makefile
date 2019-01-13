@@ -1,8 +1,8 @@
 #
-# TaC Kernel Source Code
+# TaC Test Source Code
 #    Tokuyama kousen Educational Computer 16 bit Version
 #
-# Copyright (C) 2008-2010 by
+# Copyright (C) 2009-2019 by
 #                      Dept. of Computer Science and Electronic Engineering,
 #                      Tokuyama College of Technology, JAPAN
 #
@@ -17,30 +17,28 @@
 # る損害に関しても，その責任を負わない．
 #
 #
-# Makefile : サンプルプログラム 8Queen の makefile
+# Makefile : MAIN テストプログラムの makefile
 #
-# 2010.07.20         : Subversion の管理に入る
-# 2010.06.18         : cpp に std=c99 オプション追加
-# 2008.08            : 初期バージョン
+# 2019.01.06         : cm2e を使用するように変更
+# 2012.01.11         : 初期バージョン
 #
 # $Id$
 #
 
-kernel.bin : crt0.o kernel.o util.o
-	ld-- kernel crt0.o kernel.o util.o > kernel.sym
-	objbin-- 0x0000 kernel.bin kernel
+TEXT=0x0000
 
-crt0.o : crt0.s
+kernel.bin: main
+	objbin-- ${TEXT} kernel.bin main | sort > kernel.map
+
+main: crt0.o main.o
+	ld-- main crt0.o main.o > main.sym
+
+main.o: main.cmm util.h
+	cm2e -K -c main.cmm
+
+crt0.o: crt0.s
 	as-- crt0.s
 
-kernel.o : kernel.cmm util.h
-	cpp -std=c99 kernel.cmm | c-- > kernel.s
-	as-- kernel.s
-
-util.o : util.cmm util.h
-	cpp -std=c99 util.cmm | c-- > util.s
-	as-- util.s
-
-clean :
-	rm -f kernel.bin kernel *.o kernel.s util.s *.lst *.sym *~
+clean:
+	rm -f main main.s *.lst *.bin *.o *.hex *.sym *.map *~
 

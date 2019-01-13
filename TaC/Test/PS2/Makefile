@@ -2,7 +2,7 @@
 # TaC Test Source Code
 #    Tokuyama kousen Educational Computer 16 bit Version
 #
-# Copyright (C) 2009-2010 by
+# Copyright (C) 2009-2019 by
 #                      Dept. of Computer Science and Electronic Engineering,
 #                      Tokuyama College of Technology, JAPAN
 #
@@ -19,12 +19,12 @@
 #
 # Makefile : MAIN テストプログラムの makefile
 #
+# 2019.01.06         : cm2e を使用するように変更
 # 2012.01.11         : 初期バージョン
 #
 # $Id$
 #
 
-CPP=llvm-cpp-4.2 -std=c99               # プリプロセッサ
 TEXT=0x0000
 
 kernel.bin: main
@@ -34,8 +34,7 @@ main: crt0.o main.o
 	ld-- main crt0.o main.o > main.sym
 
 main.o: main.cmm util.h
-	cpp main.cmm | c-- -O > main.s
-	as-- main.s
+	cm2e -K -c main.cmm
 
 crt0.o: crt0.s
 	as-- crt0.s
