@@ -1,2 +1,9 @@
 .DS_Store
 *~
+*.lst
+*.o
+*.bin
+*.hex
+*.map
+*.sym
+
