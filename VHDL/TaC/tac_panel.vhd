@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2016 by
+-- Copyright (C) 2002-2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac_panel.vhd : TaC Console Panel
 --
+-- 2019.01.15           : RESETスイッチにもデバウンスを追加
 -- 2016.01.10           : 電源投入時 "RUN" 状態から始まるようにする
 -- 2016.01.07           : 未使用の出力 P_BUZ を '0' に接続
 -- 2013.07.17           : STOPスイッチの誤動作対応
@@ -104,7 +105,8 @@ architecture RTL of TAC_PANEL is
   signal i_incaSw   : std_logic;                     -- increment address sw.
   signal i_decaSw   : std_logic;                     -- decrement address sw.
   signal i_setaSw   : std_logic;                     -- set address sw.
-  signal i_writeSw  : std_logic;                     -- write data sw
+  signal i_writeSw  : std_logic;                     -- write data sw.
+  signal i_rstSw    : std_logic;                     -- reset sw.
   signal i_runSw    : std_logic;                     -- run program
   signal i_rcwSw    : std_logic;                     -- rotate clock wise
   signal i_rccwSw   : std_logic;                     -- rotate c-clock wise
@@ -143,16 +145,17 @@ begin  -- RTL
   end process;
     
   -- reset sw
+  rstSw   : TRSW port map (P_CLK0, '1', P_RESET_SW, i_smp, '0', i_rstSW  );
   process(P_CLK90)
   begin
     if (P_CLK90'event and P_CLK90='0') then
-      i_reset <= not (P_RESET_SW or (not P_RESET_IN));
+      i_reset <= not (i_rstSW or (not P_RESET_IN));
     end if;
   end process;
   P_RESET <= i_reset;
 
   -- triggerd sw
-  runSw   : TRSW port map (P_CLK0, '1', P_RUN_SW,   i_smp, '1', i_runSw  );
+  runSw   : TRSW port map (P_CLK0, '1', P_RUN_SW,   i_smp, '0', i_runSw  );
   decaSw  : TRSW port map (P_CLK0, '1', P_DECA_SW,  i_smp, '1', i_decaSw );
   incaSw  : TRSW port map (P_CLK0, '1', P_INCA_SW,  i_smp, '1', i_incaSw );
   setaSw  : TRSW port map (P_CLK0, '1', P_SETA_SW,  i_smp, '0', i_setaSw );
