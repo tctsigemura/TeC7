@@ -2,7 +2,7 @@
  * TaC Micro Code Assenbler Program
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2002-2013 by
+ * Copyright (C) 2002-2017 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,7 @@
 /*
  * masm.c : マイクロコードアセンブラ本体
  *
+ * 2017.01.10           :  Jcc(NIOPR) を追加
  * 2013.12.16           : コメントのネストを解消
  * 2012.09.26           : リスト出力の空白数の調節
  * 2012.07.14           : REG(FP), STP, CLP, ALU(INC2,DEC2),Jcc(NPRV,ZERO),
@@ -98,7 +99,8 @@
 #define SPR      1046
 #define PCR      1047
 #define IM       1048
-#define NPRV     1049
+#define NIOPR    1049
+#define NPRV     1050
 
 /* バス命令の機能 */
 #define MEMR     1051      /* Read Word from Memory  */
@@ -153,7 +155,7 @@ struct word_tok_t
   /* JCC 命令 */
   { "INT",   INT  }, { "NJP",   NJP  }, { "CT16",  CT16 },  { "STOP",  STOP },
   { "CTDR",  CTDR }, { "DI",    DI   }, { "SPR",   SPR   }, { "PCR",   PCR  },
-  { "IM",    IM   }, { "NPRV",  NPRV },
+  { "IM",    IM   }, { "NPRV",  NPRV }, { "NIOPR", NIOPR },
 
   /* BUS 命令 */
   { "MEMR",  MEMR }, { "MEMW",   MEMW }, { "IOR",   IOR  }, { "IOW",   IOW  },
@@ -724,6 +726,7 @@ void jcc()
     case PCR  : WM_JP(mcode,J_PCR);  break;
     case IM   : WM_JP(mcode,J_IM);   break;
     case NPRV : WM_JP(mcode,J_NPRV); break;
+    case NIOPR: WM_JP(mcode,J_NIOPR);break;
     case ZERO : WM_JP(mcode,J_ZERO); break;
     default : errmes = "JCC 命令の条件が不正";
               return;
