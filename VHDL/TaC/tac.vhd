@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011-2018 by
+-- Copyright (C) 2011-2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.01.22           : MMU を追加
 -- 2018.12.31           : CPU が停止中はタイマーも停止するように変更
 -- 2018.12.09           : PIO の出力を最大12ビット化
 -- 2018.07.13           : モードを3ビットに変更
@@ -201,7 +202,7 @@ component TAC_CPU
          P_VR       : out std_logic;                       -- Vector Req.
          P_HL       : out std_logic;                       -- Halt instruction
          P_BT       : out std_logic;                       -- Byte To
-			P_PR       : in  std_logic;                       -- Privilege　Mode
+         P_PR       : in  std_logic;                       -- Privilege Mode
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic                        -- Bus Request
        );
@@ -376,26 +377,24 @@ component TAC_RN4020 is
 end component;
 
 component TAC_MMU is 
-  Port (
-    P_CLK      : in  STD_LOGIC;
-    P_RESET    : in  STD_LOGIC;
-    P_EN       : in  STD_LOGIC;
-    P_IOW      : in  STD_LOGIC;
-    P_MMU_MR   : in  STD_LOGIC;
-    P_PR       : in  STD_LOGIC;                      -- Execution mode (0:user, 1:privilege)
-    P_INT      : out STD_LOGIC;
-    P_MR       : out STD_LOGIC;
-    P_ADDR     : out STD_LOGIC_VECTOR (15 downto 0); -- Physical address
-    P_MMU_ADDR : in  STD_LOGIC_VECTOR (15 downto 0); -- Virtual address, P_MMU_ADDR(1):I/O address
-    P_DIN      : in  STD_LOGIC_VECTOR (15 downto 0)  -- B,L register (input)
-  );
+  Port ( P_CLK      : in  std_logic;
+         P_RESET    : in  std_logic;
+         P_EN       : in  std_logic;
+         P_IOW      : in  std_logic;
+         P_MMU_MR   : in  std_logic;
+         P_PR       : in  std_logic;                     -- Privilege mode
+         P_INT      : out std_logic;
+         P_MR       : out std_logic;
+         P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
+         P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
+         P_DIN      : in  std_logic_vector(15 downto 0)
+       );
 end component;
 
 
 begin
   -- アドレス違反用(将来実装)
   i_int_bit(10) <= '0';
-  --i_int_bit(11) <= '0';
 
   -- マイクロプログラムが発生する例外が 12 ～ 15 を使用
   i_int_bit(12) <= '0';
@@ -449,7 +448,7 @@ begin
          P_VR       => i_vr,
          P_HL       => i_hl,
          P_BT       => i_bt,
-			P_PR       => i_pr,
+         P_PR       => i_pr,
          P_INTR     => i_intr,
          P_STOP     => i_stop
   );
@@ -526,6 +525,21 @@ begin
          P_BUZ      => P_BUZ
   );
 
+  TAC_MMU1: TAC_MMU
+  port map (
+         P_CLK         => P_CLK0,
+         P_RESET       => i_reset,
+         P_EN          => i_en_mmu,
+         P_IOW         => i_iow,
+         P_MMU_MR      => i_cpu_mr,
+         P_PR          => i_pr,
+         P_INT         => i_int_bit(11),
+         P_MR          => i_mr,
+         P_ADDR        => i_addr,
+         P_MMU_ADDR    => i_cpu_addr, 
+         P_DIN         => i_dout_cpu
+  );
+
   -- RAM
   TAC_RAM1 : TAC_RAM
   port map (
@@ -576,7 +590,7 @@ begin
          P_RxD      => P_TEC_TXD
        );
 
-  TAC_RN1 : TAC_RN4020                    -- TeC
+  TAC_RN1 : TAC_RN4020                    -- Bluetooth
   port map (
          P_CLK      => P_CLK0,
          P_RESET    => i_reset,
@@ -671,19 +685,4 @@ begin
       P_STOP        => i_stop
     );
 	 
-  TAC_MMU1: TAC_MMU
-  port map (
-      P_CLK         => P_CLK0,
-      P_RESET       => i_reset,
-      P_EN          => i_en_mmu,
-      P_IOW         => i_iow,
-      P_MMU_MR      => i_cpu_mr,
-      P_PR          => i_pr,
-      P_INT         => i_int_bit(11),
-      P_MR          => i_mr,
-      P_ADDR        => i_addr,
-      P_MMU_ADDR    => i_cpu_addr, 
-      P_DIN         => i_dout_cpu
-    );
-
 end Behavioral;
