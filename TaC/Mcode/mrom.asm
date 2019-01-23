@@ -2,7 +2,7 @@
 ;;; TaC Micro Program Source Code
 ;;;    Tokuyama kousen Educational Computer 16bit Ver.
 ;;;
-;;; Copyright (C) 2002-2012 by
+;;; Copyright (C) 2002-2017 by
 ;;;                      Dept. of Computer Science and Electronic Engineering,
 ;;;                      Tokuyama College of Technology, JAPAN
 ;;;
@@ -21,6 +21,7 @@
 ;;; 
 ;;; mrom.asm : TaC
 ;;;
+;;; 2017.01.10        : in,outの割込み判定を NPRV -> NIOPR に変更
 ;;; 2013.04.04        : DIV,MOD で TMP のクリア忘れ訂正
 ;;; 2012.09.29 v2.0.0 : コメント追加、無駄な命令削除、完成
 ;;; 2012.09.19        : LD Rd,FLAG 命令を追加
@@ -167,21 +168,21 @@ callInd	alu(reg,PC),ld(OPR,PC)			; OPR<=PC
 	alu(dec2,SP),ld(SP,AR)			; AR<=(SP-=2)
 	alu(reg,Rx),ld(PC),bus(MEMW),j(fetch)	; PC<=Rx,MEM[AR]<=OPR
 ####IN####
-inDrt	bus(MEMR),jcc(NPRV,pverr)		; fetch 2'nd word
+inDrt	bus(MEMR),jcc(NIOPR,pverr)		; fetch 2'nd word
 	alu(reg,DR),ld(AR)			; AR<=DR
 	alu(inc2,PC),ld(PC),bus(IOR),j(in1)	; PC+=2,DR<=IO[AR]
-inInd	alu(reg,Rx),ld(AR),jcc(NPRV,pverr)	; AR<=Rx
+inInd	alu(reg,Rx),ld(AR),jcc(NIOPR,pverr)	; AR<=Rx
 	bus(IOR),j(in1)				; DR<=IO[AR]
-inBInd	alu(reg,Rx),ld(AR),jcc(NPRV,pverr)	; AR<=Rx
+inBInd	alu(reg,Rx),ld(AR),jcc(NIOPR,pverr)	; AR<=Rx
 	bus(IORB),j(in1)			; DR<=IO[AR](byte read)
 in1	alu(reg,DR),ld(Rd),j(fetch)		; Rd<=DR
 ####OUT####
-outDrt	bus(MEMR),jcc(NPRV,pverr)		; fetch 2'nd word
+outDrt	bus(MEMR),jcc(NIOPR,pverr)		; fetch 2'nd word
 	alu(reg,DR),ld(AR)			; AR<=DR
 	alu(inc2,PC),ld(PC),bus(IOW),j(fetch)	; PC+=2,IO[AR]<=OPR
-outInd	alu(reg,Rx),ld(AR),jcc(NPRV,pverr)	; AR<=Rx
+outInd	alu(reg,Rx),ld(AR),jcc(NIOPR,pverr)	; AR<=Rx
 	bus(IOW),j(fetch)			; IO[AR]<=OPR
-outBInd	alu(reg,Rx),ld(AR),jcc(NPRV,pverr)	; AR<=Rx
+outBInd	alu(reg,Rx),ld(AR),jcc(NIOPR,pverr)	; AR<=Rx
 	bus(IOWB),j(fetch)			; IO[AR]<=OPR(byte write)
 ####PUSH###
 psh	alu(dec2,SP),ld(SP,AR)			; AR<=(SP-=2)

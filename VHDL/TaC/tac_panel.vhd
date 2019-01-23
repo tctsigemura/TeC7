@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2016 by
+-- Copyright (C) 2002-2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,8 @@
 --
 -- TaC/tac_panel.vhd : TaC Console Panel
 --
+-- 2019.01.23           : P_RESET の fanout を減らす対策
+-- 2019.01.15           : RESETスイッチにもデバウンスを追加
 -- 2016.01.10           : 電源投入時 "RUN" 状態から始まるようにする
 -- 2016.01.07           : 未使用の出力 P_BUZ を '0' に接続
 -- 2013.07.17           : STOPスイッチの誤動作対応
@@ -100,11 +102,14 @@ architecture RTL of TAC_PANEL is
 
   -- signal
   signal i_func     : std_logic_vector( 3 downto 0); -- console function reg.
-  signal i_reset    : std_logic;                     -- inernal reset signal.
+  signal i_reset0   : std_logic;                     -- unique reset signal.
+  signal i_reset1   : std_logic;                     -- copy(internal).
+  signal i_reset2   : std_logic;                     -- copy(external).
   signal i_incaSw   : std_logic;                     -- increment address sw.
   signal i_decaSw   : std_logic;                     -- decrement address sw.
   signal i_setaSw   : std_logic;                     -- set address sw.
-  signal i_writeSw  : std_logic;                     -- write data sw
+  signal i_writeSw  : std_logic;                     -- write data sw.
+  signal i_rstSw    : std_logic;                     -- reset sw.
   signal i_runSw    : std_logic;                     -- run program
   signal i_rcwSw    : std_logic;                     -- rotate clock wise
   signal i_rccwSw   : std_logic;                     -- rotate c-clock wise
@@ -112,6 +117,10 @@ architecture RTL of TAC_PANEL is
   signal i_leds     : std_logic_vector( 8 downto 0); -- LED
   
   signal i_ladd     : std_logic;                     -- address msb
+  
+  attribute EQUIVALENT_REGISTER_REMOVAL : string;
+  attribute EQUIVALENT_REGISTER_REMOVAL of i_reset1 : signal is "NO";
+  attribute EQUIVALENT_REGISTER_REMOVAL of i_reset2 : signal is "NO";
   
   component TRSW
     port ( P_CLK    : in  std_logic;               -- CLK
@@ -143,16 +152,19 @@ begin  -- RTL
   end process;
     
   -- reset sw
+  rstSw   : TRSW port map (P_CLK0, '1', P_RESET_SW, i_smp, '0', i_rstSW  );
   process(P_CLK90)
   begin
     if (P_CLK90'event and P_CLK90='0') then
-      i_reset <= not (P_RESET_SW or (not P_RESET_IN));
+      i_reset0 <= not (i_rstSW or (not P_RESET_IN));
+      i_reset1 <= i_reset0;
+      i_reset2 <= i_reset0;
     end if;
   end process;
-  P_RESET <= i_reset;
+  P_RESET <= i_reset2;
 
   -- triggerd sw
-  runSw   : TRSW port map (P_CLK0, '1', P_RUN_SW,   i_smp, '1', i_runSw  );
+  runSw   : TRSW port map (P_CLK0, '1', P_RUN_SW,   i_smp, '0', i_runSw  );
   decaSw  : TRSW port map (P_CLK0, '1', P_DECA_SW,  i_smp, '1', i_decaSw );
   incaSw  : TRSW port map (P_CLK0, '1', P_INCA_SW,  i_smp, '1', i_incaSw );
   setaSw  : TRSW port map (P_CLK0, '1', P_SETA_SW,  i_smp, '0', i_setaSw );
@@ -204,9 +216,9 @@ begin  -- RTL
     "000001001" when others;  -- Memory Address
 
   -- write Flip Flop
-  process(i_reset, P_CLK0)
+  process(i_reset1, P_CLK0)
   begin
-    if (i_reset='0') then
+    if (i_reset1='0') then
       i_writeFF <= '0';
     elsif (P_CLK0'event and P_CLK0='1') then
       if (i_writeSw='1') then
@@ -226,7 +238,7 @@ begin  -- RTL
     "1111";
 
   -- Address Register
-  process(i_reset, P_CLK0)
+  process(i_reset1, P_CLK0)
   begin
     if (P_CLK0'event and P_CLK0='1') then
       if (i_setaSw='1') then                            -- 8bit shift
@@ -243,9 +255,9 @@ begin  -- RTL
   -- run Flip/Flop
   P_R_LED <= i_runFF;
   P_STOP  <= not i_runFF;
-  process(i_reset, P_CLK0)
+  process(i_reset1, P_CLK0)
   begin
-    if (i_reset='0') then
+    if (i_reset1='0') then
       i_runFF <= '1';
     elsif (P_CLK0'event and P_CLK0='1') then
       i_stopSw <= P_STOP_SW;                           -- clocked signal
@@ -264,9 +276,9 @@ begin  -- RTL
   -- (address, data) LED
   P_A_LED <= i_datReg(15 downto 8);
   P_D_LED <= i_datReg( 7 downto 0);
-  process(i_reset, P_CLK0)
+  process(i_reset1, P_CLK0)
   begin
-    if (i_reset='0') then
+    if (i_reset1='0') then
       i_datReg <= "0000000000000000";
     elsif (P_CLK0'event and P_CLK0='1') then
       if (P_AIN(7 downto 0)="11111000" and P_IR='1' and P_RW='1') then

@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011-2018 by
+-- Copyright (C) 2011-2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.01.22           : MMU を追加
 -- 2018.12.31           : CPU が停止中はタイマーも停止するように変更
 -- 2018.12.09           : PIO の出力を最大12ビット化
 -- 2018.07.13           : モードを3ビットに変更
@@ -130,9 +131,12 @@ signal i_ir             : std_logic;
 signal i_rw             : std_logic;
 signal i_bt             : std_logic;
 signal i_int_bit        : std_logic_vector(15 downto 0);
+signal i_pr             : std_logic;
+signal i_cpu_mr         : std_logic;
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
+signal i_cpu_addr       : std_logic_vector(15 downto 0);
 
 -- data bus
 signal i_dout_cpu       : std_logic_vector(15 downto 0);
@@ -159,6 +163,7 @@ signal i_en_rn          : std_logic;    -- RN4020
 signal i_en_pio         : std_logic;
 signal i_en_tmr0        : std_logic;
 signal i_en_tmr1        : std_logic;
+signal i_en_mmu         : std_logic;
 
 -- bus for DMA
 signal i_addr_dma       : std_logic_vector(14 downto 0);
@@ -197,6 +202,7 @@ component TAC_CPU
          P_VR       : out std_logic;                       -- Vector Req.
          P_HL       : out std_logic;                       -- Halt instruction
          P_BT       : out std_logic;                       -- Byte To
+         P_PR       : in  std_logic;                       -- Privilege Mode
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic                        -- Bus Request
        );
@@ -370,10 +376,25 @@ component TAC_RN4020 is
        );
 end component;
 
+component TAC_MMU is 
+  Port ( P_CLK      : in  std_logic;
+         P_RESET    : in  std_logic;
+         P_EN       : in  std_logic;
+         P_IOW      : in  std_logic;
+         P_MMU_MR   : in  std_logic;
+         P_PR       : in  std_logic;                     -- Privilege mode
+         P_INT      : out std_logic;
+         P_MR       : out std_logic;
+         P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
+         P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
+         P_DIN      : in  std_logic_vector(15 downto 0)
+       );
+end component;
+
+
 begin
   -- アドレス違反用(将来実装)
   i_int_bit(10) <= '0';
-  i_int_bit(11) <= '0';
 
   -- マイクロプログラムが発生する例外が 12 ～ 15 を使用
   i_int_bit(12) <= '0';
@@ -416,17 +437,18 @@ begin
          P_CLK90    => P_CLK90,
          P_RESET    => i_reset,
 
-         P_ADDR     => i_addr,
+         P_ADDR     => i_cpu_addr,
          P_DIN      => i_din_cpu,
          P_DOUT     => i_dout_cpu,
 
          P_RW       => i_rw,
          P_IR       => i_ir,
-         P_MR       => i_mr,
+         P_MR       => i_cpu_mr,
          P_LI       => i_li,
          P_VR       => i_vr,
          P_HL       => i_hl,
          P_BT       => i_bt,
+         P_PR       => i_pr,
          P_INTR     => i_intr,
          P_STOP     => i_stop
   );
@@ -440,6 +462,7 @@ begin
   i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10~17
   i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18~1f
   i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28~2f
+  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110")  else '0'; -- f0~f7
  
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
                i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
@@ -502,6 +525,21 @@ begin
          P_BUZ      => P_BUZ
   );
 
+  TAC_MMU1: TAC_MMU
+  port map (
+         P_CLK         => P_CLK0,
+         P_RESET       => i_reset,
+         P_EN          => i_en_mmu,
+         P_IOW         => i_iow,
+         P_MMU_MR      => i_cpu_mr,
+         P_PR          => i_pr,
+         P_INT         => i_int_bit(11),
+         P_MR          => i_mr,
+         P_ADDR        => i_addr,
+         P_MMU_ADDR    => i_cpu_addr, 
+         P_DIN         => i_dout_cpu
+  );
+
   -- RAM
   TAC_RAM1 : TAC_RAM
   port map (
@@ -552,7 +590,7 @@ begin
          P_RxD      => P_TEC_TXD
        );
 
-  TAC_RN1 : TAC_RN4020                    -- TeC
+  TAC_RN1 : TAC_RN4020                    -- Bluetooth
   port map (
          P_CLK      => P_CLK0,
          P_RESET    => i_reset,
@@ -646,5 +684,5 @@ begin
       P_DOUT        => i_dout_tmr1,
       P_STOP        => i_stop
     );
-
+	 
 end Behavioral;
