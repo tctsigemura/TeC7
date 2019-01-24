@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.02.02           : 空きI/Oアドレスのリードは 00H になるように変更
 -- 2019.01.27           : MMU を追加
 -- 2018.12.31           : CPU が停止中はタイマーも停止するように変更
 -- 2018.12.09           : PIO の出力を最大12ビット化
@@ -485,7 +486,8 @@ begin
                ("00000000" & i_dout_ps2) when (i_ir='1' and i_en_ps2='1') else
                i_dout_spi when (i_ir='1' and i_en_spi='1') else
                ("00000000" & i_dout_pio) when (i_ir='1' and i_en_pio='1') else
-               i_dout_intc;
+               i_dout_intc when (i_vr='1') else
+               "0000000000000000";
 
   -- TaC PANEL
   TAC_PANEL1 : TAC_PANEL
