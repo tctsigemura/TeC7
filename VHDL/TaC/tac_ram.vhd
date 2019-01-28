@@ -38,14 +38,14 @@ use ieee.std_logic_textio.all;
 entity TAC_RAM is
   port (
     P_CLK   : in  std_logic;
-	 -- for CPU
+    -- for CPU
     P_AIN1   : in  std_logic_vector(15 downto 0);
     P_DIN1   : in  std_logic_vector(15 downto 0);
     P_DOUT1  : out std_logic_vector(15 downto 0);
     P_RW1    : in  std_logic;
     P_MR1    : in  std_logic;
     P_BT     : in  std_logic;
-	 -- for DMA
+    -- for DMA
     P_AIN2   : in  std_logic_vector(14 downto 0);
     P_DIN2   : in  std_logic_vector(15 downto 0);
     P_DOUT2  : out std_logic_vector(15 downto 0);
@@ -109,7 +109,7 @@ architecture BEHAVE of TAC_RAM is
   signal high   : std_logic;
   signal low    : std_logic;
 
-	-- DMA
+  -- DMA
   signal csB0_dma   : std_logic;                      -- CS Bank0
   signal csB1_dma   : std_logic;                      -- CS Bank1
   signal csB2_dma   : std_logic;                      -- CS Bank2
@@ -140,7 +140,7 @@ architecture BEHAVE of TAC_RAM is
     weBI <= csBI and P_MR1 and P_RW1 and              -- RAM (FFE0H - FFFFH)
             (P_AIN1(11) and P_AIN1(10) and P_AIN1(9) and
              P_AIN1(8) and P_AIN1(7) and P_AIN1(6) and P_AIN1(5));
-	
+
     -- byte control
     high <= not (P_AIN1(0) and P_BT);
     low  <= not ((not P_AIN1(0)) and P_BT);
@@ -151,8 +151,8 @@ architecture BEHAVE of TAC_RAM is
         if (P_CLK'event and P_CLK='0') then
           if (weB0='1' and high='1') then
             memB0H(conv_integer(P_AIN1(14 downto 1))) := P_DIN1(15 downto 8);
-			 end if;
-			 memB0(15 downto 8) <= memB0H(conv_integer(P_AIN1(14 downto 1)));
+          end if;
+          memB0(15 downto 8) <= memB0H(conv_integer(P_AIN1(14 downto 1)));
         end if;
       end process;
 
@@ -162,19 +162,19 @@ architecture BEHAVE of TAC_RAM is
         if (P_CLK'event and P_CLK='0') then
           if (weB0='1' and low='1') then
             memB0L(conv_integer(P_AIN1(14 downto 1))) := P_DIN1(7 downto 0);
-			 end if;
-			 memB0(7 downto 0) <= memB0L(conv_integer(P_AIN1(14 downto 1)));
+          end if;
+          memB0(7 downto 0) <= memB0L(conv_integer(P_AIN1(14 downto 1)));
         end if;
       end process;
-		
+
     -- Bank1H(CPU)
     process(P_CLK)
       begin
         if (P_CLK'event and P_CLK='0') then
           if (weB1='1' and high='1') then
             memB1H(conv_integer(P_AIN1(13 downto 1))) := P_DIN1(15 downto 8);
-			 end if;
-			 memB1(15 downto 8) <= memB1H(conv_integer(P_AIN1(13 downto 1)));
+          end if;
+          memB1(15 downto 8) <= memB1H(conv_integer(P_AIN1(13 downto 1)));
         end if;
       end process;
 
@@ -184,8 +184,8 @@ architecture BEHAVE of TAC_RAM is
         if (P_CLK'event and P_CLK='0') then
           if (weB1='1' and low='1') then
             memB1L(conv_integer(P_AIN1(13 downto 1))) := P_DIN1(7 downto 0);
-			 end if;
-			 memB1(7 downto 0) <= memB1L(conv_integer(P_AIN1(13 downto 1)));
+          end if;
+          memB1(7 downto 0) <= memB1L(conv_integer(P_AIN1(13 downto 1)));
         end if;
       end process;
 
@@ -195,8 +195,8 @@ architecture BEHAVE of TAC_RAM is
         if (P_CLK'event and P_CLK='0') then
           if (weB2='1' and high='1') then
             memB2H(conv_integer(P_AIN1(12 downto 1))) := P_DIN1(15 downto 8);
-			 end if;
-			 memB2(15 downto 8) <= memB2H(conv_integer(P_AIN1(12 downto 1)));
+          end if;
+          memB2(15 downto 8) <= memB2H(conv_integer(P_AIN1(12 downto 1)));
         end if;
       end process;
 
@@ -206,8 +206,8 @@ architecture BEHAVE of TAC_RAM is
         if (P_CLK'event and P_CLK='0') then
           if (weB2='1' and low='1') then
             memB2L(conv_integer(P_AIN1(12 downto 1))) := P_DIN1(7 downto 0);
-			 end if;
-			 memB2( 7 downto 0) <= memB2L(conv_integer(P_AIN1(12 downto 1)));
+          end if;
+          memB2( 7 downto 0) <= memB2L(conv_integer(P_AIN1(12 downto 1)));
         end if;
       end process;
 
@@ -218,26 +218,26 @@ architecture BEHAVE of TAC_RAM is
           if (weBI='1') then
             memBIHL(conv_integer(P_AIN1(11 downto 1))) <= P_DIN1;
           end if;
-			 memBI <= memBIHL(conv_integer(P_AIN1(11 downto 1)));
+          memBI <= memBIHL(conv_integer(P_AIN1(11 downto 1)));
         end if;
       end process;
 
-	-- bank select(DMA)
-	csB0_dma <= (not P_AIN2(14));                      -- 0000H - 7FFFH
-	csB1_dma <=  P_AIN2(14) and (not P_AIN2(13));      -- 8000H - BFFFH
-	csB2_dma <=  P_AIN2(14) and P_AIN2(13)
-               and (not P_AIN2(12));                  -- C000H - DFFFH
+    -- bank select(DMA)
+    csB0_dma <= (not P_AIN2(14));                      -- 0000H - 7FFFH
+    csB1_dma <=  P_AIN2(14) and (not P_AIN2(13));      -- 8000H - BFFFH
+    csB2_dma <=  P_AIN2(14) and P_AIN2(13)
+                and (not P_AIN2(12));                  -- C000H - DFFFH
 
-   -- write control(DMA)
-	weB0_dma <= csB0_dma and P_MR2 and P_RW2;
-	weB1_dma <= csB1_dma and P_MR2 and P_RW2;
-	weB2_dma <= csB2_dma and P_MR2 and P_RW2;
+    -- write control(DMA)
+    weB0_dma <= csB0_dma and P_MR2 and P_RW2;
+    weB1_dma <= csB1_dma and P_MR2 and P_RW2;
+    weB2_dma <= csB2_dma and P_MR2 and P_RW2;
 
-	-- read control(DMA)
-	P_DOUT2 <= memB0_dma when (csB0_dma='1')
-			else memB1_dma when (csB1_dma='1')
-			else memB2_dma when (csB2_dma='1')
-			else "0000000000000000";
+    -- read control(DMA)
+    P_DOUT2 <= memB0_dma when (csB0_dma='1')
+            else memB1_dma when (csB1_dma='1')
+            else memB2_dma when (csB2_dma='1')
+            else "0000000000000000";
 
     -- Bank0H(DMA)
     process(P_CLK)
@@ -245,8 +245,8 @@ architecture BEHAVE of TAC_RAM is
         if (P_CLK'event and P_CLK='0') then
           if (weB0_dma='1') then
             memB0H(conv_integer(P_AIN2(13 downto 0))) := P_DIN2(15 downto 8);
- 			 end if;
-			 memB0_dma(15 downto 8) <= memB0H(conv_integer(P_AIN2(13 downto 0)));
+          end if;
+        memB0_dma(15 downto 8) <= memB0H(conv_integer(P_AIN2(13 downto 0)));
         end if;
       end process;
 
@@ -256,8 +256,8 @@ architecture BEHAVE of TAC_RAM is
         if (P_CLK'event and P_CLK='0') then
           if (weB0_dma='1') then
             memB0L(conv_integer(P_AIN2(13 downto 0))) := P_DIN2(7 downto 0);
- 			 end if;
-			 memB0_dma(7 downto 0) <= memB0L(conv_integer(P_AIN2(13 downto 0)));
+          end if;
+          memB0_dma(7 downto 0) <= memB0L(conv_integer(P_AIN2(13 downto 0)));
         end if;
       end process;
 
@@ -267,8 +267,8 @@ architecture BEHAVE of TAC_RAM is
         if (P_CLK'event and P_CLK='0') then
           if (weB1_dma='1') then
             memB1H(conv_integer(P_AIN2(12 downto 0))) := P_DIN2(15 downto 8);
-			 end if;
-			 memB1_dma(15 downto 8) <= memB1H(conv_integer(P_AIN2(12 downto 0)));
+          end if;
+          memB1_dma(15 downto 8) <= memB1H(conv_integer(P_AIN2(12 downto 0)));
         end if;
       end process;
 
@@ -278,8 +278,8 @@ architecture BEHAVE of TAC_RAM is
         if (P_CLK'event and P_CLK='0') then
           if (weB1_dma='1') then
             memB1L(conv_integer(P_AIN2(12 downto 0))) := P_DIN2(7 downto 0);
-			 end if;
-			 memB1_dma(7 downto 0) <= memB1L(conv_integer(P_AIN2(12 downto 0)));
+          end if;
+          memB1_dma(7 downto 0) <= memB1L(conv_integer(P_AIN2(12 downto 0)));
         end if;
       end process;
 
@@ -289,19 +289,19 @@ architecture BEHAVE of TAC_RAM is
         if (P_CLK'event and P_CLK='0') then
           if (weB2_dma='1') then
             memB2H(conv_integer(P_AIN2(11 downto 0))) := P_DIN2(15 downto 8);
-			 end if;
-			 memB2_dma(15 downto 8) <= memB2H(conv_integer(P_AIN2(11 downto 0)));
+          end if;
+          memB2_dma(15 downto 8) <= memB2H(conv_integer(P_AIN2(11 downto 0)));
         end if;
       end process;
-		
+
     -- Bank2L(DMA)
     process(P_CLK)
       begin
         if (P_CLK'event and P_CLK='0') then
           if (weB2_dma='1') then
             memB2L(conv_integer(P_AIN2(11 downto 0))) := P_DIN2(7 downto 0);
-			 end if;
-			 memB2_dma( 7 downto 0) <= memB2L(conv_integer(P_AIN2(11 downto 0)));
+          end if;
+          memB2_dma( 7 downto 0) <= memB2L(conv_integer(P_AIN2(11 downto 0)));
         end if;
       end process;
 end BEHAVE;
