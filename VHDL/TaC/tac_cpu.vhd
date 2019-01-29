@@ -21,6 +21,7 @@
 --
 -- TaC/tac_cpu.vhd : TaC CPU VHDL Source Code
 --
+-- 2019.01.29           : MPCの変化タイミングを5ns早く(MROMが間に合わないので）
 -- 2019.01.17           : I/O特権モード（隅田の成果）を取り込む
 -- 2016.01.08           : "DR の制御" 部分 warning 対応
 -- 2012.09.27           : TaC-CPU V2 対応完了
@@ -433,11 +434,11 @@ begin
     end case;
   end process;
 
-  process(P_CLK90, P_RESET)             -- MPC 部分
+  process(P_CLK0, P_RESET)              -- MPC 部分
   begin
     if (P_RESET='0') then
       I_MPC <= "00000000";
-    elsif (P_CLK90' event and P_CLK90='0') then
+    elsif (P_CLK0' event and P_CLK0='0') then
       case I_MPCLDAB is
         when "10"   => I_MPC <= M_JA;                -- JA("10")
         when "11"   => I_MPC <= I_DCODE;             -- Decode ROM DATA("11")
