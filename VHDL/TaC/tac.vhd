@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011-2018 by
+-- Copyright (C) 2011-2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -12,7 +12,7 @@
 -- 布することを無償で許諾する．
 --
 --   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
--- 関連機関・個人は本ソースコードに関して，その適用可能性も含ﾟて，いかなる保証
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
 -- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
 -- る損害に関しても，その責任を負わない．
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.01.27           : MMU を追加
 -- 2018.12.31           : CPU が停止中はタイマーも停止するように変更
 -- 2018.12.09           : PIO の出力を最大12ビット化
 -- 2016.01.07           : 川部版と統合
@@ -45,7 +46,7 @@ entity TaC is
          P_CLK90      : in   std_logic;                      -- 49.1520MHz 90'
          P_CLK_VGA    : in   std_logic;                      -- 25.1221MHz
          P_MODE       : in   std_logic_vector(1 downto 0);   -- 0:TeC,1:TaC
-         P_RESET      : in   std_logic;                      --   2,3:DEMO1,2
+         P_RESET      : in   std_logic;                      -- 2,3:DEMO1,2
 
          -- CONSOLE(INPUT)
          P_DATA_SW   : in    std_logic_vector(7 downto 0);   -- Data  SW
@@ -127,9 +128,12 @@ signal i_rw             : std_logic;
 signal i_bt             : std_logic;
 signal i_int            : std_logic;
 signal i_int_bit        : std_logic_vector(15 downto 0);
+signal i_pr             : std_logic;
+signal i_cpu_mr         : std_logic;
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
+signal i_cpu_addr       : std_logic_vector(15 downto 0);
 
 -- data bus
 signal i_dout_cpu       : std_logic_vector(15 downto 0);
@@ -155,6 +159,7 @@ signal i_en_pio         : std_logic;
 signal i_en_ps2         : std_logic;
 signal i_en_tmr0        : std_logic;
 signal i_en_tmr1        : std_logic;
+signal i_en_mmu         : std_logic;
 signal i_en_vga         : std_logic;
 signal i_vga_we         : std_logic;
 
@@ -195,6 +200,7 @@ component TAC_CPU
          P_VR       : out std_logic;                       -- Vector Req.
          P_HL       : out std_logic;                       -- Halt instruction
          P_BT       : out std_logic;                       -- Byte To
+         P_PR       : out std_logic;                       -- Privilege Mode
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic                        -- Bus Request
        );
@@ -303,15 +309,15 @@ component TAC_SIO
 end component;
 
 component TAC_SPI
-  Port ( P_CLK     : in  STD_LOGIC;
-         P_RESET   : in  STD_LOGIC;
-         P_EN      : in  STD_LOGIC;
-         P_IOR     : in  STD_LOGIC;
-         P_IOW     : in  STD_LOGIC;
-	     P_INT     : out std_logic;
-         P_ADDR : in  std_logic_vector (1 downto 0);
-         P_DIN : in  std_logic_vector (15 downto 0);
-         P_DOUT : out  std_logic_vector (15 downto 0);
+  Port ( P_CLK     : in  std_logic;
+         P_RESET   : in  std_logic;
+         P_EN      : in  std_logic;
+         P_IOR     : in  std_logic;
+         P_IOW     : in  std_logic;
+         P_INT     : out std_logic;
+         P_ADDR    : in  std_logic_vector (1 downto 0);
+         P_DIN     : in  std_logic_vector (15 downto 0);
+         P_DOUT    : out  std_logic_vector (15 downto 0);
          
          P_ADDR_DMA : out  std_logic_vector (14 downto 0);
          P_DIN_DMA  : in  std_logic_vector (15 downto 0);
@@ -319,30 +325,30 @@ component TAC_SPI
          P_RW_DMA   : out std_logic;
          P_MR_DMA   : out std_logic;
          
-         P_SCLK    : out STD_LOGIC;
-         P_DI      : in  STD_LOGIC;
-         P_DO      : out STD_LOGIC;
-         P_CS      : out STD_LOGIC;
-         P_ACC     : out STD_LOGIC
+         P_SCLK    : out std_logic;
+         P_DI      : in  std_logic;
+         P_DO      : out std_logic;
+         P_CS      : out std_logic;
+         P_ACC     : out std_logic
        );
 end component;
 
 component TAC_PIO
-    Port ( P_CLK : in  STD_LOGIC;
-           P_RESET : in  STD_LOGIC;
-           P_EN : in  STD_LOGIC;
-           P_IOR : in  STD_LOGIC;
-           P_IOW : in  STD_LOGIC;
-           P_INT : out  STD_LOGIC;
-           P_ADDR : in  STD_LOGIC_VECTOR (1 downto 0);
-           P_DIN : in  STD_LOGIC_VECTOR (7 downto 0);
-           P_DOUT : out  STD_LOGIC_VECTOR (7 downto 0);
+    Port ( P_CLK     : in  std_logic;
+           P_RESET   : in  std_logic;
+           P_EN      : in  std_logic;
+           P_IOR     : in  std_logic;
+           P_IOW     : in  std_logic;
+           P_INT     : out  std_logic;
+           P_ADDR    : in  std_logic_vector (1 downto 0);
+           P_DIN     : in  std_logic_vector (7 downto 0);
+           P_DOUT    : out  std_logic_vector (7 downto 0);
               
-           P_ADC_REF : out  STD_LOGIC_VECTOR(7 downto 0);
-           P_EXT_IN  : in   STD_LOGIC_VECTOR(7 downto 0);
-           P_EXT_OUT : out  STD_LOGIC_VECTOR(11 downto 0);
-           P_EXT_MODE: out  STD_LOGIC;
-           P_MODE    : in   STD_LOGIC_VECTOR(1 downto 0)
+           P_ADC_REF : out  std_logic_vector(7 downto 0);
+           P_EXT_IN  : in   std_logic_vector(7 downto 0);
+           P_EXT_OUT : out  std_logic_vector(11 downto 0);
+           P_EXT_MODE: out  std_logic;
+           P_MODE    : in   std_logic_vector(1 downto 0)
          );
 end component;
 
@@ -379,6 +385,21 @@ component TAC_TIMER is
          );
 end component;
 
+component TAC_MMU is 
+  Port ( P_CLK      : in  std_logic;
+         P_RESET    : in  std_logic;
+         P_EN       : in  std_logic;
+         P_IOW      : in  std_logic;
+         P_MMU_MR   : in  std_logic;
+         P_PR       : in  std_logic;                     -- Privilege mode
+         P_INT      : out std_logic;
+         P_MR       : out std_logic;
+         P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
+         P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
+         P_DIN      : in  std_logic_vector(15 downto 0)
+       );
+end component;
+
 begin
   -- 未実装のため
   i_int_bit(2)  <= '0';  -- INT(使用予定なし)
@@ -386,7 +407,6 @@ begin
 
   -- アドレス違反用(将来実装)
   i_int_bit(10) <= '0';
-  i_int_bit(11) <= '0';
 
   -- マイクロプログラムが発生する例外が 12 ～ 15 を使用
   i_int_bit(12) <= '0';
@@ -428,17 +448,18 @@ begin
          P_CLK90    => P_CLK90,
          P_RESET    => i_reset,
 
-         P_ADDR     => i_addr,
+         P_ADDR     => i_cpu_addr,
          P_DIN      => i_din_cpu,
          P_DOUT     => i_dout_cpu,
 
          P_RW       => i_rw,
          P_IR       => i_ir,
-         P_MR       => i_mr,
+         P_MR       => i_cpu_mr,
          P_LI       => i_li,
          P_VR       => i_vr,
          P_HL       => i_hl,
          P_BT       => i_bt,
+         P_PR       => i_pr,
          P_INTR     => i_intr,
          P_STOP     => i_stop
   );
@@ -451,6 +472,7 @@ begin
   i_en_ps2    <= '1' when (i_addr(7 downto 2)="000011") else '0'; -- 0c~0f
   i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10~17
   i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18~1f
+  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110")  else '0'; -- f0~f7
   i_en_vga    <= '1' when (i_addr(15 downto 12)="1110") else '0'; -- e000~efff
   i_vga_we    <= '1' when (i_en_vga and i_mr and i_rw)='1' else '0';
  
@@ -513,6 +535,21 @@ begin
          P_PC_LED   => P_PC_LED,
          P_MM_LED   => P_MM_LED,
          P_BUZ      => P_BUZ
+  );
+
+  TAC_MMU1: TAC_MMU
+  port map (
+         P_CLK         => P_CLK0,
+         P_RESET       => i_reset,
+         P_EN          => i_en_mmu,
+         P_IOW         => i_iow,
+         P_MMU_MR      => i_cpu_mr,
+         P_PR          => i_pr,
+         P_INT         => i_int_bit(11),
+         P_MR          => i_mr,
+         P_ADDR        => i_addr,
+         P_MMU_ADDR    => i_cpu_addr, 
+         P_DIN         => i_dout_cpu
   );
 
   -- RAM
@@ -615,7 +652,7 @@ begin
   TAC_PS21: TAC_PS2
   port map (
       P_CLK         => P_CLK0,
-      P_RESET       => i_reset,        
+      P_RESET       => i_reset,
       P_IOW         => i_iow,
       P_IOR         => i_ior,    
       P_INT_W       => i_int_bit(7),

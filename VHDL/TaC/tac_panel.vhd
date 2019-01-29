@@ -21,6 +21,7 @@
 --
 -- TaC/tac_panel.vhd : TaC Console Panel
 --
+-- 2019.01.29           : MPCの変化タイミングを5ns早く(MROMが間に合わないので）
 -- 2019.01.15           : RESETスイッチにもデバウンスを追加
 -- 2016.01.10           : 電源投入時 "RUN" 状態から始まるようにする
 -- 2016.01.07           : 未使用の出力 P_BUZ を '0' に接続
@@ -146,9 +147,9 @@ begin  -- RTL
     
   -- reset sw
   rstSw   : TRSW port map (P_CLK0, '1', P_RESET_SW, i_smp, '0', i_rstSW  );
-  process(P_CLK90)
+  process(P_CLK0)
   begin
-    if (P_CLK90'event and P_CLK90='0') then
+    if (P_CLK0'event and P_CLK0='0') then
       i_reset <= not (i_rstSW or (not P_RESET_IN));
     end if;
   end process;
