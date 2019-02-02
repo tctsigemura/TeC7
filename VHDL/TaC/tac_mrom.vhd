@@ -36,7 +36,7 @@ use ieee.std_logic_textio.all;
 entity TAC_MROM is
   port (
     P_CLK   : in  std_logic;
-	 P_RESET : in  std_logic;
+    P_RESET : in  std_logic;
     P_AIN   : in  std_logic_vector( 7 downto 0);
     P_DOUT  : out std_logic_vector(31 downto 0)
   );
@@ -64,7 +64,7 @@ architecture BEHAVE of TAC_MROM is
     process(P_CLK, P_RESET)
       begin
         if (P_RESET='0') then   -- make distribute RAM
-		    P_DOUT <= "00000000000000000000000000000000";
+          P_DOUT <= "00000000000000000000000000000000";
         elsif (P_CLK'event and P_CLK='1') then
           P_DOUT <= mem( conv_integer(P_AIN) );
         end if;

@@ -36,7 +36,7 @@ use ieee.std_logic_textio.all;
 entity TAC_DROM is
   port (
     P_CLK   : in  std_logic;
-	 P_RESET : in  std_logic;
+    P_RESET : in  std_logic;
     P_AIN   : in  std_logic_vector(8 downto 0);
     P_DOUT  : out std_logic_vector(7 downto 0)
   );
@@ -63,8 +63,8 @@ architecture BEHAVE of TAC_DROM is
   begin
     process(P_RESET, P_CLK)
       begin
-		  if (P_RESET='0') then       -- make distribute ram
-		    P_DOUT <= "00000000";
+        if (P_RESET='0') then       -- make distribute ram
+          P_DOUT <= "00000000";
         elsif (P_CLK'event and P_CLK='1') then
           P_DOUT <= mem( conv_integer(P_AIN ) );
         end if;
