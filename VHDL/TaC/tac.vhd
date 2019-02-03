@@ -21,14 +21,15 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
--- 2019.02.02           : 空きI/Oアドレスのリードは 00H になるように変更
--- 2019.01.27           : MMU を追加
--- 2018.12.31           : CPU が停止中はタイマーも停止するように変更
--- 2018.12.09           : PIO の出力を最大12ビット化
--- 2016.01.07           : 川部版と統合
--- 2012.09.26           : TaC-CUP V2 対応完了
--- 2012.01.22           : TeC とのインタフェースを削除
--- 2011.09.18           : 新規作成
+-- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
+-- 2019.02.02 : 空きI/Oアドレスのリードは 00H になるように変更
+-- 2019.01.27 : MMU を追加
+-- 2018.12.31 : CPU が停止中はタイマーも停止するように変更
+-- 2018.12.09 : PIO の出力を最大12ビット化
+-- 2016.01.07 : 川部版と統合
+-- 2012.09.26 : TaC-CUP V2 対応完了
+-- 2012.01.22 : TeC とのインタフェースを削除
+-- 2011.09.18 : 新規作成
 --
 -- $Id
 --
@@ -95,6 +96,15 @@ entity TaC is
          P_SPI_CS    : out   std_logic;
          P_ACC_LED   : out   std_logic;                      -- access led
          
+         -- TeC CONSOLE
+         P_TEC_DLED : in std_logic_vector(7 downto 0);
+         P_TEC_DSW  : out std_logic_vector(7 downto 0);
+         P_TEC_FNC  : out std_logic_vector(7 downto 0);
+         P_TEC_CTL  : out std_logic_vector(2 downto 0);
+         P_TEC_ENA  : out std_logic;
+         P_TEC_RESET: in std_logic;
+         P_TEC_SETA : in std_logic;
+
          -- PS/2
          P_PS2_CLK   : inout std_logic;
          P_PS2_DAT   : inout std_logic;
@@ -150,6 +160,7 @@ signal i_dout_ps2       : std_logic_vector( 7 downto 0);
 signal i_dout_pio       : std_logic_vector( 7 downto 0);
 signal i_dout_tmr0      : std_logic_vector(15 downto 0);
 signal i_dout_tmr1      : std_logic_vector(15 downto 0);
+signal i_dout_tec       : std_logic_vector( 7 downto 0);
 
 -- address decoder
 signal i_ior            : std_logic;
@@ -160,6 +171,7 @@ signal i_en_pio         : std_logic;
 signal i_en_ps2         : std_logic;
 signal i_en_tmr0        : std_logic;
 signal i_en_tmr1        : std_logic;
+signal i_en_tec         : std_logic;
 signal i_en_mmu         : std_logic;
 signal i_en_vga         : std_logic;
 signal i_vga_we         : std_logic;
@@ -401,6 +413,26 @@ component TAC_MMU is
        );
 end component;
 
+component TAC_TEC is
+  Port ( P_CLK      : in  std_logic;
+         P_RESET    : in  std_logic;
+         P_EN       : in  std_logic;
+         P_IOR      : in  std_logic;
+         P_IOW      : in  std_logic;
+         P_ADDR     : in  std_logic_vector (1 downto 0);
+         P_DIN      : in  std_logic_vector (7 downto 0);
+         P_DOUT     : out std_logic_vector (7 downto 0);
+
+         P_TEC_DLED : in std_logic_vector(7 downto 0);
+         P_TEC_DSW  : out std_logic_vector(7 downto 0);
+         P_TEC_FNC  : out std_logic_vector(7 downto 0);
+         P_TEC_CTL  : out std_logic_vector(2 downto 0);
+         P_TEC_ENA  : out std_logic;
+         P_TEC_RESET: in std_logic;
+         P_TEC_SETA : in std_logic
+       );
+end component;
+
 begin
   -- 未実装のため
   i_int_bit(2)  <= '0';  -- INT(使用予定なし)
@@ -473,6 +505,7 @@ begin
   i_en_ps2    <= '1' when (i_addr(7 downto 2)="000011") else '0'; -- 0c~0f
   i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10~17
   i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18~1f
+  i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30~37
   i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110")  else '0'; -- f0~f7
   i_en_vga    <= '1' when (i_addr(15 downto 12)="1110") else '0'; -- e000~efff
   i_vga_we    <= '1' when (i_en_vga and i_mr and i_rw)='1' else '0';
@@ -486,6 +519,7 @@ begin
                ("00000000" & i_dout_ps2) when (i_ir='1' and i_en_ps2='1') else
                i_dout_spi when (i_ir='1' and i_en_spi='1') else
                ("00000000" & i_dout_pio) when (i_ir='1' and i_en_pio='1') else
+               ("00000000" & i_dout_tec) when (i_ir='1' and i_en_tec='1') else
                i_dout_intc when (i_vr='1') else
                "0000000000000000";
 
@@ -696,6 +730,26 @@ begin
       P_DIN         => i_dout_cpu,
       P_DOUT        => i_dout_tmr1,
       P_STOP        => i_stop
+    );
+
+  TAC_TEC1: TAC_TEC
+  port map (
+      P_CLK         => P_CLK0,
+      P_RESET       => i_reset,
+      P_EN          => i_en_tec,
+      P_IOR         => i_ior,
+      P_IOW         => i_iow,
+      P_ADDR        => i_addr(2 downto 1),
+      P_DIN         => i_dout_cpu(7 downto 0),
+      P_DOUT        => i_dout_tec,
+
+      P_TEC_DLED    => P_TEC_DLED,
+      P_TEC_DSW     => P_TEC_DSW,
+      P_TEC_FNC     => P_TEC_FNC,
+      P_TEC_CTL     => P_TEC_CTL,
+      P_TEC_ENA     => P_TEC_ENA,
+      P_TEC_RESET   => P_TEC_RESET,
+      P_TEC_SETA    => P_TEC_SETA
     );
 
 end Behavioral;
