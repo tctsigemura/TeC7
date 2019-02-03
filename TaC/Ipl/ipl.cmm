@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2016 by
+ * Copyright (C) 2009-2019 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,7 @@
 /*
  * ipl.cmm : C-- 言語版の TaC IPL
  *
+ * 2019.02.03 v3.1.0    : TeCモードでSTOPとRESETの同時押しでTacOSを起動する
  * 2016.01.10 v3.0.1    : メッセージ表示後止まるように変更
  * 2016.01.07 v3.0.0    : 川部版と統合
  * 2012.09.13 v2.0.0    : TaC-CPU V2 対応、"kernel.bin"ファイルをブートする
@@ -45,48 +46,8 @@
 #include "console.h"
 #include "loader.h"
 
-/*
-// 例外処理の共通部分
-void err(int pc, char[] msg) {
-  putstr("\npanic : ");
-  putstr(msg);
-  putstr(" at ");
-  _puthex(pc);
-  halt();
-}
-
-// ゼロ除算例外
-void zerr() {
-  err(reta(), "Zero divide");
-}
-
-// 特権保護例外
-void perr() {
-  err(reta(), "Privilege violation");
-}
-
-// 不正命令
-void oerr() {
-  err(reta(), "Illegal instruction");
-}
-
-// ゼロ除算例外
-void serr() {
-  err(reta(), "Illegal SVC");
-}
-*/
-
 // ここからスタート
 public void main() {
-/*
-  // 例外発生に備える
-  int[] vect = _ItoA(0xffe0);
-  vect[12] = addrof(zerr);     // ゼロ除算
-  vect[13] = addrof(perr);     // 特権違反
-  vect[14] = addrof(oerr);     // 未定義命令
-  vect[15] = addrof(serr);     // SVC
-*/
-
   consInit();                  // コンソールドライバ初期化
 
   putstr("TaC Initial Program Loader Ver.");
@@ -95,12 +56,18 @@ public void main() {
   putstr("(build date : ");
   putstr( DATE );
   putstr(")\n");
-  putstr("Copyright(c) 2009-2016 Tokuyama College of Technology\n");
+  putstr("Copyright(c) 2009-2019 Tokuyama College of Technology\n");
   putstr("All rights reserved.\n\n");
-  putstr("Push \"RUN\" to boot the kernel\n");
-  halt();
-  putstr("Load kernel ... ");
 
+  if (in(0x1e)==1) {           // TaC Mode
+    putstr("Push \"RUN\" to boot the kernel\n");
+    halt();
+  } else {                     // TeC, DEMO Mode
+    putstr("Push \"SETA\"+\"RESET\" to boot the kernel\n");
+    for (;in(0x36)!=3;) {
+    }
+  }
+  putstr("Load kernel ... ");
   initLoader();                         // カーネルローダ初期化
   int addr = load("KERNEL  ", "BIN");   // "KERNEL.BIN" をロード
 
