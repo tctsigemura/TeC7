@@ -2,7 +2,7 @@
 # TaC IPL Source Code
 #    Tokuyama kousen Educational Computer 16 bit Version
 #
-# Copyright (C) 2009-2016 by
+# Copyright (C) 2009-2019 by
 #                      Dept. of Computer Science and Electronic Engineering,
 #                      Tokuyama College of Technology, JAPAN
 #
@@ -19,6 +19,7 @@
 #
 # Makefile : IPL の makefile
 #
+# 2019.02.03 Ver.3.1.0 : cm2e を使用するように変更
 # 2016.01.07 Ver.3.0.0 : 川部版と統合
 # 2016.01.07           : c-- に -K オプション追加
 # 2012.09.25           : objbin-- がメモリマップを出力するように変更
@@ -39,17 +40,14 @@ VRAM=0xe000           # 0xe000 - 0xefff : V-RAM
 TEXT=0xf000           # 0xf000 - 0xffdf : ipl rom
 
 OBJS=crt0.o ipl.o loader.o console.o mmcspi.o
-#CPP=llvm-cpp-4.2 -std=c99		# プリプロセッサ
-CPP=cc -E -std=c99 -		# プリプロセッサ
 UTILDIR=../../Util
 .SUFFIXES: .o .cmm .s
 
 .s.o:
 	as-- $*.s
 
-.cmm.s:
-	${CPP} -DDATE=${DATE} -DVER=${VER} -DSIO \
-	-DVRAM=${VRAM} < $*.cmm | c-- -K > $*.s
+.cmm.o:
+	cm2e -c -K -DDATE=${DATE} -DVER=${VER} -DSIO -DVRAM=${VRAM} $*.cmm
 
 all : tac_ram.txt
 
