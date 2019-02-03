@@ -2,7 +2,7 @@
 # TaC IPL Source Code
 #    Tokuyama kousen Educational Computer 16 bit Version
 #
-# Copyright (C) 2009-2017 by
+# Copyright (C) 2009-2019 by
 #                      Dept. of Computer Science and Electronic Engineering,
 #                      Tokuyama College of Technology, JAPAN
 #
@@ -19,6 +19,9 @@
 #
 # Makefile : IPL の makefile
 #
+# 2019.02.03 v4.2.0    : TeCモードでSETAとRESETの同時押しでTacOSを起動する
+# 2018.10.26 v4.1.1    : DEMO1モードでTaCは単純なRN<=>FT中継機能
+#                        DEMO2とリセットモードTaCはポート操作もできる中継機能
 # 2018.07.17 Ver.4.1.0 : BSSを広くする, RN4020のリセットモード追加
 # 2017.05.09 Ver.4.0.0 : TeC7b に対応, cm2e を使用するように変更
 # 2016.01.07 Ver.3.0.0 : 川部版と統合

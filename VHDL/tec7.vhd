@@ -19,6 +19,7 @@
 --
 -- tec7.vhd : TeC7 Top Level
 --
+-- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
 -- 2018.12.08 : EXT_IN(7 downto 4) を inout にし出力を最大12ビットに変更
 -- 2018.07.13 : モードを3ビットに変更
 -- 2017.05.09 : TeC7b 用に VGA, PS/2 削除，RN4020 関連追加
@@ -133,6 +134,12 @@ signal i_rn_cmd      : std_logic;
 signal i_rn_cts      : std_logic;
 signal i_rn_hw       : std_logic;
 signal i_rn_rts      : std_logic;
+
+-- TeC CONSOLE
+signal i_tec_dsw     : std_logic_vector(7 downto 0);
+signal i_tec_fnc     : std_logic_vector(7 downto 0);
+signal i_tec_ctl     : std_logic_vector(2 downto 0);
+signal i_tec_ena     : std_logic;
 
 component IBUFG
     port ( I         : in     std_logic;
@@ -283,7 +290,16 @@ component TAC
            P_RN4020_CMD : out std_logic;
            P_RN4020_SW  : out std_logic;
            P_RN4020_RX  : out std_logic;
-           P_RN4020_TX  : in std_logic
+           P_RN4020_TX  : in std_logic;
+
+           -- TeC CONSOLE
+           P_TEC_DLED : in std_logic_vector(7 downto 0);
+           P_TEC_DSW  : out std_logic_vector(7 downto 0);
+           P_TEC_FNC  : out std_logic_vector(7 downto 0);
+           P_TEC_CTL  : out std_logic_vector(2 downto 0);
+           P_TEC_ENA  : out std_logic;
+           P_TEC_RESET: in std_logic;
+           P_TEC_SETA : in std_logic
     );
 end component;
 
@@ -349,18 +365,20 @@ begin
   -- INPUT
   i_in(27 downto 24) <= EXT_INOUT;
   i_in(23 downto 20) <= EXT_IN;
-  i_in(19 downto 12) <= DATA_SW;
-  i_in(11) <= RESET_SW;
-  i_in(10) <= SETA_SW;
-  i_in(9) <= INCA_SW;
-  i_in(8) <= DECA_SW;
-  i_in(7) <= WRITE_SW;
-  i_in(6) <= STEP_SW;
-  i_in(5) <= BREAK_SW;
-  i_in(4) <= STOP_SW;
-  i_in(3) <= RUN_SW;
-  i_in(2) <= RIGHT_SW;
-  i_in(1) <= LEFT_SW;
+
+  i_in(19 downto 12) <= DATA_SW when i_tec_ena='0' else i_tec_dsw;
+  i_in(11) <= RESET_SW when i_tec_ena='0' else i_tec_ctl(2);
+  i_in(10) <= SETA_SW when i_tec_ena='0' else i_tec_fnc(3);
+  i_in(9) <= INCA_SW when i_tec_ena='0' else i_tec_fnc(2);
+  i_in(8) <= DECA_SW when i_tec_ena='0' else i_tec_fnc(1);
+  i_in(7) <= WRITE_SW when i_tec_ena='0' else i_tec_fnc(0);
+  i_in(6) <= STEP_SW when i_tec_ena='0' else i_tec_fnc(6);
+  i_in(5) <= BREAK_SW when i_tec_ena='0' else i_tec_fnc(7);
+  i_in(4) <= STOP_SW when i_tec_ena='0' else i_tec_fnc(4);
+  i_in(3) <= RUN_SW when i_tec_ena='0' else i_tec_fnc(5);
+  i_in(2) <= RIGHT_SW when i_tec_ena='0' else i_tec_ctl(0);
+  i_in(1) <= LEFT_SW when i_tec_ena='0' else i_tec_ctl(1);
+
   i_in_tec <= "000000000000000000000000000" when i_mode="001" else i_in;
   i_in_tac <= i_in when i_mode="001" else "000000000000000000000000000";
   
@@ -383,7 +401,7 @@ begin
   SPK_OUT <= i_out(1);
   i_out <= i_out_tac when i_mode="001" else i_out_tec;
 
-  TEC1     : TEC
+  TEC1 : TEC
     port map(
          P_RESET    => i_reset_tec,                         -- CLK が有効
          P_MODE     => i_mode(1 downto 0),                  -- 0:TeC 1:TaC
@@ -493,7 +511,16 @@ begin
          P_RN4020_CMD => i_rn_cmd,
          P_RN4020_SW  => i_rn_sw,
          P_RN4020_RX  => i_rn_rx,
-         P_RN4020_TX  => i_rn_tx
+         P_RN4020_TX  => i_rn_tx,
+
+        -- TeC CONSOLE
+         P_TEC_DLED => i_out_tec(19 downto 12),
+         P_TEC_DSW  => i_tec_dsw,
+         P_TEC_FNC  => i_tec_fnc,
+         P_TEC_CTL  => i_tec_ctl,
+         P_TEC_ENA  => i_tec_ena,
+         P_TEC_RESET=> RESET_SW,
+         P_TEC_SETA => SETA_SW
     );
 
   end Behavioral;
