@@ -22,6 +22,7 @@
 /*
  * ipl.cmm : C-- 言語版の TaC IPL
  *
+ * 2019.02.10           : マイクロSDの挿入を確認してからブートする
  * 2019.02.03 v4.2.0    : TeCモードでSETAとRESETの同時押しでTacOSを起動する
  * 2018.10.26 v4.1.1    : DEMO1モードでTaCは単純なRN<=>FT中継機能
  *                        DEMO2とリセットモードTaCはポート操作もできる中継機能
@@ -66,24 +67,37 @@ void runOS() {
 
 // TeC モードでは TaC が通信(TeC<=>FT232RL)を中継
 void tecMode() {
-  while(in(0x36)!=3) {          // SETA+RESET
-    if ((in(0x0a) & 0x40)!=0) { // FT232RL
+  for (;;) {
+    if (in(0x36)==3) {                                 // SETA+RESETが押され
+      if ((in(0x10)&0x01)==0x00) {                     //   カードが挿入済み
+        break;                                         //     TacOSを起動する
+      }
+      putstr("boot error\n");                          // 時間稼ぎの意味もある
+      while (in(0x36)!=0) {}                           // SETA+RESETが離された
+      putstr("Please insert the card.\n");             // 時間稼ぎの意味もある
+    }
+    if ((in(0x0a) & 0x40)!=0) {                        // FT232RL
       int c = in(0x08);
       putTeC(chr(c));
     }
-    if ((in(0x0e) & 0x40)!=0) { // TeC
+    if ((in(0x0e) & 0x40)!=0) {                        // TeC
       int c = in(0x0c);
       putFT232(chr(c));
     }
   }
-  runOS();
+  runOS();                                             // TacOSを起動する
 }
 
 // TaC モードでは TaC に tacOS をロードし全てを任せる
 void tacMode() {
-  putstr("Push \"RUN\" to boot the kernel\n");
-  halt();
-  runOS();
+  while ((in(0x10)&0x01)==0x01) {                      // カード未挿入なら
+    putstr("Please insert the card.\n");               //   メッセージを
+    putstr("Push \"RESET\" to boot the kernel\n");     //     表示して
+    while (true) {
+      halt();                                          //   停止する
+    }
+  }
+  runOS();                                             // TacOSを起動する
 }
 
 // DEMO1 モードでは TaC が通信(RN4020<=>FT232RL)を中継

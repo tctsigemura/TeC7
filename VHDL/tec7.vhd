@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2018 by
+-- Copyright (C) 2002-2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -19,6 +19,7 @@
 --
 -- tec7.vhd : TeC7 Top Level
 --
+-- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
 -- 2018.12.08 : EXT_IN(7 downto 4) を inout にし出力を最大12ビットに変更
 -- 2018.07.13 : モードを3ビットに変更
@@ -79,6 +80,7 @@ entity TeC7 is
            SPI_DOUT  : out  std_logic;
            SPI_CS    : out  std_logic;
            ACC_LED   : out  std_logic;
+           SD_CD     : in   std_logic;
 
            -- FT232RL
            FT232RL_TXD : in   std_logic;
@@ -274,6 +276,7 @@ component TAC
            P_SPI_DOUT : out  std_logic;
            P_SPI_CS   : out  std_logic;
            P_ACC_LED  : out  std_logic;
+           P_SD_CD    : in   std_logic;
 
            -- TEC
            P_TEC_RXD  : out  std_logic;                      -- to TeC SIO RXD
@@ -495,6 +498,7 @@ begin
          P_SPI_DOUT => SPI_DOUT,
          P_SPI_CS   => SPI_CS,
          P_ACC_LED  => ACC_LED,
+         P_SD_CD    => SD_CD,
 
          -- TEC
          P_TEC_RXD  => i_tec_rxd,                       -- SIO Receive

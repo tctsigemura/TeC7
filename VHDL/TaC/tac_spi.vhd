@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011 - 2016 by
+-- Copyright (C) 2011 - 2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac_spi.vhd : TaC SPI
 --
+-- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2016.01.10 : 予期しない割込が発生するバグを修正(エッジトリガーの処理追加)
 -- 2016.01.08 : ior_blk_addr 削除(warning 対策)
 -- 2014.02.24 : DMA機能作成(川部卒研)
@@ -58,7 +59,8 @@ entity TAC_SPI is
          P_DI      : in  std_logic;
          P_DO      : out std_logic;
          P_CS      : out std_logic;
-         P_ACC    : out std_logic
+         P_ACC     : out std_logic;
+         P_CD      : in std_logic
       );
 end TAC_SPI;
 
@@ -247,7 +249,7 @@ begin
   process(IOR_SPI_Sta,IOR_Mem_Addr,Idle,Error,Memory_Addr,Block_Addr,P_ADDR)
   begin
     if (IOR_SPI_Sta = '1') then
-      P_DOUT <= "00000000" & Idle & Error & "000000";   -- ステータスを出力
+      P_DOUT <= "00000000" & Idle & Error & "00000" & P_CD; -- ステータスを出力
     elsif (IOR_Mem_Addr = '1') then
       P_DOUT <= Memory_Addr;                            -- メモリアドレスを出力
     elsif (P_ADDR(0) = '0') then

@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
 -- 2019.01.24 : 空きI/Oアドレスのリードは 00H になるように変更
 -- 2019.01.22 : MMU を追加
@@ -93,6 +94,7 @@ entity TAC is
          P_SPI_DOUT  : out   std_logic;
          P_SPI_CS    : out   std_logic;
          P_ACC_LED   : out   std_logic;                      -- access led
+         P_SD_CD     : in    std_logic;                      -- card detection
          
          -- TEC
          P_TEC_RXD  : out  std_logic;                        -- to TeC SIO RXD
@@ -328,7 +330,8 @@ component TAC_SPI
          P_DI       : in  STD_LOGIC;
          P_DO       : out STD_LOGIC;
          P_CS       : out STD_LOGIC;
-         P_ACC      : out STD_LOGIC
+         P_ACC      : out STD_LOGIC;
+         P_CD       : in  STD_LOGIC
        );
 end component;
 
@@ -668,7 +671,8 @@ begin
          P_DI       => P_SPI_DIN,
          P_DO       => P_SPI_DOUT,
          P_CS       => P_SPI_CS,
-         P_ACC      => P_ACC_LED
+         P_ACC      => P_ACC_LED,
+         P_CD       => P_SD_CD
        );
 
   TAC_PIO1 : TAC_PIO
