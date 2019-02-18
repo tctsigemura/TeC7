@@ -21,6 +21,8 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.02.18 : TaC モード以外では SETA+RESET で TaC をリセットするように変更
+-- 2019.02.16 : TAC_CPU の P_PR の in/out 間違え訂正
 -- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
 -- 2019.01.24 : 空きI/Oアドレスのリードは 00H になるように変更
@@ -128,9 +130,8 @@ architecture Behavioral of TAC is
 
 -- clock and reset
 signal i_1kHz           : std_logic;
-
--- cnt16
 signal i_cnt16          : std_logic_vector(15 downto 0);
+signal i_reset_panel    : std_logic;
 
 -- control bus
 signal i_reset          : std_logic;
@@ -217,7 +218,7 @@ component TAC_CPU
          P_VR       : out std_logic;                       -- Vector Req.
          P_HL       : out std_logic;                       -- Halt instruction
          P_BT       : out std_logic;                       -- Byte To
-         P_PR       : in  std_logic;                       -- Privilege Mode
+         P_PR       : out std_logic;                       -- Privilege Mode
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic                        -- Bus Request
        );
@@ -436,7 +437,10 @@ begin
   i_int_bit(13) <= '0';
   i_int_bit(14) <= '0';
   i_int_bit(15) <= '0';
-  
+
+  -- TaCモード以外では RESET+SETA でTaCをリセットできる
+  i_reset_panel <= P_RESET_SW when (P_MODE=1) else P_TEC_RESET and P_TEC_SETA;
+   
   -- CNT16 (1kHz のパルスを発生する)
   i_1kHz <= '1' when (i_cnt16=49151) else '0';
 
@@ -535,7 +539,7 @@ begin
 
          -- console switchs(inputs)
          P_DATA_SW  => P_DATA_SW,
-         P_RESET_SW => P_RESET_SW,
+         P_RESET_SW => i_reset_panel,
          P_SETA_SW  => P_SETA_SW,
          P_INCA_SW  => P_INCA_SW,
          P_DECA_SW  => P_DECA_SW,
