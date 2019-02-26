@@ -43,7 +43,7 @@ public int  _reta();                 // reta() を呼出した関数の帰りア
 public int _uCmp(int a, int b);                    // 符号無しの大小比較
 
 public int[] add32(int[] dst, int[] src);          // 32ビット加算ルーチン
-public int[] sub32(int[] dst, int[] src);          // 32ビット減算ルーチン
+//public int[] sub32(int[] dst, int[] src);          // 32ビット減算ルーチン
 public int[] mul32(int[] dst, int src);            // 32ビット乗算ルーチン
 public int[] div32(int[] dst, int src);            // 32ビット除算ルーチン
 #define Ld32(dst,h,l) ((dst)[0]=(h),(dst)[1]=(l))  // 32ビットデータの代入

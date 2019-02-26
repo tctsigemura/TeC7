@@ -31,31 +31,38 @@
 #include "crt0.h"
 #include "util.h"
 
-// FT232RL への出力
-public void putFT232(char c) {
-  while((in(0x0a) & 0x80)==0)
-    ;
-  out(0x08, ord(c));
+// メッセージの一致を調べる FSM
+public boolean msgFSM(FSM fsm, char c) {
+  int stat = fsm.stat;
+  char[] msg = fsm.msg;
+  if (c==msg[stat]) {                         // メッセージの次の文字とマッチ？
+    stat = stat + 1;                          //   ステートを進める
+    if (msg[stat]=='\0') {                    //   全文字がマッチした
+      fsm.stat = 0;                           //     次回の使用に備えてクリア
+      return true;                            //     マッチした
+    }
+    fsm.stat = stat;
+  } else {                                    // マッチしない
+    fsm.stat = 0;                             //   ステートを最初に戻す
+  }
+  return false;                               // まだマッチしない
 }
 
-// TeC への出力
-public void putTeC(char c) {
-  while((in(0x0e) & 0x80)==0)
+// シリアルポートへの出力
+public void putSIO(int port, char c) {
+  while((in(port+2) & 0x80)==0)
     ;
-  out(0x0c, ord(c));
-}
-
-// RN4020 への出力
-public void putRN4020(char c) {
-  while((in(0x2a) & 0x80)==0)
-    ;
-  out(0x28, ord(c));
+  out(port, ord(c));
 }
 
 // 1文字出力
 public void putch(char c) {
   if (c=='\n') putFT232('\r');
   putFT232(c);
+  if ((in(0x2e) & 1)!=0) {                    // RN4020 が接続状態
+    if (c=='\n') putRN4020('\r');
+    putRN4020(c);
+  }
 }
 
 // 文字列出力

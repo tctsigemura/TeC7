@@ -22,15 +22,21 @@
 /*
  * util.h : TaC IPL 便利ルーチン
  *
- * 2017.05.11 v.4.0.0     : 新規作成
+ * 2019.02.26         : FSMを追加
+ * 2017.05.11 v.4.0.0 : 新規作成
  *
  * $Id$
  *
  */
 
-public void putFT232(char c);        // FT232RL への出力
-public void putTeC(char c);          // TeC への出力
-public void putRN4020(char c);       // RN4020 への出力
-public void putch(char c);           // 1文字出力
-public void putstr(char[] str);      // 文字列出力
-public void _puthex(int x);          // 16進数出力
+struct FSM { int stat; char[] msg; };
+public boolean msgFSM(FSM fsm, char c);
+
+#define putFT232(c) putSIO(0x08, c)           // FT232RL への出力
+#define putTeC(c) putSIO(0x0c, c)             // TeC への出力
+#define putRN4020(c) putSIO(0x28, c)          // RN4020 への出力
+
+public void putSIO(int port, char c);         // シリアルポートへの出力
+public void putch(char c);                    // 1文字出力
+public void putstr(char[] str);               // 文字列出力
+public void _puthex(int x);                   // 16進数出力

@@ -19,6 +19,7 @@
 #
 # Makefile : IPL の makefile
 #
+# 2019.02.26 v4.2.1    : HEAPを追加
 # 2019.02.03 v4.2.0    : TeCモードでSETAとRESETの同時押しでTacOSを起動する
 # 2018.10.26 v4.1.1    : DEMO1モードでTaCは単純なRN<=>FT中継機能
 #                        DEMO2とリセットモードTaCはポート操作もできる中継機能
@@ -38,6 +39,7 @@
 VER=\"`cat VERSION`\"
 DATE="\"`date`\""
 
+HEAP=0xd000           # 0xd000 - ...    : heap
 BSS=0xe000            # 0xe000 - ...    : bss
 STK=0xf000            # ...    - 0xefff : stack
 TEXT=0xf000           # 0xf000 - 0xffdf : ipl rom
@@ -51,7 +53,7 @@ UTILDIR=../../Util
 	as-- $*.s
 
 .cmm.o:
-	cm2e -K -c -DDATE=${DATE} -DVER=${VER} $*.cmm
+	cm2e -K -c -DDATE=${DATE} -DVER=${VER} -DHEAP=${HEAP} $*.cmm
 
 all : tac_ram.txt
 
