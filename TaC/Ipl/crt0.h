@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16 bit Version
  *
- * Copyright (C) 2009-2012 by
+ * Copyright (C) 2009-2019 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,7 @@
 /*
  * crt0.h : crt0.s で定義された関数を C-- から使えるようにするヘッダファイル
  *
+ * 2019.02.28           : wait1m を追加
  * 2012.09.14           : reta, ucmp, add32 〜 div32, Ld32 を追加
  * 2012.02.29           : TeC7 IPL 用に変更
  * 2010.07.20           : Subversion による管理を開始
@@ -47,3 +48,5 @@ public int[] add32(int[] dst, int[] src);          // 32ビット加算ルーチ
 public int[] mul32(int[] dst, int src);            // 32ビット乗算ルーチン
 public int[] div32(int[] dst, int src);            // 32ビット除算ルーチン
 #define Ld32(dst,h,l) ((dst)[0]=(h),(dst)[1]=(l))  // 32ビットデータの代入
+
+public void wait1m();                              // 1ms 待ち

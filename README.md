@@ -86,6 +86,8 @@ TaC上では
 |     |
 |     + Tsend7  Mac, UNIX 用のダウンロードプログラム
 |     |
+|     + Twrite7 Mac, UNIX 用のコンソール操作によるダウンロードプログラム
+|     |
 |     + Serial  Windows 用のダウンロードプログラム
 |
 + TaC +         TaCモード関連のユーティリティ等

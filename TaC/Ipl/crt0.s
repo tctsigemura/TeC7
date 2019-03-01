@@ -2,7 +2,7 @@
 ; TaC IPL Source Code
 ;    Tokuyama kousen Educational Computer 16 bit Version
 ;
-; Copyright (C) 2009-2012 by
+; Copyright (C) 2009-2019 by
 ;                      Dept. of Computer Science and Electronic Engineering,
 ;                      Tokuyama College of Technology, JAPAN
 ;
@@ -19,6 +19,7 @@
 ;
 ; crt0.s : IPL(ROM版)のアセンブラ部分
 ;
+; 2019.02.28         : wait1m を追加
 ; 2012.09.28         : '%' の使用を止める。(インデクスドを自動的にas--が変換)
 ; 2012.09.27         : as-- のバグ修正に伴い '%', '@' の使用間違えを訂正
 ; 2012.09.13         : TaC-CPU V2 用に書き換える
@@ -130,4 +131,72 @@ _div32                          ; int[] _div32(int[] dst, int src)
         st      g1,2,g2         ; ディスティネーション下位ワード(余)
         st      g0,0,g2         ; ディスティネーション上位ワード(商)
         ld      g0,g2           ; ディスティネーションを返す
+        ret
+
+;;  1us 待つ
+;;  9.8304MHz * 5 = 49.152MHz(周期=20.34505ns)
+;;  
+;;  1us  = 20.34505ns * 49.152 = 49ステート
+;;  call = 6ステート、残り = 43 ステート
+.wait1u ld      g0,g0	; 4ステート、残り = 39ステート
+        ld      g0,g0	; 4ステート、残り = 35ステート
+        ld      g0,g0	; 4ステート、残り = 31ステート
+        ld      g0,g0	; 4ステート、残り = 27ステート
+        ld      g0,g0	; 4ステート、残り = 23ステート
+        ld      g0,g0	; 4ステート、残り = 19ステート
+        ld      g0,g0	; 4ステート、残り = 15ステート
+        no		; 3ステート、残り = 12ステート
+        no		; 3ステート、残り =  9ステート
+        no		; 3ステート、残り =  6ステート
+        ret		; 6ステート、残り =  0ステート
+
+;;  10us 待つ
+.wait10u
+        call    .wait1u
+        call    .wait1u
+        call    .wait1u
+        call    .wait1u
+        call    .wait1u
+        call    .wait1u
+        call    .wait1u
+        call    .wait1u
+        call    .wait1u	; 9us（残り= 49 - 6 = 43ステート)
+        ld      g0,g0	; 4ステート、残り = 39ステート
+        ld      g0,g0	; 4ステート、残り = 35ステート
+        ld      g0,g0	; 4ステート、残り = 31ステート
+        ld      g0,g0	; 4ステート、残り = 27ステート
+        ld      g0,g0	; 4ステート、残り = 23ステート
+        ld      g0,g0	; 4ステート、残り = 19ステート
+        ld      g0,g0	; 4ステート、残り = 15ステート
+        no		; 3ステート、残り = 12ステート
+        no		; 3ステート、残り =  9ステート
+        no		; 3ステート、残り =  6ステート
+        ret		; 6ステート、残り =  0ステート
+
+;;  100us 待つ
+.wait100u
+        call    .wait10u
+        call    .wait10u
+        call    .wait10u
+        call    .wait10u
+        call    .wait10u
+        call    .wait10u
+        call    .wait10u
+        call    .wait10u
+        call    .wait10u
+        call    .wait10u
+        ret
+
+;;  1ms 待つ
+_wait1m
+        call    .wait100u
+        call    .wait100u
+        call    .wait100u
+        call    .wait100u
+        call    .wait100u
+        call    .wait100u
+        call    .wait100u
+        call    .wait100u
+        call    .wait100u
+        call    .wait100u
         ret

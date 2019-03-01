@@ -19,7 +19,8 @@
 #
 # Makefile : IPL の makefile
 #
-# 2019.02.26 v4.2.1    : HEAPを追加
+# 2019.02.28           : IPLをIPL0とIPL1に分離
+# 2019.02.26           : HEAPを追加
 # 2019.02.03 v4.2.0    : TeCモードでSETAとRESETの同時押しでTacOSを起動する
 # 2018.10.26 v4.1.1    : DEMO1モードでTaCは単純なRN<=>FT中継機能
 #                        DEMO2とリセットモードTaCはポート操作もできる中継機能
@@ -44,7 +45,10 @@ BSS=0xe000            # 0xe000 - ...    : bss
 STK=0xf000            # ...    - 0xefff : stack
 TEXT=0xf000           # 0xf000 - 0xffdf : ipl rom
 
-OBJS=crt0.o ipl.o loader.o mmcspi.o util.o
+CMFLAGS=-K -c -DDATE=${DATE} -DVER=${VER} -DTEXT=${TEXT} -DHEAP=${HEAP}
+
+OBJS0=crt0.o ipl0.o util.o
+OBJS1=crt0.o ipl1.o loader.o mmcspi.o util.o
 UTILDIR=../../Util
 
 .SUFFIXES: .o .cmm .s
@@ -53,22 +57,35 @@ UTILDIR=../../Util
 	as-- $*.s
 
 .cmm.o:
-	cm2e -K -c -DDATE=${DATE} -DVER=${VER} -DHEAP=${HEAP} $*.cmm
+	cm2e ${CMFLAGS} $*.cmm
 
-all : tac_ram.txt
+all : tac_ram0.txt tac_ram1.txt
 
-tac_ram.txt : ipl.hex ${UTILDIR}/hex2txt
-	${UTILDIR}/hex2txt 16 16 < ipl.hex > tac_ram.txt
+tac_ram0.txt : ipl0.hex ${UTILDIR}/hex2txt
+	${UTILDIR}/hex2txt 16 16 < ipl0.hex > tac_ram0.txt
 
-ipl.hex : ${UTILDIR}/bin2hex16 ipl.bin
-	${UTILDIR}/bin2hex16 ipl.bin 0x1000 > ipl.hex  # 4kB
+ipl0.hex : ${UTILDIR}/bin2hex16 ipl0.bin
+	${UTILDIR}/bin2hex16 ipl0.bin 0x1000 > ipl0.hex  # 4kB
 
-ipl.bin: ipl
-	objbin-- ${TEXT} ipl.bin ipl ${BSS} | sort --key=1 > ipl.map
+ipl0.bin: ipl0
+	objbin-- ${TEXT} ipl0.bin ipl0 ${BSS} | sort --key=1 > ipl0.map
 
-ipl: ${OBJS} crt0.h
-	ld-- ipl ${OBJS} > ipl.sym
-	size-- ipl
+ipl0: ${OBJS0} crt0.h
+	ld-- ipl0 ${OBJS0} > ipl0.sym
+	size-- ipl0
+
+tac_ram1.txt : ipl1.hex ${UTILDIR}/hex2txt
+	${UTILDIR}/hex2txt 16 16 < ipl1.hex > tac_ram1.txt
+
+ipl1.hex : ${UTILDIR}/bin2hex16 ipl1.bin
+	${UTILDIR}/bin2hex16 ipl1.bin 0x1000 > ipl1.hex  # 4kB
+
+ipl1.bin: ipl1
+	objbin-- ${TEXT} ipl1.bin ipl1 ${BSS} | sort --key=1 > ipl1.map
+
+ipl1: ${OBJS1} crt0.h
+	ld-- ipl1 ${OBJS1} > ipl1.sym
+	size-- ipl1
 
 hex2txt : ${UTILDIR}/hex2txt.c
 	(cd ${UTILDIR}; make hex2txt)
@@ -77,5 +94,5 @@ bin2hex16 : ${UTILDIR}/bin2hex16.c
 	(cd ${UTILDIR}; make bin2hex16)
 
 clean:
-	rm -f tac_ram.txt ipl ipl.s *.lst *.bin *.o *.hex *.sym *.map *~
+	rm -f tac_ram?.txt ipl0 ipl0.s ipl1 ipl1.s *.lst *.bin *.o *.hex *.sym *.map *~
 

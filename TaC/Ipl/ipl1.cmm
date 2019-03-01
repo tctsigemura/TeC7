@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2017-2019 by
+ * Copyright (C) 2019 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -20,26 +20,27 @@
  */
 
 /*
- * util.h : TaC IPL 便利ルーチン
+ * ipl1.cmm : バンク1に格納する TacOS のブートプログラム
  *
- * 2019.02.27         : sjumpを追加
- * 2019.02.26         : FSMを追加
- * 2017.05.11 v.4.0.0 : 新規作成
+ * 2019.02.27           : ipl.cmm から分離
  *
  * $Id$
  *
  */
 
-struct FSM { int stat; char[] msg; };
-public boolean msgFSM(FSM fsm, char c);
+#include "crt0.h"
+#include "loader.h"
+#include "util.h"
 
-#define putFT232(c) putSIO(0x08, c)           // FT232RL への出力
-#define putTeC(c) putSIO(0x0c, c)             // TeC への出力
-#define putRN4020(c) putSIO(0x28, c)          // RN4020 への出力
+// ここからスタート
+public void main() {
+  putstr("Load kernel ... ");
 
-public void putSIO(int port, char c);         // シリアルポートへの出力
-public void putch(char c);                    // 1文字出力
-public void putstr(char[] str);               // 文字列出力
-public void puthex(int x);                    // 16進数出力
+  initLoader();                               // カーネルローダ初期化
+  int addr = load("KERNEL  ", "BIN");         // "KERNEL.BIN" をロード
 
-public void sjump(int bank,  int addr);       // バンクを切替えた上でジャンプ
+  putstr("(Start kernel@0x");
+  puthex( addr );
+  putstr(")\n");
+  sjump( 2, addr);                            // F000h 以降をRAMに切替えて
+}                                             //   カーネルにジャンプ

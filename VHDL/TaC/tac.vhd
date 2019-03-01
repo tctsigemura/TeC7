@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.02.28 : TAC_RAMにRESETを配線（IPLの複数バンク化）
 -- 2019.02.18 : TaC モード以外では SETA+RESET で TaC をリセットするように変更
 -- 2019.02.16 : TAC_CPU の P_PR の in/out 間違え訂正
 -- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
@@ -180,6 +181,7 @@ signal i_en_tmr0        : std_logic;
 signal i_en_tmr1        : std_logic;
 signal i_en_tec         : std_logic;
 signal i_en_mmu         : std_logic;
+signal i_en_ram         : std_logic;
 
 -- bus for DMA
 signal i_addr_dma       : std_logic_vector(14 downto 0);
@@ -276,7 +278,10 @@ end component;
 
 component TAC_RAM
   port (
-         P_CLK   : in  std_logic;
+         P_CLK    : in  std_logic;
+         P_RESET  : in  std_logic;
+         P_IOE    : in  std_logic;                         -- I/O Enable
+         P_IOW    : in  std_logic;                         -- I/O Write
          -- for CPU
          P_AIN1   : in  std_logic_vector(15 downto 0);
          P_DIN1   : in  std_logic_vector(15 downto 0);
@@ -502,7 +507,9 @@ begin
   i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18~1f
   i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28~2f
   i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30~37
-  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110")  else '0'; -- f0~f7
+  i_en_ram    <= '1' when (i_addr(7 downto 1)="1111000")else '0'; -- f0~f1
+  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110" and
+                      (i_addr(2)='1' or i_addr(1)='1')) else '0'; -- f2~f7
  
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
                i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
@@ -586,6 +593,9 @@ begin
   TAC_RAM1 : TAC_RAM
   port map (
          P_CLK      => P_CLK0,
+         P_RESET    => i_reset,
+         P_IOE      => i_en_ram,
+         P_IOW      => i_iow,
          P_AIN1     => i_addr,
          P_DIN1     => i_dout_cpu,
          P_DOUT1    => i_dout_ram,

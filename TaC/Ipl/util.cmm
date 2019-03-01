@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2017 by
+ * Copyright (C) 2009-2019 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,8 @@
 /*
  * util.cmm : TaC IPL 便利ルーチン
  *
+ * 2019.03.01             : IPLのバンク切り替えsjump()追加
+ * 2019.02.28             : メッセージ検知FSM追加
  * 2017.05.11 v.4.0.0     : 新規作成
  *
  * $Id$
@@ -73,10 +75,27 @@ public void putstr(char[] str) {
 
 // 16進数出力
 char[] hstr = "0123456789abcdef";
-public void _puthex(int x) {
+public void puthex(int x) {
   putch(hstr[(x>>12)&0x000f]);
   putch(hstr[(x>>8 )&0x000f]);
   putch(hstr[(x>>4 )&0x000f]);
   putch(hstr[(x    )&0x000f]);
 }
 
+// バンクを切り替えてジャンプする
+/*
+0000 0b02       _swjp ld     g0,4,fp            ; arg1 (bank no)
+0002 b800 00f0        out    g0,0xf0            ; ipl bank register
+0006 0b03             ld     g0,6,fp            ; arg2 (jmp addr)
+0008 a6f0             jmp    0,g0
+*/
+int[] swjp={ 0x0b02, 0xb800, 0x00f0, 0x0b03, 0xa6f0 };  // 上の機械語
+int[] mem;
+
+public void sjump(int bank, int addr) {
+  mem = _ItoA(HEAP);                          // 0xd000
+  for (int i=0; i<5; i=i+1) {                 // 上記の機械語をバンクの影響を
+    mem[i] = swjp[i];                         //   受けないアドレスにコピーする
+  }
+  jump(HEAP);                                 // そしてジャンプ
+}                                             //   （引数はスタックにある）

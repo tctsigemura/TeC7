@@ -20,8 +20,9 @@
  */
 
 /*
- * ipl.cmm : C-- 言語版の TaC IPL
+ * ipl0.cmm : C-- 言語版の TaC IPL
  *
+ * 2019.03.01           : IPL0とIPL1に分離(バンク切替えをする）
  * 2019.02.26           : RN4020との接続・切断を検出する＋DEMO2を廃止する
  * 2019.02.18           : TeCモードで起動時SETAが押されていればTacOSを起動する
  * 2019.02.10           : マイクロSDの挿入を確認してからブートする
@@ -51,20 +52,11 @@
  */
 
 #include "crt0.h"
-#include "loader.h"
 #include "util.h"
 
 // TacOS をロードして起動する
 void runOS() {
-  putstr("Load kernel ... ");
-
-  initLoader();                               // カーネルローダ初期化
-  int addr = load("KERNEL  ", "BIN");         // "KERNEL.BIN" をロード
-
-  putstr("(Start kernel@0x");
-  _puthex( addr );
-  putstr(")\n");
-  jump(addr);
+  sjump( 1, TEXT);                            // ipl1 に切り替える
 }
 
 // RN4020 との接続・切断を調べる
@@ -86,6 +78,96 @@ void rn4Rcv(char c)  {                        // RN4020からの受信をチェ�
   }
 }
 
+// TeC にコンソール操作でプログラムを書き込む
+#define DSW   0x32                            // I/Oアドレス(データスイッチ)
+
+#define FNC   0x34                            // I/Oアドレス(機能スイッチ)
+#define SETA  0x08
+#define WRITE 0x01
+
+#define CTL   0x36                            // I/Oアドレス(制御)
+#define TWENA 0x80
+#define RESET 0x04
+#define LEFT  0x02
+#define RIGHT 0x01
+
+void wait60ms() {
+  for (int i=0; i<60; i=i+1) {
+    wait1m();
+  }
+}
+
+void pushFncSw(int sw) {                      // 機能スイッチを押す
+  out(FNC, sw);                               // スイッチを操作する
+  wait60ms();                                 // 60ms 待つ
+  out(FNC, 0);                                // スイッチをもとに戻す
+  wait60ms();                                 // 60ms 待つ
+}
+
+void pushCtlSw(int sw) {                      // 制御スイッチを操作する
+  out(CTL, TWENA|sw);                         // スイッチを操作する
+  wait60ms();                                 // 60ms 待つ
+  out(CTL, TWENA);                            // スイッチをもとに戻す
+  wait60ms();                                 // 60ms 待つ
+}
+
+void twConsole(int addr, int cnt, char[] buf) {
+  pushCtlSw(RESET);                           // RESET スイッチを押す
+  for (int i=0; i<5; i=i+1) {                 // 5回右矢印スイッチを押す
+    pushCtlSw(RIGHT);                         // （MMの位置になるはず）
+  }
+  out(DSW, addr);                             // アドレスをセットし
+  pushFncSw(SETA);                            // SETA スイッチを押す
+  for (int i=0; i<cnt; i=i+1) {               // プログラム全体について
+    out(DSW, ord(buf[i]));                    //   データをセットし
+    pushFncSw(WRITE);                         //   WRITE スイッチを押す
+  }
+  pushCtlSw(LEFT);                            // （PCの位置になるはず）
+  out(DSW, addr);                             // アドレスをセットし
+  pushFncSw(WRITE);                           //   WRITE スイッチを押す
+  out(CTL, 0);                                // コンソール機能を手動に戻す
+}
+
+// TWRITEの通信を検知する
+FSM twFSM;                                    // 通信開始を検知するFSM
+int twMode;                                   // 0:未検知,1,2:ヘッダ,3:本体受信
+char[] twBuf=array(256);                      // 受信バッファ
+int twPtr;                                    // 受信バッファ内のポインタ
+int twCnt;                                    // プログラムの長さ
+int twAdr;                                    // プログラムのロードアドレス
+int twMat;                                    // 前回のFSMの状態
+                                              // （途中までマッチした文字数）
+void twWrite(char c) {
+  if (twMode==1) {                            // ヘッダからアドレスを読み取る
+    twAdr = ord(c);
+    twMode = 2;
+  } else if (twMode==2) {
+    twCnt = ord(c);                           // ヘッダから長さを読み取る
+    twPtr = 0;
+    twMode = 3;
+  } else if (twMode==3) {                     // プログラム本体の受信
+    twBuf[twPtr] = c;
+    twPtr = twPtr + 1;
+    if (twPtr>=twCnt) {                       //   プログラムを最後まで受信した
+      twConsole(twAdr, twCnt, twBuf);         //     TeCのコンソールから書込む
+      twMode = 0;                             //     最初の状態にもどる
+    }
+  } else if (msgFSM(twFSM, c)) {              // 新しくマッチした（twMode==0）
+    twMode = 1;                               //   処理開始
+  } else {
+    int stat = twFSM.stat;                    // まだマッチしていない
+    if (stat>0) {                             //   マッチする可能性がある
+      twMat = stat;                           //     マッチした位置を記録
+    } else {
+      for (int i=0; i<twMat; i=i+1) {         // マッチしない
+        putTeC(twFSM.msg[i]);                 //   保留をTeCに送信
+      }
+      putTeC(c);                              //   今回の入力を送信
+      twMat = 0;                              //   マッチ位置はクリア
+    }
+  }
+}
+
 // TeC モードでは TaC が通信(TeC<=>PC)を中継
 void tecMode() {
   if ((in(0x36)&0x01)==0x01 &&                // SETAが押されていて
@@ -96,7 +178,7 @@ void tecMode() {
   // TacOSを起動できなかった場合は IPL が通信を中継する
   for (;;) {
     if ((in(0x0a) & 0x40)!=0) {               // FT232RLから受信したら
-      putTeC(chr(in(0x08)));                  //   TeCに送信する
+      twWrite(chr(in(0x08)));                 //   TWRITEの通信をチェック
     }
     if ((in(0x2a) & 0x40)!=0) {               // RN4020から受信したら
       char c = chr(in(0x028));
@@ -197,6 +279,12 @@ public void main() {
   errFSM = malloc(sizeof(FSM));               // 接続切れを判断するFSM
   errFSM.stat = 0;                            // FSMの初期状態はステート0
   errFSM.msg = "ERR\r\nERR\r\n";              // エラー時のメッセージ
+
+  twFSM = malloc(sizeof(FSM));                // TWRITEを判断するFSM
+  twFSM.stat = 0;                             // FSMの初期状態はステート0
+  twFSM.msg = "\033TWRITE\r\n";               // TWRITEの開始メッセージ
+  twMode = 0;                                 // TWRITEの初期状態
+  twMat  = 0;                                 // TWRITEの初期状態
 
   mldpOn = (in(0x2e) & 1)!=0;                 // RN4020-RAMから初期値を決める
 
