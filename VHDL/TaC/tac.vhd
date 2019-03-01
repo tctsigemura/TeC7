@@ -21,6 +21,9 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.02.28 : TAC_RAMにRESETを配線（IPLの複数バンク化）
+-- 2019.02.18 : TaC モード以外では SETA+RESET で TaC をリセットするように変更
+-- 2019.02.16 : TAC_CPU の P_PR の in/out 間違え訂正
 -- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
 -- 2019.01.24 : 空きI/Oアドレスのリードは 00H になるように変更
@@ -128,9 +131,8 @@ architecture Behavioral of TAC is
 
 -- clock and reset
 signal i_1kHz           : std_logic;
-
--- cnt16
 signal i_cnt16          : std_logic_vector(15 downto 0);
+signal i_reset_panel    : std_logic;
 
 -- control bus
 signal i_reset          : std_logic;
@@ -179,6 +181,7 @@ signal i_en_tmr0        : std_logic;
 signal i_en_tmr1        : std_logic;
 signal i_en_tec         : std_logic;
 signal i_en_mmu         : std_logic;
+signal i_en_ram         : std_logic;
 
 -- bus for DMA
 signal i_addr_dma       : std_logic_vector(14 downto 0);
@@ -217,7 +220,7 @@ component TAC_CPU
          P_VR       : out std_logic;                       -- Vector Req.
          P_HL       : out std_logic;                       -- Halt instruction
          P_BT       : out std_logic;                       -- Byte To
-         P_PR       : in  std_logic;                       -- Privilege Mode
+         P_PR       : out std_logic;                       -- Privilege Mode
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic                        -- Bus Request
        );
@@ -275,7 +278,10 @@ end component;
 
 component TAC_RAM
   port (
-         P_CLK   : in  std_logic;
+         P_CLK    : in  std_logic;
+         P_RESET  : in  std_logic;
+         P_IOE    : in  std_logic;                         -- I/O Enable
+         P_IOW    : in  std_logic;                         -- I/O Write
          -- for CPU
          P_AIN1   : in  std_logic_vector(15 downto 0);
          P_DIN1   : in  std_logic_vector(15 downto 0);
@@ -436,7 +442,10 @@ begin
   i_int_bit(13) <= '0';
   i_int_bit(14) <= '0';
   i_int_bit(15) <= '0';
-  
+
+  -- TaCモード以外では RESET+SETA でTaCをリセットできる
+  i_reset_panel <= P_RESET_SW when (P_MODE=1) else P_TEC_RESET and P_TEC_SETA;
+   
   -- CNT16 (1kHz のパルスを発生する)
   i_1kHz <= '1' when (i_cnt16=49151) else '0';
 
@@ -498,7 +507,9 @@ begin
   i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18~1f
   i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28~2f
   i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30~37
-  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110")  else '0'; -- f0~f7
+  i_en_ram    <= '1' when (i_addr(7 downto 1)="1111000")else '0'; -- f0~f1
+  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110" and
+                      (i_addr(2)='1' or i_addr(1)='1')) else '0'; -- f2~f7
  
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
                i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
@@ -535,7 +546,7 @@ begin
 
          -- console switchs(inputs)
          P_DATA_SW  => P_DATA_SW,
-         P_RESET_SW => P_RESET_SW,
+         P_RESET_SW => i_reset_panel,
          P_SETA_SW  => P_SETA_SW,
          P_INCA_SW  => P_INCA_SW,
          P_DECA_SW  => P_DECA_SW,
@@ -582,6 +593,9 @@ begin
   TAC_RAM1 : TAC_RAM
   port map (
          P_CLK      => P_CLK0,
+         P_RESET    => i_reset,
+         P_IOE      => i_en_ram,
+         P_IOW      => i_iow,
          P_AIN1     => i_addr,
          P_DIN1     => i_dout_cpu,
          P_DOUT1    => i_dout_ram,

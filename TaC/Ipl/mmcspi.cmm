@@ -81,7 +81,6 @@ public void readSct(int h, int l, void[] buf) {
  *  h   : block address upper
  *  l   : block address lower
  *  buf : data buffer
- */
 public void writeSct(int h, int l, void[] buf) {
 	out(MEM_ADDR, _AtoI(buf));
 	out(BLK_ADDR_H, h);
@@ -90,3 +89,4 @@ public void writeSct(int h, int l, void[] buf) {
 	while (in(SD_STAT) == 0) 
 		;
 }
+ */

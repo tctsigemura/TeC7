@@ -21,6 +21,7 @@
 --
 -- TaC/tac_spi.vhd : TaC SPI
 --
+-- 2019.02.16 : 前回の変更箇所で P_CD をセンシビリティリストに追加忘れ訂正
 -- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2016.01.10 : 予期しない割込が発生するバグを修正(エッジトリガーの処理追加)
 -- 2016.01.08 : ior_blk_addr 削除(warning 対策)
@@ -246,7 +247,8 @@ begin
   --   IE = 10  ->  暇だよ
   --   IE = 11  ->  ありえない
   --
-  process(IOR_SPI_Sta,IOR_Mem_Addr,Idle,Error,Memory_Addr,Block_Addr,P_ADDR)
+  process(IOR_SPI_Sta,IOR_Mem_Addr,Idle,
+          Error,Memory_Addr,Block_Addr,P_ADDR,P_CD)
   begin
     if (IOR_SPI_Sta = '1') then
       P_DOUT <= "00000000" & Idle & Error & "00000" & P_CD; -- ステータスを出力

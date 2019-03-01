@@ -2,7 +2,7 @@
 -- TaC VHDL Source Code
 --    Tokuyama kousen Educational Computer 16 bit Version
 --
--- Copyright (C) 2017 - 2018 by
+-- Copyright (C) 2017 - 2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 --  TaC/tac_RN4020.vhd : RN4020 インタフェース
 --
+-- 2019.02.26          : 接続状態を記録するためのRESETされないレジスタ追加
 -- 2018.07.13          : 受信バッファ（FIFO）を追加
 -- 2018.07.12          : SIOを取り込む
 -- 2017.05.09          : 新規作成
@@ -69,6 +70,11 @@ signal i_ior_dat  : std_logic;
 signal i_en_ctl   : std_logic;
 signal i_iow_ctl  : std_logic;
 signal i_ior_sta  : std_logic;
+
+signal i_en_ram   : std_logic;
+signal i_iow_ram  : std_logic;
+--signal i_ior_ram  : std_logic;
+signal i_ram : std_logic_vector(7 downto 0) := "00000000";
 
 -- Internal bus
 signal i_cts      : std_logic;
@@ -149,11 +155,15 @@ begin
   i_iow_ctl <= P_IOW and i_en_ctl;
   i_ior_sta <= P_IOR and i_en_ctl;
   
+  i_en_ram <= '1' when (P_ADDR="11" and P_EN='1') else '0';
+  i_iow_ram <= P_IOW and i_en_ram;
+--i_ior_ram <= P_IOR and i_en_ram;
+  
   -- Data Bus
   P_DOUT <= ("0000" & i_cmd) when i_ior_cmd='1' else
             i_rx_dat when i_ior_dat='1' else
             ((not i_tx_fll)&(not i_rx_emp)&"000000") when i_ior_sta='1' else
-            "00000000";
+            i_ram;
 
   -- CMD
   P_SW  <= i_cmd(0);
@@ -301,4 +311,14 @@ begin
     end if;
   end process;
 
+  -- RAM
+  process (P_CLK)
+  begin
+    if (P_CLK'event and P_CLK='1') then
+      if (i_iow_ram='1') then
+        i_ram <= P_DIN;
+      end if;
+    end if;
+  end process;
+  
 end RTL;
