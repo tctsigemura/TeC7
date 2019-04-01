@@ -22,6 +22,7 @@
 /*
  * ipl.cmm : C-- 言語版の TaC IPL
  *
+ * 2019.02.18           : TeCモードで起動時SETAが押されていればTacOSを起動する
  * 2019.02.10 v3.2.0    : マイクロSDの挿入を確認してからブートする
  * 2019.02.03 v3.1.0    : TeCモードでSETAとRESETの同時押しでTacOSを起動する
  * 2016.01.10 v3.0.1    : メッセージ表示後止まるように変更
@@ -67,17 +68,13 @@ void runOS() {
   jump(addr);
 }
 
-// TeC モードでは TaC が通信(TeC<=>FT232RL)を中継
+// TaC モード以外では TaC が通信(TeC<=>FT232RL)を中継
 void tecMode() {
+  if ((in(0x36)&0x01)==0x01 &&                         // SETAが押されている
+      (in(0x10)&0x01)==0x00) {                         //   カードが挿入済み
+    runOS();                                           // TacOSを起動する
+  }
   for (;;) {
-    if (in(0x36)==3) {                                 // SETA+RESETが押され
-      if ((in(0x10)&0x01)==0x00) {                     //   カードが挿入済み
-        break;                                         //     TacOSを起動する
-      }
-      putstr("boot error\n");                          // 時間稼ぎの意味もある
-      while (in(0x36)!=0) {}                           // SETA+RESETが離された
-      putstr("Please insert the card.\n");             // 時間稼ぎの意味もある
-    }
     if ((in(0x0a) & 0x40)!=0) {                        // FT232RL
       int c = in(0x08);
       putTeC(chr(c));
@@ -87,7 +84,6 @@ void tecMode() {
       putSIO(chr(c));
     }
   }
-  runOS();                                             // TacOSを起動する
 }
 
 // TaC モードでは TaC に tacOS をロードし全てを任せる
@@ -106,7 +102,7 @@ void tacMode() {
 public void main() {
   consInit();                  // コンソールドライバ初期化
 
-  putstr("TaC Initial Program Loader Ver.");
+  putstr("\nTaC Initial Program Loader Ver.");
   putstr( VER );
   putstr("\n" );
   putstr("(build date : ");
@@ -117,7 +113,7 @@ public void main() {
 
   int mode = in(0x1e);
   if (mode==1) tacMode();          // TaCモード ：tacMode() は戻らない
-  else tacMode();                  // 他のモード：tecMode() は戻らない
+  else tecMode();                  // 他のモード：tecMode() は戻らない
 
   while (true) {                   // ここまで来ないはず
       halt();                      // ここまで来たらTaCを停止する

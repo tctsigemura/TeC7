@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2016 by
+ * Copyright (C) 2009-2019 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,7 @@
 /*
  * console.cmm : TaC IPL の画面制御部分
  *
+ * 2019.04.01           : putSIO を public にする
  * 2016.01.10           : ハードウェアカーソルの制御機能を追加
  * 2012.12.26           : TaC-OS と共通化のため puthex を _puthex に名称変更
  * 2012.09.13 v2.0.0    : TaC-CPU V2 用に変更(TAB,BSを省略しサイズを縮小)
@@ -108,17 +109,16 @@ void putVGA(char c) {                         // VGA への出力
   vRam[2046] = cy;                            //   レジスタは VRAM 最後にある
 }
 
-#ifdef SIO
-void putSIO(char c) {                         // SIO への出力
+//
+// 外部へ公開する関数
+//
+// SIOへ1文字出力（IPL本体も使用する）
+public void putSIO(char c) {                  // SIO への出力
   while((in(0x0a) & 0x80)==0)
     ;
   out(0x08, ord(c));
 }
-#endif
 
-//
-// 外部へ公開する関数
-//
 // 1文字出力
 public void putch(char c) {                   // VGA と SIO の両方へ出力する
 #ifdef SIO
