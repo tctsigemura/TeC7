@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2016 by
+ * Copyright (C) 2009-2019 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -23,6 +23,7 @@
  * loader.cmm(ブートローダ)： FAT16 のルートディレクトリから KERNEL ファイルを
  *                            探し読み込む
  *
+ * 2019.02.10  v4.2.0   : TaCモード以外でエラー発生ならIPLに戻る
  * 2016.01.07  v3.0.0   : 重村版に統合
  * 2014.04.26  v2.0.1   : 第２パーティション以降からのブート機能復活
  * 2012.09.14  v2.0.0   : TaC-CPU V2 に対応し、IPL の一部とする
@@ -42,9 +43,13 @@
  */
 
 #include "crt0.h"
-#include "console.h"
+#include "util.h"
 #include "mmcspi.h"
 #include "loader.h"
+
+#define MODE 0x1e
+#define TAC  1
+#define IPL  0xf000
 
 /*
  * IPL は ROM 化されるのでスタティク変数の配置セグメントに注意が必要
@@ -62,7 +67,12 @@ int[] one  = { 0, 1 };                   // 32bit の 1
 void error(char[] msg) {
   putstr( msg );                         // エラーメッセージ表示
   putch('\n');
-  for(;;) halt();                        // CPU を停止する
+  if (in(MODE)==TAC) {                   // TaC モードなら
+    for(;;) {                            //   CPU を停止する
+      halt();                            //   RESET で IPL に戻る
+    }
+  }
+  jump(IPL);                             // TaCモード以外なら自動的にIPLに戻る
 }
 
 void notSupported() {
@@ -98,7 +108,7 @@ void readMBR() {
       return;
     }
   }
-  error("can't find active FAT16 partition!\n");
+  error("can't find active FAT16 partition!");
 }
 
 /*
@@ -282,7 +292,7 @@ public void initLoader() {
  */
 public int load(char[] fname, char[] ext) {
   if (!srchDir(fname, ext)) {            // カーネルファイルを探す
-    error("kernel not found\n");         // 見つからないときはエラー
+    error("kernel not found");           // 見つからないときはエラー
   }
   // ここに来たら srchDir が fLen, nClst を決定済み
   int addr = readKern();                 // nClst から fLen の bin 形式を

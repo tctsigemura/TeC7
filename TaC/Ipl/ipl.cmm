@@ -22,6 +22,7 @@
 /*
  * ipl.cmm : C-- 言語版の TaC IPL
  *
+ * 2019.02.10 v3.2.0    : マイクロSDの挿入を確認してからブートする
  * 2019.02.03 v3.1.0    : TeCモードでSETAとRESETの同時押しでTacOSを起動する
  * 2016.01.10 v3.0.1    : メッセージ表示後止まるように変更
  * 2016.01.07 v3.0.0    : 川部版と統合
@@ -46,6 +47,61 @@
 #include "console.h"
 #include "loader.h"
 
+// TeC へ出力する
+void putTeC(char c) {                         // SIO への出力
+  while((in(0x0a) & 0x80)==0)
+    ;
+  out(0x08, ord(c));
+}
+
+// TacOS をロードして起動する
+void runOS() {
+  putstr("Load kernel ... ");
+
+  initLoader();                         // カーネルローダ初期化
+  int addr = load("KERNEL  ", "BIN");   // "KERNEL.BIN" をロード
+
+  putstr("(Start kernel@0x");
+  _puthex( addr );
+  putstr(")\n");
+  jump(addr);
+}
+
+// TeC モードでは TaC が通信(TeC<=>FT232RL)を中継
+void tecMode() {
+  for (;;) {
+    if (in(0x36)==3) {                                 // SETA+RESETが押され
+      if ((in(0x10)&0x01)==0x00) {                     //   カードが挿入済み
+        break;                                         //     TacOSを起動する
+      }
+      putstr("boot error\n");                          // 時間稼ぎの意味もある
+      while (in(0x36)!=0) {}                           // SETA+RESETが離された
+      putstr("Please insert the card.\n");             // 時間稼ぎの意味もある
+    }
+    if ((in(0x0a) & 0x40)!=0) {                        // FT232RL
+      int c = in(0x08);
+      putTeC(chr(c));
+    }
+    if ((in(0x0e) & 0x40)!=0) {                        // TeC
+      int c = in(0x0c);
+      putSIO(chr(c));
+    }
+  }
+  runOS();                                             // TacOSを起動する
+}
+
+// TaC モードでは TaC に tacOS をロードし全てを任せる
+void tacMode() {
+  while ((in(0x10)&0x01)==0x01) {                      // カード未挿入なら
+    putstr("Please insert the card.\n");               //   メッセージを
+    putstr("Push \"RESET\" to boot the kernel\n");     //     表示して
+    while (true) {
+      halt();                                          //   停止する
+    }
+  }
+  runOS();                                             // TacOSを起動する
+}
+
 // ここからスタート
 public void main() {
   consInit();                  // コンソールドライバ初期化
@@ -59,20 +115,11 @@ public void main() {
   putstr("Copyright(c) 2009-2019 Tokuyama College of Technology\n");
   putstr("All rights reserved.\n\n");
 
-  if (in(0x1e)==1) {           // TaC Mode
-    putstr("Push \"RUN\" to boot the kernel\n");
-    halt();
-  } else {                     // TeC, DEMO Mode
-    putstr("Push \"SETA\"+\"RESET\" to boot the kernel\n");
-    for (;in(0x36)!=3;) {
-    }
-  }
-  putstr("Load kernel ... ");
-  initLoader();                         // カーネルローダ初期化
-  int addr = load("KERNEL  ", "BIN");   // "KERNEL.BIN" をロード
+  int mode = in(0x1e);
+  if (mode==1) tacMode();          // TaCモード ：tacMode() は戻らない
+  else tacMode();                  // 他のモード：tecMode() は戻らない
 
-  putstr("(Start kernel@0x");
-  _puthex( addr );
-  putstr(")\n");
-  jump(addr);
+  while (true) {                   // ここまで来ないはず
+      halt();                      // ここまで来たらTaCを停止する
+  }
 }
