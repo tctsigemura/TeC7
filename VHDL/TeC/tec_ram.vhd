@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2011 by
+-- Copyright (C) 2002-2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -19,6 +19,10 @@
 --
 -- TeC RAM
 --
+-- 2019.03.01 : シングルポート分散RAMに書き換える
+--              （もとはデュアルポートブロックRAMだったがリソース不足）
+--
+
 library IEEE;
 use std.textio.all;
 use ieee.std_logic_1164.all;
@@ -62,73 +66,60 @@ architecture BEHAVE of TEC_RAM is
     end function;
   signal mem : memory := read_file("tec_ram.txt");
 
-  signal deca   : std_logic;                    -- CPU のアドレスデコード結果
-  signal wea    : std_logic;                    -- CPU 側書き込み信号
-  signal addr10a: std_logic_vector(9 downto 0); -- CPU 側アドレス
-  signal decb   : std_logic;                    -- パネルのアドレスデコード結果
-  signal web    : std_logic;                    -- パネル側書き込み信号
-  signal addr10b: std_logic_vector(9 downto 0); -- パネル側アドレス
+  signal dec   : std_logic;                     -- アドレスデコード結果
+  signal we     : std_logic;                    -- 書き込み信号
+  signal addr10 : std_logic_vector(9 downto 0); -- 10ビットにしたアドレス
+
+  signal ain    : std_logic_vector(9 downto 0); -- RAMのアドレス
+  signal din    : std_logic_vector(7 downto 0); -- RAMの書き込みデータ
+  signal dout   : std_logic_vector(7 downto 0); -- RAMの読み出しデータ
 
   begin
-    -- アドレスをラッチする(BLOCK RAMになる)
+    -- CPUがBUS命令実行ならCPUのアドレス
+    addr10 <= (P_MODE & P_ADDR) when (P_MR='1') else (P_MODE & P_PNA);
+
+    -- アドレスをラッチすると(BLOCK RAMになる)
+    ain <= addr10;
+--  process(P_CLK)
+--    begin
+--      if (P_CLK'event and P_CLK='0') then
+--        ain <= addr10;
+--      end if;
+--    end process;
+
+    -- 書き込みアドレスのデコード
+    -- MODE=0,1 の時は E0H～FFH が書き込み不可
+    -- MODE=2   の時は、加えて 80H～BFH が書き込み不可
+    -- MODE=3   の時は、更に加えて 00H～7FH が書き込み不可
+    dec<= not ain(7) or not ain(6) or not ain(5) when P_MODE="00" else
+          not ain(7) or not ain(6) or not ain(5) when P_MODE="01" else
+          not ain(7) or (ain(6) and not ain(5))  when P_MODE="10" else
+          ain(7) and ain(6) and not ain(5);
+
+    -- 書き込み判定
+    we <= (P_MR and P_RW and dec) or
+          (P_WRITE and P_SEL(2) and not P_SEL(1) and P_SEL(0) and dec);
+
+    -- 書き込み制御（シングルポートにする）
+    din <= P_DIN when P_MR='1' else P_PND;      -- CPUがBUS命令実行ならP_DIN
     process(P_CLK)
       begin
         if (P_CLK'event and P_CLK='0') then
-          addr10a <= P_MODE & P_ADDR;
-          addr10b <= P_MODE & P_PNA;
-        end if;
-      end process;
-
-    -- 読み出し制御 
-    P_DOUT <= mem( conv_integer(addr10a) );
-    P_MMD  <= mem( conv_integer(addr10b) );
-
-    -- 書き込み制御
-    process(P_CLK)
-      begin
-        if (P_CLK'event and P_CLK='0') then
-          if (wea='1') then
-            mem( conv_integer(addr10a) ) <= P_DIN;
-          elsif (web='1') then
-            mem( conv_integer(addr10b) ) <= P_PND;
+          if (we='1') then
+            mem( conv_integer(ain) ) <= din;
           end if;
         end if;
       end process;
 
-    -- MODE=0,1 の時は E0H～FFH が書き込み不可
-    -- MODE=2   の時は、加えて 80H～BFH が書き込み不可
-    -- MODE=3   の時は、更に加えて 00H～7FH が書き込み不可
-
-    -- CPU からの書き込み制御
-    wea <= P_MR and P_RW and deca;
-    process(P_MODE, addr10a(7), addr10a(6), addr10a(5))
+    -- 読み出し制御（CPU読み出し時にパネルの表示が変化しないように）
+    dout <= mem( conv_integer(ain) );
+    P_DOUT <= dout;
+    process(P_CLK)
       begin
-        case P_MODE is
-          when "00" =>
-            deca <= not addr10a(7) or not addr10a(6) or not addr10a(5);
-          when "01" =>
-            deca <= not addr10a(7) or not addr10a(6) or not addr10a(5);
-          when "10" =>
-            deca <= not addr10a(7) or (addr10a(6) and not addr10a(5));
-          when others =>
-            deca <= addr10a(7) and addr10a(6) and not addr10a(5);
-        end case;
-    end process;
-
-    -- パネルからの書き込み制御
-    web    <= P_WRITE and P_SEL(2) and not P_SEL(1) and P_SEL(0) and decb;
-    process(P_MODE, addr10b(7), addr10b(6), addr10b(5))
-      begin
-        case P_MODE is
-          when "00" =>
-            decb <= not addr10b(7) or not addr10b(6) or not addr10b(5);
-          when "01" =>
-            decb <= not addr10b(7) or not addr10b(6) or not addr10b(5);
-          when "10" =>
-            decb <= not addr10b(7) or (addr10b(6) and not addr10b(5));
-          when others =>
-            decb <= addr10b(7) and addr10b(6) and not addr10b(5);
-        end case;
-    end process;
-
+        if (P_CLK'event and P_CLK='0') then
+          if (P_MR='0') then
+            P_MMD <= dout;                      -- CPUがBUS命令以外ならパネル
+          end if;
+        end if;
+      end process;
   end BEHAVE;
