@@ -19,6 +19,7 @@
 --
 -- tec7.vhd : TeC7 Top Level
 --
+-- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
 -- 2018.12.08 : EXT_IN(7 downto 4) を inout にし出力を最大12ビットに変更
 -- 2016.01.08 : PS2_CLK を inout に変更(バグ訂正)
@@ -81,6 +82,7 @@ entity TeC7 is
            SPI_DOUT  : out  std_logic;
            SPI_CS    : out  std_logic;
            ACC_LED   : out  std_logic;
+           SD_CD     : in   std_logic;
 			  
            -- PS/2
            PS2_CLK   : inout std_logic;
@@ -272,6 +274,7 @@ component TAC
            P_SPI_DOUT : out  std_logic;
            P_SPI_CS   : out  std_logic;
            P_ACC_LED  : out  std_logic;
+           P_SD_CD    : in  std_logic;
 
            -- PS/2
            P_PS2_CLK  : inout  std_logic;
@@ -478,6 +481,7 @@ begin
          P_SPI_DOUT => SPI_DOUT,
          P_SPI_CS   => SPI_CS,
          P_ACC_LED  => ACC_LED,
+         P_SD_CD    => SD_CD,
 
          -- PS/2
          P_PS2_CLK  => PS2_CLK,

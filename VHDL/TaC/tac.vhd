@@ -21,6 +21,8 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.02.18 : TaC モード以外では SETA+RESET で TaC をリセットするように変更
+-- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
 -- 2019.02.02 : 空きI/Oアドレスのリードは 00H になるように変更
 -- 2019.01.27 : MMU を追加
@@ -95,6 +97,7 @@ entity TaC is
          P_SPI_DOUT  : out   std_logic;
          P_SPI_CS    : out   std_logic;
          P_ACC_LED   : out   std_logic;                      -- access led
+         P_SD_CD     : in    std_logic;                      -- card detection
          
          -- TeC CONSOLE
          P_TEC_DLED : in std_logic_vector(7 downto 0);
@@ -122,9 +125,8 @@ architecture Behavioral of TaC is
 
 -- clock and reset
 signal i_1kHz           : std_logic;
-
--- cnt16
 signal i_cnt16          : std_logic_vector(15 downto 0);
+signal i_reset_panel    : std_logic;
 
 -- control bus
 signal i_reset          : std_logic;
@@ -342,7 +344,8 @@ component TAC_SPI
          P_DI      : in  std_logic;
          P_DO      : out std_logic;
          P_CS      : out std_logic;
-         P_ACC     : out std_logic
+         P_ACC     : out std_logic;
+         P_CD      : in  std_logic
        );
 end component;
 
@@ -446,7 +449,10 @@ begin
   i_int_bit(13) <= '0';
   i_int_bit(14) <= '0';
   i_int_bit(15) <= '0';
-  
+
+  -- TaCモード以外では RESET+SETA でTaCをリセットできる
+  i_reset_panel <= P_RESET_SW when (P_MODE=1) else P_TEC_RESET and P_TEC_SETA;
+
   -- CNT16 (1kHz のパルスを発生する)
   process(P_CLK0, P_RESET)
     begin
@@ -545,7 +551,7 @@ begin
 
          -- console switchs(inputs)
          P_DATA_SW  => P_DATA_SW,
-         P_RESET_SW => P_RESET_SW,
+         P_RESET_SW => i_reset_panel,
          P_SETA_SW  => P_SETA_SW,
          P_INCA_SW  => P_INCA_SW,
          P_DECA_SW  => P_DECA_SW,
@@ -663,7 +669,8 @@ begin
          P_DI       => P_SPI_DIN,
          P_DO       => P_SPI_DOUT,
          P_CS       => P_SPI_CS,
-         P_ACC      => P_ACC_LED
+         P_ACC      => P_ACC_LED,
+         P_CD       => P_SD_CD
        );
 
   TAC_PIO1 : TAC_PIO

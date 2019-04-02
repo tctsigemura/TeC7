@@ -1,0 +1,21 @@
+siod	equ	02h
+sios	equ	03h
+
+start	ld	g1,#0
+l0	ld	g2,data,g1
+	cmp	g2,#0
+	jz	end
+l1	in	g0,sios
+	and	g0,#80h
+	jz	l1
+	out	g2,siod
+	add	g1,#1
+	jmp	l0
+
+end	halt
+
+data	dc	"Tokuyama Kousen"
+	dc	0dh, 0ah
+	dc	"Shigemura"
+	dc	0dh, 0ah
+	dc	00h

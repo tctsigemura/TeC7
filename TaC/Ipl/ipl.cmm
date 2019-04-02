@@ -74,6 +74,8 @@ void tecMode() {
       (in(0x10)&0x01)==0x00) {                         //   カードが挿入済み
     runOS();                                           // TacOSを起動する
   }
+  /* 現状，TeC7aのファームウェアではFT232RLにTeCとTaCが並列接続になっている．
+     TeCモードのときTaCはシリアル通信を中継する必要はない．
   for (;;) {
     if ((in(0x0a) & 0x40)!=0) {                        // FT232RL
       int c = in(0x08);
@@ -83,6 +85,10 @@ void tecMode() {
       int c = in(0x0c);
       putSIO(chr(c));
     }
+  }
+  */
+  while (true) {
+    halt();                                            //   停止する
   }
 }
 
