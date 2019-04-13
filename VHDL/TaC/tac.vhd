@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
 -- 2019.02.28 : TAC_RAMにRESETを配線（IPLの複数バンク化）
 -- 2019.02.18 : TaC モード以外では SETA+RESET で TaC をリセットするように変更
 -- 2019.02.16 : TAC_CPU の P_PR の in/out 間違え訂正
@@ -111,8 +112,8 @@ entity TAC is
          P_RN4020_RTS : in std_logic;
          P_RN4020_HW  : out std_logic;
          P_RN4020_CTS : out std_logic;
+         P_RN4020_CON : in std_logic;
          P_RN4020_CMD : out std_logic;
-         P_RN4020_SW  : out std_logic;
          P_RN4020_RX  : out std_logic;
          P_RN4020_TX  : in std_logic;
 
@@ -392,8 +393,8 @@ component TAC_RN4020 is
          P_CTS     : in  std_logic;                      -- Clear To Send
          P_RTS     : out std_logic;                      -- Request To Send
 
-         P_SW      : out std_logic;                      -- RN4020_SW
          P_CMD     : out std_logic;                      -- RN4020_CMD/MLDP
+         P_CON     : in  std_logic;                      -- RN4020_CON
          P_HW      : out std_logic                       -- RN4020_HW
        );
 end component;
@@ -658,8 +659,8 @@ begin
          P_RxD      => P_RN4020_TX,
          P_CTS      => P_RN4020_RTS,
          P_RTS      => P_RN4020_CTS,
-         P_SW       => P_RN4020_SW,
          P_CMD      => P_RN4020_CMD,
+         P_CON      => P_RN4020_CON,
          P_HW       => P_RN4020_HW
        );
 
