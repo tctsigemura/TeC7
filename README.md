@@ -62,7 +62,7 @@ TaC上では
 現在C--言語プログラムはクロス開発ですが，
 近い将来にはTacOS上でセルフ開発ができるようになる予定です．
 
-### Bluetooth で Mac と接続して TacOS が動作中の写真
+### Bluetooth で接続した Mac を端末にして TacOS が動作中の写真
 ![TaCとして動作中](https://github.com/tctsigemura/TeC7/blob/master/Doc/Photos/Blueterm.jpg?raw=true "写真")
 
 ### ディレクトリ構成
