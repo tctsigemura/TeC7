@@ -1,5 +1,6 @@
-TeC7b,c,dの歴史
+TeC7の歴史
 
+2019.05.05 : ブランチを整理(master, tec7a, tec7bc, tec7d, tec7a_vga_ps2)
 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
 2019.04.13 : TeC7c ブランチ（TeC7b,c用）を作成
 2019.03.01 : TeC7b v1.0 (IPL Ver.4.3.0)
