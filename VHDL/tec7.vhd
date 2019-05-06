@@ -19,6 +19,7 @@
 --
 -- tec7.vhd : TeC7 Top Level
 --
+-- 2019.05.06 : TeC7a 用に新しいブランチ（RN4020 関連削除）
 -- 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
 -- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
@@ -85,16 +86,7 @@ entity TeC7 is
 
            -- FT232RL
            FT232RL_TXD : in   std_logic;
-           FT232RL_RXD : out  std_logic;
-
-           -- RN4020
-           RN4020_RTS : in  std_logic;
-           RN4020_HW  : out std_logic;
-           RN4020_CTS : out std_logic;
-           RN4020_CON : in std_logic;
-           RN4020_CMD : out std_logic;
-           RN4020_RX  : out std_logic;
-           RN4020_TX  : in std_logic
+           FT232RL_RXD : out  std_logic
          );
 end TeC7;
 
@@ -128,15 +120,6 @@ signal i_tec_txd     : std_logic;
 -- FT232RL
 signal i_ft_rxd      : std_logic;
 signal i_ft_txd      : std_logic;
-
--- RN4020
-signal i_rn_tx       : std_logic;
-signal i_rn_rx       : std_logic;
-signal i_rn_cmd      : std_logic;
-signal i_rn_con      : std_logic;
-signal i_rn_cts      : std_logic;
-signal i_rn_hw       : std_logic;
-signal i_rn_rts      : std_logic;
 
 -- TeC CONSOLE
 signal i_tec_dsw     : std_logic_vector(7 downto 0);
@@ -287,15 +270,6 @@ component TAC
            P_FT232RL_RXD : out std_logic;                    -- to FT SIO RXD
            P_FT232RL_TXD : in  std_logic;                    -- to FT SIO TXD
 
-           -- RN4020
-           P_RN4020_RTS : in std_logic;
-           P_RN4020_HW  : out std_logic;
-           P_RN4020_CTS : out std_logic;
-           P_RN4020_CON : in std_logic;
-           P_RN4020_CMD : out std_logic;
-           P_RN4020_RX  : out std_logic;
-           P_RN4020_TX  : in std_logic;
-
            -- TeC CONSOLE
            P_TEC_DLED : in std_logic_vector(7 downto 0);
            P_TEC_DSW  : out std_logic_vector(7 downto 0);
@@ -355,15 +329,6 @@ begin
   -- FT232RL
     i_ft_txd    <= FT232RL_TXD;
     FT232RL_RXD <= i_ft_rxd;
-  
-  -- RN4020
-    i_rn_tx    <= RN4020_TX;
-    RN4020_RX  <= i_rn_rx;
-    RN4020_CMD <= i_rn_cmd;
-    i_rn_con   <= RN4020_CON;
-    RN4020_CTS <= not i_rn_cts;
-    RN4020_HW  <= i_rn_hw;
-    i_rn_rts   <= not RN4020_RTS;
   
   -- I/O Switch (select TeC/TaC)
   -- INPUT
@@ -508,15 +473,6 @@ begin
          -- FT232RL
          P_FT232RL_RXD => i_ft_rxd,
          P_FT232RL_TXD => i_ft_txd,
-
-         -- RN4020
-         P_RN4020_RTS => i_rn_rts,
-         P_RN4020_HW  => i_rn_hw,
-         P_RN4020_CTS => i_rn_cts,
-         P_RN4020_CON  => i_rn_con,
-         P_RN4020_CMD => i_rn_cmd,
-         P_RN4020_RX  => i_rn_rx,
-         P_RN4020_TX  => i_rn_tx,
 
         -- TeC CONSOLE
          P_TEC_DLED => i_out_tec(19 downto 12),

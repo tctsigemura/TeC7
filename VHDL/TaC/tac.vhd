@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.05.06 : TeC7a 用に新しいブランチ（RN4020 関連削除）
 -- 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
 -- 2019.02.28 : TAC_RAMにRESETを配線（IPLの複数バンク化）
 -- 2019.02.18 : TaC モード以外では SETA+RESET で TaC をリセットするように変更
@@ -108,15 +109,6 @@ entity TAC is
          P_FT232RL_RXD : out std_logic;                      -- to FT SIO RXD
          P_FT232RL_TXD : in  std_logic;                      -- to FT SIO TXD
 
-         -- RN4020
-         P_RN4020_RTS : in std_logic;
-         P_RN4020_HW  : out std_logic;
-         P_RN4020_CTS : out std_logic;
-         P_RN4020_CON : in std_logic;
-         P_RN4020_CMD : out std_logic;
-         P_RN4020_RX  : out std_logic;
-         P_RN4020_TX  : in std_logic;
-
          -- TeC CONSOLE
          P_TEC_DLED : in std_logic_vector(7 downto 0);
          P_TEC_DSW  : out std_logic_vector(7 downto 0);
@@ -164,7 +156,6 @@ signal i_dout_intc      : std_logic_vector(15 downto 0);
 signal i_dout_spi       : std_logic_vector(15 downto 0);
 signal i_dout_sio1      : std_logic_vector( 7 downto 0);  -- FT232RL
 signal i_dout_sio2      : std_logic_vector( 7 downto 0);  -- TeC
-signal i_dout_rn        : std_logic_vector( 7 downto 0);  -- RN4020
 signal i_dout_pio       : std_logic_vector( 7 downto 0);
 signal i_dout_tmr0      : std_logic_vector(15 downto 0);
 signal i_dout_tmr1      : std_logic_vector(15 downto 0);
@@ -176,7 +167,6 @@ signal i_iow            : std_logic;
 signal i_en_spi         : std_logic;
 signal i_en_sio1        : std_logic;    -- FT232RL
 signal i_en_sio2        : std_logic;    -- TeC
-signal i_en_rn          : std_logic;    -- RN4020
 signal i_en_pio         : std_logic;
 signal i_en_tmr0        : std_logic;
 signal i_en_tmr1        : std_logic;
@@ -376,29 +366,6 @@ component TAC_TIMER is
          );
 end component;
 
-component TAC_RN4020 is
-  port ( P_CLK     : in  std_logic;                      -- 49.1520MHz
-         P_RESET   : in  std_logic;                      -- Reset
-         P_IOW     : in  std_logic;                      -- I/O Write
-         P_IOR     : in  std_logic;                      -- I/O Read
-         P_EN      : in  std_logic;                      -- Enable
-         P_ADDR    : in  std_logic_vector(1 downto 0);   -- Address(2 downto 1)
-         P_DOUT    : out std_logic_vector(7 downto 0);   -- Data Output
-         P_DIN     : in  std_logic_vector(7 downto 0);   -- Data Input
-         P_INT_TxD : out std_logic;                      -- 送信割り込み
-         P_INT_RxD : out std_logic;                      -- 受信割り込み
-
-         P_TxD     : out std_logic;                      -- シリアル出力
-         P_RxD     : in  std_logic;                      -- シリアル入力
-         P_CTS     : in  std_logic;                      -- Clear To Send
-         P_RTS     : out std_logic;                      -- Request To Send
-
-         P_CMD     : out std_logic;                      -- RN4020_CMD/MLDP
-         P_CON     : in  std_logic;                      -- RN4020_CON
-         P_HW      : out std_logic                       -- RN4020_HW
-       );
-end component;
-
 component TAC_MMU is 
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
@@ -506,7 +473,7 @@ begin
   i_en_sio2   <= '1' when (i_addr(7 downto 2)="000011") else '0'; -- 0c~0f
   i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10~17
   i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18~1f
-  i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28~2f
+--i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28~2f
   i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30~37
   i_en_ram    <= '1' when (i_addr(7 downto 1)="1111000")else '0'; -- f0~f1
   i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110" and
@@ -520,7 +487,7 @@ begin
                ("00000000"&i_dout_sio2) when (i_ir='1' and i_en_sio2='1') else
                i_dout_spi when (i_ir='1' and i_en_spi='1') else
                ("00000000"&i_dout_pio) when (i_ir='1' and i_en_pio='1') else
-               ("00000000"&i_dout_rn) when (i_ir='1' and i_en_rn='1') else
+--             ("00000000"&i_dout_rn) when (i_ir='1' and i_en_rn='1') else
                ("00000000"&i_dout_tec) when (i_ir='1' and i_en_tec='1') else
                i_dout_intc when (i_vr='1') else
                "0000000000000000";
@@ -641,27 +608,6 @@ begin
          P_INT_RxD  => i_int_bit(6),
          P_TxD      => P_TEC_RXD,
          P_RxD      => P_TEC_TXD
-       );
-
-  TAC_RN1 : TAC_RN4020                    -- Bluetooth
-  port map (
-         P_CLK      => P_CLK0,
-         P_RESET    => i_reset,
-         P_IOW      => i_iow,
-         P_IOR      => i_ior,
-         P_EN       => i_en_rn,
-         P_ADDR     => i_addr(2 downto 1),
-         P_DOUT     => i_dout_rn,
-         P_DIN      => i_dout_cpu(7 downto 0),
-         P_INT_TxD  => i_int_bit(3),
-         P_INT_RxD  => i_int_bit(2),
-         P_TxD      => P_RN4020_RX,
-         P_RxD      => P_RN4020_TX,
-         P_CTS      => P_RN4020_RTS,
-         P_RTS      => P_RN4020_CTS,
-         P_CMD      => P_RN4020_CMD,
-         P_CON      => P_RN4020_CON,
-         P_HW       => P_RN4020_HW
        );
 
   TAC_SPI1 : TAC_SPI
