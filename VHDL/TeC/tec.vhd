@@ -264,7 +264,7 @@ end component;
 
 begin
   -- ƒNƒƒbƒN‚ğì‚é
-  I_2_4kHz  <= I_CNT(9);                    -- 2.4kHztac_panel.pdf
+  I_2_4kHz  <= I_CNT(9);                    -- 2.4kHz
   I_75Hz    <= I_CNT(14);                   -- 75Hz
   I_18_75Hz <= I_CNT(15);                   -- 18.75Hz
   I_2_3Hz   <= I_CNT(19);                   -- 2.3Hz
