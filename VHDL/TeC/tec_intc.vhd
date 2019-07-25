@@ -6,15 +6,15 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 -- TeC Interrupt Controller VHDL Source Code
@@ -38,20 +38,20 @@ entity TEC_INTC is
          P_INT3  : in  std_logic;                        -- INT3 (Console)
 
          P_INTR  : out std_logic;                        -- Interrupt
-         P_VECT  : out std_logic_vector(1 downto 0)      -- �����ݔԍ�
+         P_VECT  : out std_logic_vector(1 downto 0)      -- 割込み番号
         );
 end TEC_INTC;
 
 architecture RTL of TEC_INTC is
-signal I_INT0 : std_logic;                               -- INT0 �̓��b�`����
-signal I_INT3 : std_logic;                               -- INT3 �̓��b�`����
+signal I_INT0 : std_logic;                               -- INT0 はラッチする
+signal I_INT3 : std_logic;                               -- INT3 はラッチする
 
 begin
   P_INTR <= I_INT0 or P_INT1 or  P_INT2 or  I_INT3;
 
-  process(I_INT0, P_INT1, P_INT2)                        -- ���荞�ݔԍ������߂�
-  begin                                                  --   �v���C�I���e�B
-    if (I_INT0='1') then                                 --     �G���R�[�_
+  process(I_INT0, P_INT1, P_INT2)                        -- 割り込み番号を決める
+  begin                                                  --   プライオリティ
+    if (I_INT0='1') then                                 --     エンコーダ
       P_VECT <= "00";
     elsif (P_INT1='1') then
       P_VECT <= "01";
@@ -62,23 +62,23 @@ begin
     end if;
   end process;
 
-  -- INT0, INT3 �̓��b�`����(CPU ���F�������玩���I�Ƀ��Z�b�g����)
+  -- INT0, INT3 はラッチする(CPU が認識したら自動的にリセットする)
   process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
       I_INT0 <= '0';
       I_INT3 <= '0';
     elsif (P_CLK' event and P_CLK='1') then
-      if (P_INT0='1') then                               -- INT0 �����b�`����
+      if (P_INT0='1') then                               -- INT0 をラッチする
         I_INT0 <= '1';
-      elsif (P_MR='0' and P_LI='1') then                 -- CPU �� INT0 ��F��
-        I_INT0 <= '0';                                   --   ���Z�b�g����
+      elsif (P_MR='0' and P_LI='1') then                 -- CPU が INT0 を認識
+        I_INT0 <= '0';                                   --   リセットする
       end if;
-      if (P_INT3='1') then                               -- INT3 �����b�`����
+      if (P_INT3='1') then                               -- INT3 をラッチする
         I_INT3 <= '1';
-      elsif (P_MR='0' and P_LI='1' and I_INT0='0'        -- CPU �� INT3 ��F��
+      elsif (P_MR='0' and P_LI='1' and I_INT0='0'        -- CPU が INT3 を認識
              and P_INT1='0' and P_INT2='0') then
-        I_INT3 <= '0';                                   --   ���Z�b�g����
+        I_INT3 <= '0';                                   --   リセットする
       end if;
     end if;
   end process;

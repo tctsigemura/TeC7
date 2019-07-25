@@ -6,28 +6,28 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ã‹L’˜ìŒ Ò‚ÍCFree Software Foundation ‚É‚æ‚Á‚ÄŒöŠJ‚³‚ê‚Ä‚¢‚é GNU ˆê”ÊŒö
--- O—˜—p‹–‘øŒ_–ñ‘ƒo[ƒWƒ‡ƒ“‚Q‚É‹Lq‚³‚ê‚Ä‚¢‚éğŒ‚ğ–‚½‚·ê‡‚ÉŒÀ‚èC–{ƒ\[ƒX
--- ƒR[ƒh(–{ƒ\[ƒXƒR[ƒh‚ğ‰ü•Ï‚µ‚½‚à‚Ì‚ğŠÜ‚ŞDˆÈ‰º“¯—l)‚ğg—pE•¡»E‰ü•ÏEÄ”z
--- •z‚·‚é‚±‚Æ‚ğ–³‚Å‹–‘ø‚·‚éD
+--   ä¸Šè¨˜è‘—ä½œæ¨©è€…ã¯ï¼ŒFree Software Foundation ã«ã‚ˆã£ã¦å…¬é–‹ã•ã‚Œã¦ã„ã‚‹ GNU ä¸€èˆ¬å…¬
+-- è¡†åˆ©ç”¨è¨±è«¾å¥‘ç´„æ›¸ãƒãƒ¼ã‚¸ãƒ§ãƒ³ï¼’ã«è¨˜è¿°ã•ã‚Œã¦ã„ã‚‹æ¡ä»¶ã‚’æº€ãŸã™å ´åˆã«é™ã‚Šï¼Œæœ¬ã‚½ãƒ¼ã‚¹
+-- ã‚³ãƒ¼ãƒ‰(æœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã‚’æ”¹å¤‰ã—ãŸã‚‚ã®ã‚’å«ã‚€ï¼ä»¥ä¸‹åŒæ§˜)ã‚’ä½¿ç”¨ãƒ»è¤‡è£½ãƒ»æ”¹å¤‰ãƒ»å†é…
+-- å¸ƒã™ã‚‹ã“ã¨ã‚’ç„¡å„Ÿã§è¨±è«¾ã™ã‚‹ï¼
 --
---   –{ƒ\[ƒXƒR[ƒh‚Í–‘S‚­‚Ì–³•ÛØ–‚Å’ñ‹Ÿ‚³‚ê‚é‚à‚Ì‚Å‚ ‚éBã‹L’˜ìŒ Ò‚¨‚æ‚Ñ
--- ŠÖ˜A‹@ŠÖEŒÂl‚Í–{ƒ\[ƒXƒR[ƒh‚ÉŠÖ‚µ‚ÄC‚»‚Ì“K—p‰Â”\«‚àŠÜ‚ß‚ÄC‚¢‚©‚È‚é•ÛØ
--- ‚às‚í‚È‚¢D‚Ü‚½C–{ƒ\[ƒXƒR[ƒh‚Ì—˜—p‚É‚æ‚è’¼Ú“I‚Ü‚½‚ÍŠÔÚ“I‚É¶‚¶‚½‚¢‚©‚È
--- ‚é‘¹ŠQ‚ÉŠÖ‚µ‚Ä‚àC‚»‚ÌÓ”C‚ğ•‰‚í‚È‚¢D
+--   æœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã¯ï¼Šå…¨ãã®ç„¡ä¿è¨¼ï¼Šã§æä¾›ã•ã‚Œã‚‹ã‚‚ã®ã§ã‚ã‚‹ã€‚ä¸Šè¨˜è‘—ä½œæ¨©è€…ãŠã‚ˆã³
+-- é–¢é€£æ©Ÿé–¢ãƒ»å€‹äººã¯æœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã«é–¢ã—ã¦ï¼Œãã®é©ç”¨å¯èƒ½æ€§ã‚‚å«ã‚ã¦ï¼Œã„ã‹ãªã‚‹ä¿è¨¼
+-- ã‚‚è¡Œã‚ãªã„ï¼ã¾ãŸï¼Œæœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã®åˆ©ç”¨ã«ã‚ˆã‚Šç›´æ¥çš„ã¾ãŸã¯é–“æ¥çš„ã«ç”Ÿã˜ãŸã„ã‹ãª
+-- ã‚‹æå®³ã«é–¢ã—ã¦ã‚‚ï¼Œãã®è²¬ä»»ã‚’è² ã‚ãªã„ï¼
 --
 --
 
 --
 -- TaC/tac_spi.vhd : TaC SPI
 --
--- 2019.02.16 : ‘O‰ñ‚Ì•ÏX‰ÓŠ‚Å P_CD ‚ğƒZƒ“ƒVƒrƒŠƒeƒBƒŠƒXƒg‚É’Ç‰Á–Y‚ê’ù³
--- 2019.02.09 : ƒ}ƒCƒNƒSDƒJ[ƒh‚Ì‘}“ü‚ğŒŸ’m‚Å‚«‚é‚æ‚¤‚É‚·‚é
--- 2016.01.10 : —\Šú‚µ‚È‚¢Š„‚ª”­¶‚·‚éƒoƒO‚ğC³(ƒGƒbƒWƒgƒŠƒK[‚Ìˆ—’Ç‰Á)
--- 2016.01.08 : ior_blk_addr íœ(warning ‘Îô)
--- 2014.02.24 : DMA‹@”\ì¬(ì•”‘²Œ¤)
--- 2012.01.22 : entity –¼AŒ©’¼‚µ
--- 2011.12.20 : V‹Kì¬
+-- 2019.02.16 : å‰å›ã®å¤‰æ›´ç®‡æ‰€ã§ P_CD ã‚’ã‚»ãƒ³ã‚·ãƒ“ãƒªãƒ†ã‚£ãƒªã‚¹ãƒˆã«è¿½åŠ å¿˜ã‚Œè¨‚æ­£
+-- 2019.02.09 : ãƒã‚¤ã‚¯ãƒ­SDã‚«ãƒ¼ãƒ‰ã®æŒ¿å…¥ã‚’æ¤œçŸ¥ã§ãã‚‹ã‚ˆã†ã«ã™ã‚‹
+-- 2016.01.10 : äºˆæœŸã—ãªã„å‰²è¾¼ãŒç™ºç”Ÿã™ã‚‹ãƒã‚°ã‚’ä¿®æ­£(ã‚¨ãƒƒã‚¸ãƒˆãƒªã‚¬ãƒ¼ã®å‡¦ç†è¿½åŠ )
+-- 2016.01.08 : ior_blk_addr å‰Šé™¤(warning å¯¾ç­–)
+-- 2014.02.24 : DMAæ©Ÿèƒ½ä½œæˆ(å·éƒ¨å’ç ”)
+-- 2012.01.22 : entity åã€è¦‹ç›´ã—
+-- 2011.12.20 : æ–°è¦ä½œæˆ
 --
 -- $Id
 --
@@ -48,14 +48,14 @@ entity TAC_SPI is
          P_DIN    : in  std_logic_vector(15 downto 0);  -- from CPU
          P_DOUT    : out std_logic_vector(15 downto 0);  -- to CPU
        
-         -- DMAŠÖ˜A
+         -- DMAé–¢é€£
          P_ADDR_DMA  : out std_logic_vector(14 downto 0);
          P_DIN_DMA  : in  std_logic_vector(15 downto 0);
          P_DOUT_DMA  : out std_logic_vector(15 downto 0);
          P_RW_DMA    : out std_logic;
          P_MR_DMA    : out std_logic;
        
-         -- uSD’[q
+         -- uSDç«¯å­
          P_SCLK    : out std_logic;
          P_DI      : in  std_logic;
          P_DO      : out std_logic;
@@ -67,7 +67,7 @@ end TAC_SPI;
 
 architecture Behavioral of TAC_SPI is
   
-  -- ’è”
+  -- å®šæ•°
   constant CMD0    : std_logic_vector(47 downto 0) := X"400000000095";
   constant CMD1    : std_logic_vector(47 downto 0) := X"410000000001";
   --constant CMD9    : std_logic_vector(47 downto 0) := X"490000000001";
@@ -77,7 +77,7 @@ architecture Behavioral of TAC_SPI is
   constant START_BYTE  : std_logic_vector( 7 downto 0) := X"FE";
   constant CRC    : std_logic_vector( 7 downto 0) := X"01";
   
-  -- ”zü—Ş
+  -- é…ç·šé¡
   signal i_init_cs  : std_logic;
   signal i_init_sclk  : std_logic;
   signal i_init_do  : std_logic;
@@ -93,62 +93,62 @@ architecture Behavioral of TAC_SPI is
   signal i_write_do  : std_logic;
   signal i_write_led  : std_logic;
   
-  signal i_read_mr  : std_logic;  -- memory req(DMA—p)
-  signal i_write_mr  : std_logic;  -- memory req(DMA—p)
+  signal i_read_mr  : std_logic;  -- memory req(DMAç”¨)
+  signal i_write_mr  : std_logic;  -- memory req(DMAç”¨)
   
   
-  -- ƒfƒR[ƒhŒ‹‰Ê
-  signal IOW_SPI_Ctl  : std_logic;  -- ƒRƒ“ƒgƒ[ƒ‹‚Ì‘‚«‚İ
-  signal IOR_SPI_Sta  : std_logic;  -- ƒXƒe[ƒ^ƒX‚Ì“Ç‚İ‚İ
-  signal IOW_Mem_Addr : std_logic;  -- ƒƒ‚ƒŠƒAƒhƒŒƒX‚Ì‘‚«‚İ
-  signal IOR_Mem_Addr : std_logic;  --       V      ‚Ì“Ç‚İ‚İ
-  signal IOW_Blk_Addr : std_logic;  -- ƒuƒƒbƒNƒAƒhƒŒƒX‚Ì‘‚«‚İ
---signal IOR_Blk_Addr : std_logic;  --        V       ‚Ì“Ç‚İ‚İ
-                    -- (ãˆÊ16bit‚©‰ºˆÊ16bit‚©‚ÍAP_ADDR(0)‚Å‹æ•Ê)
+  -- ãƒ‡ã‚³ãƒ¼ãƒ‰çµæœ
+  signal IOW_SPI_Ctl  : std_logic;  -- ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®æ›¸ãè¾¼ã¿
+  signal IOR_SPI_Sta  : std_logic;  -- ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ã®èª­ã¿è¾¼ã¿
+  signal IOW_Mem_Addr : std_logic;  -- ãƒ¡ãƒ¢ãƒªã‚¢ãƒ‰ãƒ¬ã‚¹ã®æ›¸ãè¾¼ã¿
+  signal IOR_Mem_Addr : std_logic;  --       ã€ƒ      ã®èª­ã¿è¾¼ã¿
+  signal IOW_Blk_Addr : std_logic;  -- ãƒ–ãƒ­ãƒƒã‚¯ã‚¢ãƒ‰ãƒ¬ã‚¹ã®æ›¸ãè¾¼ã¿
+--signal IOR_Blk_Addr : std_logic;  --        ã€ƒ       ã®èª­ã¿è¾¼ã¿
+                    -- (ä¸Šä½16bitã‹ä¸‹ä½16bitã‹ã¯ã€P_ADDR(0)ã§åŒºåˆ¥)
   
-  -- ƒŒƒWƒXƒ^
-  signal Memory_Addr : std_logic_vector(15 downto 0);   -- ƒƒ‚ƒŠƒAƒhƒŒƒX
-  signal Block_Addr  : std_logic_vector(31 downto 0);   -- ƒuƒƒbƒNƒAƒhƒŒƒX
-  signal Data_Addr   : std_logic_vector(31 downto 0);   -- ƒf[ƒ^ƒAƒhƒŒƒX
-  signal Int_Ena     : std_logic;                       -- Š„‚è‚İ‹–‰Â
-  signal Processing  : std_logic := '0';                -- ˆ—’†(uSD‚Æ’ÊM’†)
-  signal ProcessingD : std_logic := '0';                -- 1ƒNƒƒbƒN’x‚ê‚ÌM†
-  signal Error       : std_logic := '0';                -- ƒGƒ‰[‚ª”­¶‚µ‚½
+  -- ãƒ¬ã‚¸ã‚¹ã‚¿
+  signal Memory_Addr : std_logic_vector(15 downto 0);   -- ãƒ¡ãƒ¢ãƒªã‚¢ãƒ‰ãƒ¬ã‚¹
+  signal Block_Addr  : std_logic_vector(31 downto 0);   -- ãƒ–ãƒ­ãƒƒã‚¯ã‚¢ãƒ‰ãƒ¬ã‚¹
+  signal Data_Addr   : std_logic_vector(31 downto 0);   -- ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒ‰ãƒ¬ã‚¹
+  signal Int_Ena     : std_logic;                       -- å‰²ã‚Šè¾¼ã¿è¨±å¯
+  signal Processing  : std_logic := '0';                -- å‡¦ç†ä¸­(uSDã¨é€šä¿¡ä¸­)
+  signal ProcessingD : std_logic := '0';                -- 1ã‚¯ãƒ­ãƒƒã‚¯é…ã‚Œã®ä¿¡å·
+  signal Error       : std_logic := '0';                -- ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ãŸ
   signal Idle        : std_logic := '0';
-  signal Interrupt   : std_logic := '0';                -- Š„‚İ
+  signal Interrupt   : std_logic := '0';                -- å‰²è¾¼ã¿
   
   -- Init
-  signal Init_Req     : std_logic;                     -- ‰Šú‰»ƒŠƒNƒGƒXƒg
-  signal Initializing : std_logic;                     -- ‰Šú‰»’†FF
-  signal Init_State   : std_logic_vector( 3 downto 0); -- ƒXƒe[ƒg
-  signal Init_Counter : std_logic_vector( 7 downto 0); -- ”Ä—pƒJƒEƒ“ƒ^
-  signal Init_Clk_Cnt : std_logic_vector( 7 downto 0); -- 400kHz¶¬—pƒJƒEƒ“ƒ^
-  signal Init_Byte_Buffer : std_logic_vector( 7 downto 0); -- ƒoƒCƒgƒoƒbƒtƒ@
-  signal Init_Error       : std_logic;                     -- ƒGƒ‰[”­¶FF
+  signal Init_Req     : std_logic;                     -- åˆæœŸåŒ–ãƒªã‚¯ã‚¨ã‚¹ãƒˆ
+  signal Initializing : std_logic;                     -- åˆæœŸåŒ–ä¸­FF
+  signal Init_State   : std_logic_vector( 3 downto 0); -- ã‚¹ãƒ†ãƒ¼ãƒˆ
+  signal Init_Counter : std_logic_vector( 7 downto 0); -- æ±ç”¨ã‚«ã‚¦ãƒ³ã‚¿
+  signal Init_Clk_Cnt : std_logic_vector( 7 downto 0); -- 400kHzç”Ÿæˆç”¨ã‚«ã‚¦ãƒ³ã‚¿
+  signal Init_Byte_Buffer : std_logic_vector( 7 downto 0); -- ãƒã‚¤ãƒˆãƒãƒƒãƒ•ã‚¡
+  signal Init_Error       : std_logic;                     -- ã‚¨ãƒ©ãƒ¼ç™ºç”ŸFF
   
   -- Read
-  signal Read_Req     : std_logic;                     -- “Ç‚İ‚İƒŠƒNƒGƒXƒg
-  signal Reading      : std_logic;                     -- “Ç‚İ‚İ’†FF
-  signal Read_State   : std_logic_vector( 2 downto 0); -- ƒXƒe[ƒg
-  signal Read_Counter : std_logic_vector( 7 downto 0); -- ”Ä—pƒJƒEƒ“ƒ^
-  signal Read_Clk_Cnt : std_logic_vector( 7 downto 0); -- 25MkHz¶¬—pƒJƒEƒ“ƒ^
-  signal Read_Byte_Buffer : std_logic_vector( 7 downto 0); -- ƒoƒCƒgƒoƒbƒtƒ@
-  signal Read_Error       : std_logic;            -- ƒGƒ‰[”­¶FF
+  signal Read_Req     : std_logic;                     -- èª­ã¿è¾¼ã¿ãƒªã‚¯ã‚¨ã‚¹ãƒˆ
+  signal Reading      : std_logic;                     -- èª­ã¿è¾¼ã¿ä¸­FF
+  signal Read_State   : std_logic_vector( 2 downto 0); -- ã‚¹ãƒ†ãƒ¼ãƒˆ
+  signal Read_Counter : std_logic_vector( 7 downto 0); -- æ±ç”¨ã‚«ã‚¦ãƒ³ã‚¿
+  signal Read_Clk_Cnt : std_logic_vector( 7 downto 0); -- 25MkHzç”Ÿæˆç”¨ã‚«ã‚¦ãƒ³ã‚¿
+  signal Read_Byte_Buffer : std_logic_vector( 7 downto 0); -- ãƒã‚¤ãƒˆãƒãƒƒãƒ•ã‚¡
+  signal Read_Error       : std_logic;            -- ã‚¨ãƒ©ãƒ¼ç™ºç”ŸFF
   
-  signal Read_Counter256 : std_logic_vector( 7 downto 0); -- ƒf[ƒ^óMƒJƒEƒ“ƒ^
-  signal Read_Word_Buffer : std_logic_vector(15 downto 0);  -- ƒ[ƒhƒoƒbƒtƒ@
+  signal Read_Counter256 : std_logic_vector( 7 downto 0); -- ãƒ‡ãƒ¼ã‚¿å—ä¿¡ã‚«ã‚¦ãƒ³ã‚¿
+  signal Read_Word_Buffer : std_logic_vector(15 downto 0);  -- ãƒ¯ãƒ¼ãƒ‰ãƒãƒƒãƒ•ã‚¡
   
   -- Write
-  signal Write_Req     : std_logic;            -- ‘‚«‚İƒŠƒNƒGƒXƒg
-  signal Writing       : std_logic;            -- ‘‚«‚İ’†FF
-  signal Write_State   : std_logic_vector( 3 downto 0);  -- ƒXƒe[ƒg
-  signal Write_Counter : std_logic_vector( 7 downto 0);  -- ”Ä—pƒJƒEƒ“ƒ^
-  signal Write_Clk_Cnt : std_logic_vector( 7 downto 0);  -- 25MHz¶¬—pƒJƒEƒ“ƒ^
-  signal Write_Byte_Buffer : std_logic_vector( 7 downto 0);  -- ƒoƒCƒgƒoƒbƒtƒ@
-  signal Write_Error       : std_logic;            -- ƒGƒ‰[”­¶FF
+  signal Write_Req     : std_logic;            -- æ›¸ãè¾¼ã¿ãƒªã‚¯ã‚¨ã‚¹ãƒˆ
+  signal Writing       : std_logic;            -- æ›¸ãè¾¼ã¿ä¸­FF
+  signal Write_State   : std_logic_vector( 3 downto 0);  -- ã‚¹ãƒ†ãƒ¼ãƒˆ
+  signal Write_Counter : std_logic_vector( 7 downto 0);  -- æ±ç”¨ã‚«ã‚¦ãƒ³ã‚¿
+  signal Write_Clk_Cnt : std_logic_vector( 7 downto 0);  -- 25MHzç”Ÿæˆç”¨ã‚«ã‚¦ãƒ³ã‚¿
+  signal Write_Byte_Buffer : std_logic_vector( 7 downto 0);  -- ãƒã‚¤ãƒˆãƒãƒƒãƒ•ã‚¡
+  signal Write_Error       : std_logic;            -- ã‚¨ãƒ©ãƒ¼ç™ºç”ŸFF
   
-  signal Write_Counter256 : std_logic_vector( 7 downto 0); -- ƒf[ƒ^‘—MƒJƒEƒ“ƒ^
-  signal Write_Word_Buffer  : std_logic_vector(15 downto 0);  -- ƒ[ƒhƒoƒbƒtƒ@
+  signal Write_Counter256 : std_logic_vector( 7 downto 0); -- ãƒ‡ãƒ¼ã‚¿é€ä¿¡ã‚«ã‚¦ãƒ³ã‚¿
+  signal Write_Word_Buffer  : std_logic_vector(15 downto 0);  -- ãƒ¯ãƒ¼ãƒ‰ãƒãƒƒãƒ•ã‚¡
   
   -- DMA
   signal Read_Addr_DMA  : std_logic_vector(14 downto 0);
@@ -156,7 +156,7 @@ architecture Behavioral of TAC_SPI is
   
 begin
   
-  -- ƒAƒhƒŒƒXƒfƒR[ƒ_
+  -- ã‚¢ãƒ‰ãƒ¬ã‚¹ãƒ‡ã‚³ãƒ¼ãƒ€
   IOW_SPI_Ctl <=                                                         -- 10h
     '1' when (P_IOW='1' and P_EN='1' and P_ADDR(1 downto 0)="00") else '0';
   IOR_SPI_Sta <=                                                         -- 10h
@@ -165,21 +165,21 @@ begin
     '1' when (P_IOW='1' and P_EN='1' and P_ADDR(1 downto 0)="01") else '0';
   IOR_Mem_Addr <=                                                        -- 12h
     '1' when (P_IOR='1' and P_EN='1' and P_ADDR(1 downto 0)="01") else '0';
-  IOW_Blk_Addr <=                                                   -- 14h‚Æ16h
+  IOW_Blk_Addr <=                                                   -- 14hã¨16h
     '1' when (P_IOW='1' and P_EN='1' and P_ADDR(1)='1') else '0';
---IOR_Blk_Addr <=                                                   -- 14h‚Æ16h
+--IOR_Blk_Addr <=                                                   -- 14hã¨16h
 --  '1' when (P_IOR='1' and P_EN='1' and P_ADDR(1)='1') else '0';
 
-  -- ˆ—’†
+  -- å‡¦ç†ä¸­
   Processing <= Initializing or Reading or Writing;
 
-  -- ƒGƒ‰[
+  -- ã‚¨ãƒ©ãƒ¼
   Error <= Init_Error or Read_Error or Write_Error;
 
-  -- ƒAƒCƒhƒ‹
+  -- ã‚¢ã‚¤ãƒ‰ãƒ«
   Idle <= (not Processing) and (not Error);
 
-  -- Š„‚İ(ƒGƒbƒWƒgƒŠƒK[A‚Pƒpƒ‹ƒXo—Í)
+  -- å‰²è¾¼ã¿(ã‚¨ãƒƒã‚¸ãƒˆãƒªã‚¬ãƒ¼ã€ï¼‘ãƒ‘ãƒ«ã‚¹å‡ºåŠ›)
 --P_INT <= (Idle or Error) and Int_Ena;
   P_INT <= Interrupt and Int_Ena;
   process (P_CLK, P_RESET)
@@ -189,15 +189,15 @@ begin
       Interrupt   <= '0';
     elsif (P_CLK' event and P_CLK = '1') then
       ProcessingD <= Processing;
-      if (ProcessingD='1' and Processing='0') then   -- ˆ—Š®—¹
-        Interrupt <= '1';                            -- Š„‚İ”­¶
+      if (ProcessingD='1' and Processing='0') then   -- å‡¦ç†å®Œäº†
+        Interrupt <= '1';                            -- å‰²è¾¼ã¿ç™ºç”Ÿ
       else
-        Interrupt <= '0';                            -- Ÿ‰ñŠ„‚İ‚Ì€”õ
+        Interrupt <= '0';                            -- æ¬¡å›å‰²è¾¼ã¿ã®æº–å‚™
       end if;
     end if;
    end process;
   
-  -- ƒƒ‚ƒŠƒAƒhƒŒƒX
+  -- ãƒ¡ãƒ¢ãƒªã‚¢ãƒ‰ãƒ¬ã‚¹
   process (P_CLK, P_RESET)
   begin
     if (P_RESET = '0') then
@@ -209,8 +209,8 @@ begin
     end if;
   end process;
   
-  -- ƒuƒƒbƒNƒAƒhƒŒƒX(ƒf[ƒ^ƒAƒhƒŒƒX)
-  -- ’Fƒf[ƒ^ƒAƒhƒŒƒX‚ÍƒuƒƒbƒNƒAƒhƒŒƒX‚ğ9bit¶ƒVƒtƒg
+  -- ãƒ–ãƒ­ãƒƒã‚¯ã‚¢ãƒ‰ãƒ¬ã‚¹(ãƒ‡ãƒ¼ã‚¿ã‚¢ãƒ‰ãƒ¬ã‚¹)
+  -- æ³¨ï¼šãƒ‡ãƒ¼ã‚¿ã‚¢ãƒ‰ãƒ¬ã‚¹ã¯ãƒ–ãƒ­ãƒƒã‚¯ã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’9bitå·¦ã‚·ãƒ•ãƒˆ
   process (P_CLK, P_RESET)
   begin
     if (P_RESET = '0') then
@@ -218,11 +218,11 @@ begin
       Data_Addr  <= (others => '0');
     elsif (P_CLK' event and P_CLK = '1') then
       if (IOW_Blk_Addr = '1') then
-        -- ƒuƒƒbƒNƒAƒhƒŒƒXãˆÊ16bit(I/O 14h)
+        -- ãƒ–ãƒ­ãƒƒã‚¯ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸Šä½16bit(I/O 14h)
         if (P_ADDR(0) = '0') then
           Block_Addr(31 downto 16) <= P_DIN;
           Data_Addr(31 downto 25) <= P_DIN(6 downto 0);
-        -- ƒuƒƒbƒNƒAƒhƒŒƒX‰ºˆÊ16bit(I/O 16h)
+        -- ãƒ–ãƒ­ãƒƒã‚¯ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸‹ä½16bit(I/O 16h)
         else
           Block_Addr(15 downto 0) <= P_DIN;
           Data_Addr(24 downto 9) <= P_DIN;
@@ -231,37 +231,37 @@ begin
     end if;
   end process;
   
-  -- ƒf[ƒ^ƒoƒX
+  -- ãƒ‡ãƒ¼ã‚¿ãƒã‚¹
   -- 
-  -- yƒXƒe[ƒ^ƒXd—lz
+  -- ã€ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ä»•æ§˜ã€‘
   -- 
   --   0000 0000 IE00 0000
   -- 
-  --   I(Idle)c‰Šú‰»A“Ç‚İ‚İA‘‚«‚İ‚Ì‚¢‚¸‚ê‚à³í‚ÉÀs‰Â”\‚Å‚ ‚é
+  --   I(Idle)â€¦åˆæœŸåŒ–ã€èª­ã¿è¾¼ã¿ã€æ›¸ãè¾¼ã¿ã®ã„ãšã‚Œã‚‚æ­£å¸¸ã«å®Ÿè¡Œå¯èƒ½ã§ã‚ã‚‹
   --    I <= (not Processing) and (not Error)
-  --   E(Error)cˆ—’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚½
+  --   E(Error)â€¦å‡¦ç†ä¸­ã«ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ãŸ
   --     E <= Error
   --
-  --   IE = 00  ->  ˆ—’†
-  --   IE = 01  ->  ƒGƒ‰[‚ª”­¶‚µ‚½(‰Šú‰»‚ª•K—v)
-  --   IE = 10  ->  ‰É‚¾‚æ
-  --   IE = 11  ->  ‚ ‚è‚¦‚È‚¢
+  --   IE = 00  ->  å‡¦ç†ä¸­
+  --   IE = 01  ->  ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ãŸ(åˆæœŸåŒ–ãŒå¿…è¦)
+  --   IE = 10  ->  æš‡ã ã‚ˆ
+  --   IE = 11  ->  ã‚ã‚Šãˆãªã„
   --
   process(IOR_SPI_Sta,IOR_Mem_Addr,Idle,
           Error,Memory_Addr,Block_Addr,P_ADDR,P_CD)
   begin
     if (IOR_SPI_Sta = '1') then
-      P_DOUT <= "00000000" & Idle & Error & "00000" & P_CD; -- ƒXƒe[ƒ^ƒX‚ğo—Í
+      P_DOUT <= "00000000" & Idle & Error & "00000" & P_CD; -- ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ã‚’å‡ºåŠ›
     elsif (IOR_Mem_Addr = '1') then
-      P_DOUT <= Memory_Addr;                            -- ƒƒ‚ƒŠƒAƒhƒŒƒX‚ğo—Í
+      P_DOUT <= Memory_Addr;                            -- ãƒ¡ãƒ¢ãƒªã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’å‡ºåŠ›
     elsif (P_ADDR(0) = '0') then
-      P_DOUT <= Block_Addr(31 downto 16);    -- ƒuƒƒbƒNƒAƒhƒŒƒXãˆÊ16bit‚ğo—Í
+      P_DOUT <= Block_Addr(31 downto 16);    -- ãƒ–ãƒ­ãƒƒã‚¯ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸Šä½16bitã‚’å‡ºåŠ›
     else
-      P_DOUT <= Block_Addr(15 downto 0);     -- ƒuƒƒbƒNƒAƒhƒŒƒX‰ºˆÊ16bit‚ğo—Í
+      P_DOUT <= Block_Addr(15 downto 0);     -- ãƒ–ãƒ­ãƒƒã‚¯ã‚¢ãƒ‰ãƒ¬ã‚¹ä¸‹ä½16bitã‚’å‡ºåŠ›
     end if;
   end process;
   
-  -- ƒRƒ“ƒgƒ[ƒ‹
+  -- ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«
   process (P_CLK, P_RESET)
   begin
     if (P_RESET = '0') then
@@ -270,13 +270,13 @@ begin
       Read_Req  <= '0';
       Write_Req <= '0';
     elsif (P_CLK'event and P_CLK = '1') then
-      -- Š„‚İİ’èAˆ—ŠJn‚ğƒ‰ƒbƒ`
+      -- å‰²è¾¼ã¿è¨­å®šã€å‡¦ç†é–‹å§‹ã‚’ãƒ©ãƒƒãƒ
       if (IOW_SPI_Ctl = '1') then
         Int_Ena   <= P_DIN(7);
         Init_Req  <= P_DIN(2);
         Read_Req  <= P_DIN(1);
         Write_Req <= P_DIN(0);
-      -- ˆ—ŠJnƒŠƒNƒGƒXƒg‚ÍŸ‚Ìƒ^ƒCƒ~ƒ“ƒO‚Åæ‚è‰º‚°‚é
+      -- å‡¦ç†é–‹å§‹ãƒªã‚¯ã‚¨ã‚¹ãƒˆã¯æ¬¡ã®ã‚¿ã‚¤ãƒŸãƒ³ã‚°ã§å–ã‚Šä¸‹ã’ã‚‹
       else
         if (Initializing = '0') then
           Init_Req <= '0';
@@ -306,52 +306,52 @@ begin
       i_init_led       <= '0';
     elsif (P_CLK' event and P_CLK = '1') then
       if (Initializing = '1') then
-        if (Init_Clk_Cnt = 61) then -- ‚±‚Ìif•¶‚Ì’†‚Í400kHz–ˆ(ƒlƒKƒeƒBƒuƒGƒbƒW)
+        if (Init_Clk_Cnt = 61) then -- ã“ã®ifæ–‡ã®ä¸­ã¯400kHzæ¯(ãƒã‚¬ãƒ†ã‚£ãƒ–ã‚¨ãƒƒã‚¸)
           Init_Clk_Cnt <= Init_Clk_Cnt + 1;
-          i_init_sclk <= '0';       -- uSD‚ÌƒNƒƒbƒN‚ğ—§‚¿‰º‚°‚é
+          i_init_sclk <= '0';       -- uSDã®ã‚¯ãƒ­ãƒƒã‚¯ã‚’ç«‹ã¡ä¸‹ã’ã‚‹
           
           case Init_State is
-          -- 80‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+          -- 80å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
           when "0000" =>
             
-          -- CMD0‚Ì‘—M
+          -- CMD0ã®é€ä¿¡
           when "0001" =>
             i_init_cs <= '0';
             i_init_do <= CMD0(conv_integer(Init_Counter));
-          -- R1ƒŒƒXƒ|ƒ“ƒX(0x01)‘Ò‚¿
+          -- R1ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x01)å¾…ã¡
           when "0010" =>
             
-          -- 8‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+          -- 8å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
           when "0011" =>
             i_init_cs <= '1';
-          -- CMD1‚Ì‘—M
+          -- CMD1ã®é€ä¿¡
           when "0100" =>
             i_init_cs <= '0';
             i_init_do <= CMD1(conv_integer(Init_Counter));
-          -- R1ƒŒƒXƒ|ƒ“ƒX(0x00)‚ÌóM
+          -- R1ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x00)ã®å—ä¿¡
           when "0101" =>
             i_init_do <= '1';
-          -- 8‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+          -- 8å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
           when "0110" =>
             i_init_cs <= '1';
             
-          -- ‚±‚±‚©‚çƒuƒƒbƒN’·‚Ì•ÏX
-          -- CMD16‚Ì‘—M
+          -- ã“ã“ã‹ã‚‰ãƒ–ãƒ­ãƒƒã‚¯é•·ã®å¤‰æ›´
+          -- CMD16ã®é€ä¿¡
           when "0111" =>
             i_init_cs <= '0';
             i_init_do <= CMD16(conv_integer(Init_Counter));
-          -- R1ƒŒƒXƒ|ƒ“ƒX(0x00)‚ÌóM  
+          -- R1ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x00)ã®å—ä¿¡  
           when "1000" =>
             i_init_do <= '1';
           when others =>
           end case;
           
-        elsif (Init_Clk_Cnt = 123) then -- 400kHz–ˆ(ƒ|ƒWƒeƒBƒuƒGƒbƒW)
+        elsif (Init_Clk_Cnt = 123) then -- 400kHzæ¯(ãƒã‚¸ãƒ†ã‚£ãƒ–ã‚¨ãƒƒã‚¸)
           Init_Clk_Cnt <= "00000000";
-          i_init_sclk <= '1';           -- uSD‚ÌƒNƒƒbƒN‚ğ—§‚¿ã‚°‚é
+          i_init_sclk <= '1';           -- uSDã®ã‚¯ãƒ­ãƒƒã‚¯ã‚’ç«‹ã¡ä¸Šã’ã‚‹
           
           case Init_State is
-          -- 80‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+          -- 80å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
           when "0000" =>
             if (Init_Counter = 0) then
               Init_Counter <= conv_std_logic_vector(47, 8);
@@ -359,7 +359,7 @@ begin
             else
               Init_Counter <= Init_Counter - 1;
             end if;
-          -- CMD0‚Ì‘—M
+          -- CMD0ã®é€ä¿¡
           when "0001" =>
             if (Init_Counter = 0) then
               Init_Counter <= conv_std_logic_vector(7, 8);
@@ -367,7 +367,7 @@ begin
             else
               Init_Counter <= Init_Counter - 1;
             end if;
-          -- R1ƒŒƒXƒ|ƒ“ƒX(0x01)‚ÌóM  
+          -- R1ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x01)ã®å—ä¿¡  
           when "0010" =>
             Init_Byte_Buffer(7 downto 0) <= Init_Byte_Buffer(6 downto 0) & P_DI;
             if (Init_Counter = 0) then
@@ -387,7 +387,7 @@ begin
             else
               Init_Counter <= Init_Counter - 1;
             end if;
-          -- 8‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+          -- 8å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
           when "0011" =>
             if (Init_Counter = 0) then
               Init_Counter <= conv_std_logic_vector(47, 8);
@@ -395,7 +395,7 @@ begin
             else
               Init_Counter <= Init_Counter - 1;
             end if;
-          -- CMD1‚Ì‘—M
+          -- CMD1ã®é€ä¿¡
           when "0100" =>
             if (Init_Counter = 0) then
               Init_Counter <= conv_std_logic_vector(7, 8);
@@ -403,7 +403,7 @@ begin
             else
               Init_Counter <= Init_Counter - 1;
             end if;
-          -- R1ƒŒƒXƒ|ƒ“ƒX(0x00)‚ÌóM
+          -- R1ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x00)ã®å—ä¿¡
           when "0101" =>
             Init_Byte_Buffer(7 downto 0) <= Init_Byte_Buffer(6 downto 0) & P_DI;
             if (Init_Counter = 0) then
@@ -426,7 +426,7 @@ begin
             else
               Init_Counter <= Init_Counter - 1;
             end if;
-          -- 8‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+          -- 8å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
           when "0110" =>
             if (Init_Counter = 0) then
               Init_Counter <= conv_std_logic_vector(47, 8);
@@ -434,8 +434,8 @@ begin
             else
               Init_Counter <= Init_Counter - 1;
             end if;
-          -- ‚±‚±‚©‚çƒuƒƒbƒN’·‚Ì•ÏX
-          -- CMD16‚Ì‘—M
+          -- ã“ã“ã‹ã‚‰ãƒ–ãƒ­ãƒƒã‚¯é•·ã®å¤‰æ›´
+          -- CMD16ã®é€ä¿¡
           when "0111" =>
             if (Init_Counter = 0) then
               Init_Counter <= conv_std_logic_vector(7, 8);
@@ -443,7 +443,7 @@ begin
             else
               Init_Counter <= Init_Counter - 1;
             end if;
-          -- R1ƒŒƒXƒ|ƒ“ƒX(0x00)‘Ò‚¿
+          -- R1ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x00)å¾…ã¡
           when "1000" =>
             Init_Byte_Buffer(7 downto 0) <= Init_Byte_Buffer(6 downto 0) & P_DI;
             if (Init_Counter = 0) then
@@ -472,10 +472,10 @@ begin
         else 
           Init_Clk_Cnt <= Init_Clk_Cnt + 1;
         end if;
-      elsif (Init_Req = '1') then        -- ‰Šú‰»ƒŠƒNƒGƒXƒg‚ª‚ ‚Á‚½‚ç
-        Initializing   <= '1';           -- ‰Šú‰»’†FF‚ğƒZƒbƒg
+      elsif (Init_Req = '1') then        -- åˆæœŸåŒ–ãƒªã‚¯ã‚¨ã‚¹ãƒˆãŒã‚ã£ãŸã‚‰
+        Initializing   <= '1';           -- åˆæœŸåŒ–ä¸­FFã‚’ã‚»ãƒƒãƒˆ
         Init_Clk_Cnt   <= "00000000";
-        Init_Counter   <= conv_std_logic_vector(79, 8);  -- 80‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+        Init_Counter   <= conv_std_logic_vector(79, 8);  -- 80å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
         Init_State     <= "0000";
         Init_Byte_Buffer <= "11111111";
         i_init_cs     <= '1';
@@ -510,43 +510,43 @@ begin
       i_read_mr     <= '0';
     elsif (P_CLK' event and P_CLK = '1') then
       if (Reading = '1') then
-        if (Read_Clk_Cnt = 0) then   -- ‚±‚Ìif•¶‚Ì’†‚Í25MHz–ˆ(ƒlƒKƒeƒBƒuƒGƒbƒW)
+        if (Read_Clk_Cnt = 0) then   -- ã“ã®ifæ–‡ã®ä¸­ã¯25MHzæ¯(ãƒã‚¬ãƒ†ã‚£ãƒ–ã‚¨ãƒƒã‚¸)
           Read_Clk_Cnt <= Read_Clk_Cnt + 1;
-          i_read_sclk <= '0';        -- uSD‚ÌƒNƒƒbƒN‚ğ—§‚¿‰º‚°‚é
+          i_read_sclk <= '0';        -- uSDã®ã‚¯ãƒ­ãƒƒã‚¯ã‚’ç«‹ã¡ä¸‹ã’ã‚‹
           
           case Read_State is
-          -- CMD17‚Ì‘—M
+          -- CMD17ã®é€ä¿¡
           -- CMD17
           when "000" =>
             i_read_cs <= '0';
             i_read_do <= CMD17(conv_integer(Read_Counter));
-          -- ˆø”(ƒoƒCƒgƒAƒhƒŒƒX)
+          -- å¼•æ•°(ãƒã‚¤ãƒˆã‚¢ãƒ‰ãƒ¬ã‚¹)
           when "001" =>
             i_read_do <= Data_Addr(conv_integer(Read_Counter));
           -- CRC
           when "010" =>
             i_read_do <= CRC(conv_integer(Read_Counter));
-          -- R1ƒŒƒXƒ|ƒ“ƒX(0x00)‚ÌóM
+          -- R1ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x00)ã®å—ä¿¡
           when "011" =>
             
-          -- ƒXƒ^[ƒgƒoƒCƒg(0xFE)‚ÌóM
+          -- ã‚¹ã‚¿ãƒ¼ãƒˆãƒã‚¤ãƒˆ(0xFE)ã®å—ä¿¡
           when "100" =>
             
-          -- ƒf[ƒ^ƒuƒƒbƒN‚ÌóM
+          -- ãƒ‡ãƒ¼ã‚¿ãƒ–ãƒ­ãƒƒã‚¯ã®å—ä¿¡
           when "101" =>
             
-          -- 24‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+          -- 24å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
           when "110" =>
             i_read_cs <= '1';
           when others =>
           end case;
           
-        elsif (Read_Clk_Cnt = 1) then -- ‚±‚Ìif•¶‚Ì’†‚Í25MHz–ˆ(ƒ|ƒWƒeƒBƒuƒGƒbƒW)
+        elsif (Read_Clk_Cnt = 1) then -- ã“ã®ifæ–‡ã®ä¸­ã¯25MHzæ¯(ãƒã‚¸ãƒ†ã‚£ãƒ–ã‚¨ãƒƒã‚¸)
           Read_Clk_Cnt <= "00000000";
-          i_read_sclk <= '1';         -- uSD‚ÌƒNƒƒbƒN‚ğ—§‚¿ã‚°‚é
+          i_read_sclk <= '1';         -- uSDã®ã‚¯ãƒ­ãƒƒã‚¯ã‚’ç«‹ã¡ä¸Šã’ã‚‹
           
           case Read_State is
-          -- CMD17‚Ì‘—M
+          -- CMD17ã®é€ä¿¡
           -- CMD17
           when "000" =>
             if (Read_Counter = 0) then
@@ -555,7 +555,7 @@ begin
             else
               Read_Counter <= Read_Counter - 1;
             end if;
-          -- ˆø”(ƒoƒCƒgƒAƒhƒŒƒX)
+          -- å¼•æ•°(ãƒã‚¤ãƒˆã‚¢ãƒ‰ãƒ¬ã‚¹)
           when "001" =>
             if (Read_Counter = 0) then
               Read_Counter <= conv_std_logic_vector(7, 8);
@@ -571,7 +571,7 @@ begin
             else
               Read_Counter <= Read_Counter - 1;
             end if;
-          -- R1ƒŒƒXƒ|ƒ“ƒX(0x00)‚ÌóM
+          -- R1ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x00)ã®å—ä¿¡
           when "011" =>
             Read_Byte_Buffer(7 downto 0) <= Read_Byte_Buffer(6 downto 0) & P_DI;
             if (Read_Counter = 0) then
@@ -592,7 +592,7 @@ begin
             else
               Read_Counter <= Read_Counter - 1;
             end if;
-          -- ƒXƒ^[ƒgƒoƒCƒg(0xFE)‚ÌóM
+          -- ã‚¹ã‚¿ãƒ¼ãƒˆãƒã‚¤ãƒˆ(0xFE)ã®å—ä¿¡
           when "100" =>
             Read_Byte_Buffer(7 downto 0) <= Read_Byte_Buffer(6 downto 0) & P_DI;
             if (Read_Counter = 0) then
@@ -603,7 +603,7 @@ begin
               elsif (Read_Byte_Buffer(6 downto 0) & P_DI = X"FF") then
                 Read_Counter <= conv_std_logic_vector(7, 8);
               else
-                -- ƒJ[ƒh”ÍˆÍŠO‚Ì‰Â”\«
+                -- ã‚«ãƒ¼ãƒ‰ç¯„å›²å¤–ã®å¯èƒ½æ€§
                 Read_Error  <= '1';
                 Reading    <= '0';
                 i_read_cs  <= '1';
@@ -615,20 +615,20 @@ begin
             else
               Read_Counter <= Read_Counter - 1;
             end if;
-          -- ƒf[ƒ^ƒuƒƒbƒN‚ÌóM
+          -- ãƒ‡ãƒ¼ã‚¿ãƒ–ãƒ­ãƒƒã‚¯ã®å—ä¿¡
           when "101" =>
             Read_Word_Buffer(15 downto 0) <= Read_Word_Buffer(14 downto 0)&P_DI;
-            -- 2ƒoƒCƒg(1ƒ[ƒh)óM‚µ‚½‚©(ƒ[ƒhóM”»’è)
+            -- 2ãƒã‚¤ãƒˆ(1ãƒ¯ãƒ¼ãƒ‰)å—ä¿¡ã—ãŸã‹(ãƒ¯ãƒ¼ãƒ‰å—ä¿¡åˆ¤å®š)
             if (Read_Counter = 0) then
               Read_Counter <= conv_std_logic_vector(15, 8);
-              -- DMAŠJn
+              -- DMAé–‹å§‹
               P_DOUT_DMA <= Read_Word_Buffer(14 downto 0) & P_DI;
               if (not (Read_Counter256 = 255)) then
                 Read_Addr_DMA <= Read_Addr_DMA + 1;
               end if;
               P_RW_DMA <= '1';
               i_read_mr <= '1';
-              -- 512ƒoƒCƒg(256ƒ[ƒh)óM‚µ‚½‚©(ƒuƒƒbƒNóM”»’è)
+              -- 512ãƒã‚¤ãƒˆ(256ãƒ¯ãƒ¼ãƒ‰)å—ä¿¡ã—ãŸã‹(ãƒ–ãƒ­ãƒƒã‚¯å—ä¿¡åˆ¤å®š)
               if (Read_Counter256 = 0) then
                 Read_Counter <= conv_std_logic_vector(24, 8);
                 Read_State <= "110";
@@ -638,7 +638,7 @@ begin
             else
               Read_Counter <= Read_Counter - 1;
             end if;
-          -- 24‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+          -- 24å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
           when "110" =>
             if (Read_Counter = 0) then
               Reading    <= '0';
@@ -663,8 +663,8 @@ begin
           i_read_mr <= '0';
         end if;
         
-      elsif (Read_Req = '1') then        -- “Ç‚İ‚İƒŠƒNƒGƒXƒg‚ª‚ ‚Á‚½‚ç
-        Reading       <= '1';      -- “Ç‚İ‚İ’†FF‚ğƒZƒbƒg
+      elsif (Read_Req = '1') then        -- èª­ã¿è¾¼ã¿ãƒªã‚¯ã‚¨ã‚¹ãƒˆãŒã‚ã£ãŸã‚‰
+        Reading       <= '1';      -- èª­ã¿è¾¼ã¿ä¸­FFã‚’ã‚»ãƒƒãƒˆ
         Read_Clk_Cnt   <= "00000000";
         Read_Counter   <= conv_std_logic_vector(7, 8);
         Read_State     <= "000";
@@ -704,58 +704,58 @@ begin
       i_write_mr      <= '0';
     elsif (P_CLK' event and P_CLK = '1') then
       if (Writing = '1') then
-        if (Write_Clk_Cnt = 0) then -- ‚±‚Ìif•¶‚Ì’†‚Í25MHz–ˆ(ƒlƒKƒeƒBƒuƒGƒbƒW)
+        if (Write_Clk_Cnt = 0) then -- ã“ã®ifæ–‡ã®ä¸­ã¯25MHzæ¯(ãƒã‚¬ãƒ†ã‚£ãƒ–ã‚¨ãƒƒã‚¸)
           Write_Clk_Cnt <= Write_Clk_Cnt + 1;
-          i_write_sclk <= '0';      -- uSD‚ÌƒNƒƒbƒN‚ğ—§‚¿‰º‚°‚é
+          i_write_sclk <= '0';      -- uSDã®ã‚¯ãƒ­ãƒƒã‚¯ã‚’ç«‹ã¡ä¸‹ã’ã‚‹
                     
           case Write_State is
-          -- CMD24‚Ì‘—M
+          -- CMD24ã®é€ä¿¡
           -- CMD24
           when "0000" =>
             i_write_cs <= '0';
             i_write_do <= CMD24(conv_integer(Write_Counter));
-          -- ˆø”(ƒoƒCƒgƒAƒhƒŒƒX)
+          -- å¼•æ•°(ãƒã‚¤ãƒˆã‚¢ãƒ‰ãƒ¬ã‚¹)
           when "0001" =>
             i_write_do <= Data_Addr(conv_integer(Write_Counter));
           -- CRC
           when "0010" =>
             i_write_do <= CRC(conv_integer(Write_Counter));
-          -- R1ƒŒƒXƒ|ƒ“ƒX(0x00)‚ÌóM
+          -- R1ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x00)ã®å—ä¿¡
           when "0011" =>
             i_write_do <= '1';
-          -- ƒXƒ^[ƒgƒoƒCƒg(0xFE)‚Ì‘—M
+          -- ã‚¹ã‚¿ãƒ¼ãƒˆãƒã‚¤ãƒˆ(0xFE)ã®é€ä¿¡
           when "0100" =>
             i_write_do <= START_BYTE(conv_integer(Write_Counter));
-          -- ƒf[ƒ^‚Ì‘—M
+          -- ãƒ‡ãƒ¼ã‚¿ã®é€ä¿¡
           when "0101" =>
             i_write_do <= Write_Word_Buffer(conv_integer(Write_Counter));
-            -- DMAŠJn
+            -- DMAé–‹å§‹
             if (Write_Counter = 0) then
               i_write_mr <= '1';
               Write_Addr_DMA <= Write_Addr_DMA + 1;
             end if;
-          -- CRC(ƒ_ƒ~[ƒNƒƒbƒN2byte)‚Ì‘—M
+          -- CRC(ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯2byte)ã®é€ä¿¡
           when "0110" =>
             i_write_do <= '0';
-          -- ƒf[ƒ^ƒŒƒXƒ|ƒ“ƒX(0x5)‚ÌóM
+          -- ãƒ‡ãƒ¼ã‚¿ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x5)ã®å—ä¿¡
           when "0111" =>
             i_write_do <= '1';
-          -- BUSY‚ÌŠÔ‘Ò‚Â
+          -- BUSYã®é–“å¾…ã¤
           when "1000" =>
           
-          -- 8‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+          -- 8å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
           when "1001" =>
             i_write_cs <= '1';
           
           when others =>
           end case;
           
-        elsif (Write_Clk_Cnt = 1) then -- 25MHz–ˆ(ƒ|ƒWƒeƒBƒuƒGƒbƒW)
+        elsif (Write_Clk_Cnt = 1) then -- 25MHzæ¯(ãƒã‚¸ãƒ†ã‚£ãƒ–ã‚¨ãƒƒã‚¸)
           Write_Clk_Cnt <= "00000000";
-          i_write_sclk <= '1';      -- uSD‚ÌƒNƒƒbƒN‚ğ—§‚¿ã‚°‚é
+          i_write_sclk <= '1';      -- uSDã®ã‚¯ãƒ­ãƒƒã‚¯ã‚’ç«‹ã¡ä¸Šã’ã‚‹
           
           case Write_State is
-          -- CMD24‚Ì‘—M
+          -- CMD24ã®é€ä¿¡
           -- CMD24
           when "0000" =>
             if (Write_Counter = 0) then
@@ -764,7 +764,7 @@ begin
             else
               Write_Counter <= Write_Counter - 1;
             end if;
-          -- ˆø”(ƒoƒCƒgƒAƒhƒŒƒX)
+          -- å¼•æ•°(ãƒã‚¤ãƒˆã‚¢ãƒ‰ãƒ¬ã‚¹)
           when "0001" =>
             if (Write_Counter = 0) then
               Write_Counter <= conv_std_logic_vector(7, 8);
@@ -780,7 +780,7 @@ begin
             else
               Write_Counter <= Write_Counter - 1;
             end if;
-          -- R1ƒŒƒXƒ|ƒ“ƒX(0x00)‚ÌóM
+          -- R1ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x00)ã®å—ä¿¡
           when "0011" =>
             Write_Byte_Buffer(7 downto 0) <= Write_Byte_Buffer(6 downto 0)&P_DI;
             if (Write_Counter = 0) then
@@ -801,7 +801,7 @@ begin
             else
               Write_Counter <= Write_Counter - 1;
             end if;
-          -- ƒXƒ^[ƒgƒoƒCƒg(0xFE)‚Ì‘—M
+          -- ã‚¹ã‚¿ãƒ¼ãƒˆãƒã‚¤ãƒˆ(0xFE)ã®é€ä¿¡
           when "0100" =>
             if (Write_Counter = 0) then
               Write_Counter <= conv_std_logic_vector(15, 8);
@@ -810,7 +810,7 @@ begin
             else
               Write_Counter <= Write_Counter - 1;
             end if;
-          -- ƒf[ƒ^‚Ì‘—M
+          -- ãƒ‡ãƒ¼ã‚¿ã®é€ä¿¡
           when "0101" =>
             if (Write_Counter = 0) then
               Write_Counter <= conv_std_logic_vector(15, 8);
@@ -823,7 +823,7 @@ begin
             else
               Write_Counter <= Write_Counter - 1;
             end if;
-          -- CRC(ƒ_ƒ~[ƒNƒƒbƒN2byte)‚Ì‘—M
+          -- CRC(ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯2byte)ã®é€ä¿¡
           when "0110" =>
             if (Write_Counter = 0) then
               Write_Counter <= conv_std_logic_vector(7, 8);
@@ -831,7 +831,7 @@ begin
             else
               Write_Counter <= Write_Counter - 1;
             end if;
-          -- ƒf[ƒ^ƒŒƒXƒ|ƒ“ƒX(0x5)‚ÌóM
+          -- ãƒ‡ãƒ¼ã‚¿ãƒ¬ã‚¹ãƒãƒ³ã‚¹(0x5)ã®å—ä¿¡
           when "0111" =>
             Write_Byte_Buffer(7 downto 0) <= Write_Byte_Buffer(6 downto 0)&P_DI;
             if (Write_Counter = 0) then
@@ -841,7 +841,7 @@ begin
                 Write_Counter <= conv_std_logic_vector(7, 8);
                 Write_State <= "1000";
               else
-                -- ƒJ[ƒh”ÍˆÍŠO‚Ì‰Â”\«
+                -- ã‚«ãƒ¼ãƒ‰ç¯„å›²å¤–ã®å¯èƒ½æ€§
                 Write_Error   <= '1';
                 Writing     <= '0';
                 i_write_cs   <= '1';
@@ -853,7 +853,7 @@ begin
             else
               Write_Counter <= Write_Counter - 1;
             end if;
-          -- busy‚ÌŠÔ‘Ò‚Â
+          -- busyã®é–“å¾…ã¤
           when "1000" =>
             Write_Byte_Buffer(7 downto 0) <= Write_Byte_Buffer(6 downto 0)&P_DI;
             if (Write_Counter = 0) then
@@ -866,7 +866,7 @@ begin
             else
               Write_Counter <= Write_Counter - 1;
             end if;
-          -- 8‰ñ‚Ìƒ_ƒ~[ƒNƒƒbƒN
+          -- 8å›ã®ãƒ€ãƒŸãƒ¼ã‚¯ãƒ­ãƒƒã‚¯
           when "1001" =>
             if (Write_Counter = 0) then
               Writing     <= '0';
@@ -891,8 +891,8 @@ begin
           Write_Word_Buffer <= P_DIN_DMA;
         end if;
         
-      elsif (Write_Req = '1') then      -- ‘‚«‚İƒŠƒNƒGƒXƒg‚ª‚ ‚Á‚½‚ç
-        Writing        <= '1';      -- ‘‚«‚İ’†FF‚ğƒZƒbƒg
+      elsif (Write_Req = '1') then      -- æ›¸ãè¾¼ã¿ãƒªã‚¯ã‚¨ã‚¹ãƒˆãŒã‚ã£ãŸã‚‰
+        Writing        <= '1';      -- æ›¸ãè¾¼ã¿ä¸­FFã‚’ã‚»ãƒƒãƒˆ
         Write_Clk_Cnt    <= "00000000";
         Write_Counter    <= conv_std_logic_vector(7, 8);
         Write_State     <= "0000";
@@ -903,7 +903,7 @@ begin
         i_write_do      <= '1';
         i_write_led      <= '1';
         
-        -- Ÿ‚ÌƒNƒƒbƒN‚ÅAÅ‰‚É‘‚«‚Şƒ[ƒh‚ğƒoƒbƒtƒ@‚Éæ‚è‚ñ‚Å‚¨‚­
+        -- æ¬¡ã®ã‚¯ãƒ­ãƒƒã‚¯ã§ã€æœ€åˆã«æ›¸ãè¾¼ã‚€ãƒ¯ãƒ¼ãƒ‰ã‚’ãƒãƒƒãƒ•ã‚¡ã«å–ã‚Šè¾¼ã‚“ã§ãŠã
         Write_Addr_DMA <= Memory_Addr(15 downto 1);
         i_write_mr <= '1';
       end if;
@@ -915,13 +915,13 @@ begin
     end if;
   end process;
   
-  -- ŠeƒvƒƒZƒX‚Ì”zü‚ğuSD’[q‚ÖW–ñ
+  -- å„ãƒ—ãƒ­ã‚»ã‚¹ã®é…ç·šã‚’uSDç«¯å­ã¸é›†ç´„
   P_CS   <= i_init_cs and i_read_cs and i_write_cs;
   P_DO   <= i_init_do and i_read_do and i_write_do;
   P_SCLK <= i_init_sclk and i_read_sclk and i_write_sclk;
   P_ACC  <= not (i_init_led or i_read_led or i_write_led);
   
-  -- ŠeƒvƒƒZƒX‚Ì”zü‚ğDMA—p’[q‚ÖW–ñ
+  -- å„ãƒ—ãƒ­ã‚»ã‚¹ã®é…ç·šã‚’DMAç”¨ç«¯å­ã¸é›†ç´„
   P_ADDR_DMA <= Read_Addr_DMA or Write_Addr_DMA;
   P_MR_DMA <= i_read_mr or i_write_mr;
   

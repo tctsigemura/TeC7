@@ -6,39 +6,39 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
--- 2019.05.06 : TeC7a �p�ɐV�����u�����`�iRN4020 �֘A�폜�j
--- 2019.04.13 : TeC7d �p�� RN4020_CON �ǉ��CRN4020_SW �폜
--- 2019.02.28 : TAC_RAM��RESET��z���iIPL�̕����o���N���j
--- 2019.02.18 : TaC ���[�h�ȊO�ł� SETA+RESET �� TaC �����Z�b�g����悤�ɕύX
--- 2019.02.16 : TAC_CPU �� P_PR �� in/out �ԈႦ����
--- 2019.02.09 : �}�C�N��SD�J�[�h�̑}�������m�ł���悤�ɂ���
--- 2019.02.03 : TeC�̃R���\�[����TaC������ł���悤�ɂ���
--- 2019.01.24 : ��I/O�A�h���X�̃��[�h�� 00H �ɂȂ�悤�ɕύX
--- 2019.01.22 : MMU ��ǉ�
--- 2018.12.31 : CPU ����~���̓^�C�}�[����~����悤�ɕύX
--- 2018.12.09 : PIO �̏o�͂��ő�12�r�b�g��
--- 2018.07.13 : ���[�h��3�r�b�g�ɕύX
--- 2018.07.13 : RN4020�̎�M�o�b�t�@�iFIFO�j�ǉ�
--- 2017.05.11 : TeC7b �Ή�
--- 2016.01.07 : �암�łƓ���
--- 2012.09.26 : TaC-CUP V2 �Ή�����
--- 2012.01.22 : TeC �Ƃ̃C���^�t�F�[�X���폜
--- 2011.09.18 : �V�K�쐬
+-- 2019.05.06 : TeC7a 用に新しいブランチ（RN4020 関連削除）
+-- 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
+-- 2019.02.28 : TAC_RAMにRESETを配線（IPLの複数バンク化）
+-- 2019.02.18 : TaC モード以外では SETA+RESET で TaC をリセットするように変更
+-- 2019.02.16 : TAC_CPU の P_PR の in/out 間違え訂正
+-- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
+-- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
+-- 2019.01.24 : 空きI/Oアドレスのリードは 00H になるように変更
+-- 2019.01.22 : MMU を追加
+-- 2018.12.31 : CPU が停止中はタイマーも停止するように変更
+-- 2018.12.09 : PIO の出力を最大12ビット化
+-- 2018.07.13 : モードを3ビットに変更
+-- 2018.07.13 : RN4020の受信バッファ（FIFO）追加
+-- 2017.05.11 : TeC7b 対応
+-- 2016.01.07 : 川部版と統合
+-- 2012.09.26 : TaC-CUP V2 対応完了
+-- 2012.01.22 : TeC とのインタフェースを削除
+-- 2011.09.18 : 新規作成
 --
 -- $Id
 --
@@ -298,11 +298,11 @@ component TAC_SIO
          P_ADDR    : in  std_logic;                      -- Address
          P_DOUT    : out std_logic_vector(7 downto 0);   -- Data Output
          P_DIN     : in  std_logic_vector(7 downto 0);   -- Data Input
-         P_INT_TxD : out std_logic;                      -- SIO ���M���荞��
-         P_INT_RxD : out std_logic;                      -- SIO ��M���荞��
+         P_INT_TxD : out std_logic;                      -- SIO 送信割り込み
+         P_INT_RxD : out std_logic;                      -- SIO 受信割り込み
 
-         P_TxD     : out std_logic;                      -- �V���A���o��
-         P_RxD     : in  std_logic                       -- �V���A������
+         P_TxD     : out std_logic;                      -- シリアル出力
+         P_RxD     : in  std_logic                       -- シリアル入力
        );
 end component;
 
@@ -402,19 +402,19 @@ component TAC_TEC is
 end component;
 
 begin
-  -- �A�h���X�ᔽ�p(��������)
+  -- アドレス違反用(将来実装)
   i_int_bit(10) <= '0';
 
-  -- �}�C�N���v���O���������������O�� 12 �` 15 ���g�p
+  -- マイクロプログラムが発生する例外が 12 〜 15 を使用
   i_int_bit(12) <= '0';
   i_int_bit(13) <= '0';
   i_int_bit(14) <= '0';
   i_int_bit(15) <= '0';
 
-  -- TaC���[�h�ȊO�ł� RESET+SETA ��TaC�����Z�b�g�ł���
+  -- TaCモード以外では RESET+SETA でTaCをリセットできる
   i_reset_panel <= P_RESET_SW when (P_MODE=1) else P_TEC_RESET and P_TEC_SETA;
    
-  -- CNT16 (1kHz �̃p���X�𔭐�����)
+  -- CNT16 (1kHz のパルスを発生する)
   i_1kHz <= '1' when (i_cnt16=49151) else '0';
 
   process(P_CLK0, P_RESET)
@@ -467,17 +467,17 @@ begin
   
   i_iow       <= i_ir and i_rw and (not i_li);
   i_ior       <= i_ir and (not i_rw) and (not i_li);
-  i_en_tmr0   <= '1' when (i_addr(7 downto 2)="000000") else '0'; -- 00~03
-  i_en_tmr1   <= '1' when (i_addr(7 downto 2)="000001") else '0'; -- 04~07
-  i_en_sio1   <= '1' when (i_addr(7 downto 2)="000010") else '0'; -- 08~0b
-  i_en_sio2   <= '1' when (i_addr(7 downto 2)="000011") else '0'; -- 0c~0f
-  i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10~17
-  i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18~1f
---i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28~2f
-  i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30~37
-  i_en_ram    <= '1' when (i_addr(7 downto 1)="1111000")else '0'; -- f0~f1
+  i_en_tmr0   <= '1' when (i_addr(7 downto 2)="000000") else '0'; -- 00‾03
+  i_en_tmr1   <= '1' when (i_addr(7 downto 2)="000001") else '0'; -- 04‾07
+  i_en_sio1   <= '1' when (i_addr(7 downto 2)="000010") else '0'; -- 08‾0b
+  i_en_sio2   <= '1' when (i_addr(7 downto 2)="000011") else '0'; -- 0c‾0f
+  i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10‾17
+  i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18‾1f
+--i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28‾2f
+  i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30‾37
+  i_en_ram    <= '1' when (i_addr(7 downto 1)="1111000")else '0'; -- f0‾f1
   i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110" and
-                      (i_addr(2)='1' or i_addr(1)='1')) else '0'; -- f2~f7
+                      (i_addr(2)='1' or i_addr(1)='1')) else '0'; -- f2‾f7
  
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
                i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
