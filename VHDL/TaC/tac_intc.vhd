@@ -6,25 +6,25 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 
 --
 -- TaC/tac_intc.vhd : Interrupt Controler
 --
--- 2013.01.06           : TaC-CPU V2 �Ή�
--- 2012.01.22           : entity ��������
--- 2011.06.16           : TeC7 �p�ɏ���������
--- 2010.07.20           : Subversion �ɂ��Ǘ����J�n
+-- 2013.01.06           : TaC-CPU V2 対応
+-- 2012.01.22           : entity 名見直し
+-- 2011.06.16           : TeC7 用に書き換える
+-- 2010.07.20           : Subversion による管理を開始
 --
 -- $Id
 --
