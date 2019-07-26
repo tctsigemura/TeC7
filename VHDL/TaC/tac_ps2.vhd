@@ -6,23 +6,23 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ã‹L’˜ìŒ Ò‚ÍCFree Software Foundation ‚É‚æ‚Á‚ÄŒöŠJ‚³‚ê‚Ä‚¢‚é GNU ˆê”ÊŒö
--- O—˜—p‹–‘øŒ_–ñ‘ƒo[ƒWƒ‡ƒ“‚Q‚É‹Lq‚³‚ê‚Ä‚¢‚éğŒ‚ğ–‚½‚·ê‡‚ÉŒÀ‚èC–{ƒ\[ƒX
--- ƒR[ƒh(–{ƒ\[ƒXƒR[ƒh‚ğ‰ü•Ï‚µ‚½‚à‚Ì‚ğŠÜ‚ŞDˆÈ‰º“¯—l)‚ğg—pE•¡»E‰ü•ÏEÄ”z
--- •z‚·‚é‚±‚Æ‚ğ–³‚Å‹–‘ø‚·‚éD
+--   ä¸Šè¨˜è‘—ä½œæ¨©è€…ã¯ï¼ŒFree Software Foundation ã«ã‚ˆã£ã¦å…¬é–‹ã•ã‚Œã¦ã„ã‚‹ GNU ä¸€èˆ¬å…¬
+-- è¡†åˆ©ç”¨è¨±è«¾å¥‘ç´„æ›¸ãƒãƒ¼ã‚¸ãƒ§ãƒ³ï¼’ã«è¨˜è¿°ã•ã‚Œã¦ã„ã‚‹æ¡ä»¶ã‚’æº€ãŸã™å ´åˆã«é™ã‚Šï¼Œæœ¬ã‚½ãƒ¼ã‚¹
+-- ã‚³ãƒ¼ãƒ‰(æœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã‚’æ”¹å¤‰ã—ãŸã‚‚ã®ã‚’å«ã‚€ï¼ä»¥ä¸‹åŒæ§˜)ã‚’ä½¿ç”¨ãƒ»è¤‡è£½ãƒ»æ”¹å¤‰ãƒ»å†é…
+-- å¸ƒã™ã‚‹ã“ã¨ã‚’ç„¡å„Ÿã§è¨±è«¾ã™ã‚‹ï¼
 --
---   –{ƒ\[ƒXƒR[ƒh‚Í–‘S‚­‚Ì–³•ÛØ–‚Å’ñ‹Ÿ‚³‚ê‚é‚à‚Ì‚Å‚ ‚éBã‹L’˜ìŒ Ò‚¨‚æ‚Ñ
--- ŠÖ˜A‹@ŠÖEŒÂl‚Í–{ƒ\[ƒXƒR[ƒh‚ÉŠÖ‚µ‚ÄC‚»‚Ì“K—p‰Â”\«‚àŠÜ‚ß‚ÄC‚¢‚©‚È‚é•ÛØ
--- ‚às‚í‚È‚¢D‚Ü‚½C–{ƒ\[ƒXƒR[ƒh‚Ì—˜—p‚É‚æ‚è’¼Ú“I‚Ü‚½‚ÍŠÔÚ“I‚É¶‚¶‚½‚¢‚©‚È
--- ‚é‘¹ŠQ‚ÉŠÖ‚µ‚Ä‚àC‚»‚ÌÓ”C‚ğ•‰‚í‚È‚¢D
+--   æœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã¯ï¼Šå…¨ãã®ç„¡ä¿è¨¼ï¼Šã§æä¾›ã•ã‚Œã‚‹ã‚‚ã®ã§ã‚ã‚‹ã€‚ä¸Šè¨˜è‘—ä½œæ¨©è€…ãŠã‚ˆã³
+-- é–¢é€£æ©Ÿé–¢ãƒ»å€‹äººã¯æœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã«é–¢ã—ã¦ï¼Œãã®é©ç”¨å¯èƒ½æ€§ã‚‚å«ã‚ã¦ï¼Œã„ã‹ãªã‚‹ä¿è¨¼
+-- ã‚‚è¡Œã‚ãªã„ï¼ã¾ãŸï¼Œæœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã®åˆ©ç”¨ã«ã‚ˆã‚Šç›´æ¥çš„ã¾ãŸã¯é–“æ¥çš„ã«ç”Ÿã˜ãŸã„ã‹ãª
+-- ã‚‹æå®³ã«é–¢ã—ã¦ã‚‚ï¼Œãã®è²¬ä»»ã‚’è² ã‚ãªã„ï¼
 --
 --
 
 --
 -- TaC/tac_ps2.vhd : TaC PS/2 interface
 --
--- 2012.01.22           : entity –¼AŒ©’¼‚µ
--- 2012.01.20           : –ì‘ºŒN‚ÌƒR[ƒh‚ğæ‚è‚İ
+-- 2012.01.22           : entity åã€è¦‹ç›´ã—
+-- 2012.01.20           : é‡æ‘å›ã®ã‚³ãƒ¼ãƒ‰ã‚’å–ã‚Šè¾¼ã¿
 --
 -- $Id
 --
@@ -47,8 +47,8 @@ entity TAC_PS2 is
       P_DIN     : in std_logic_vector(7 downto 0);    -- Data Input
       P_PS2D    : inout std_logic;                    -- PS/2 Data
       P_PS2C    : inout std_logic;                    -- PS/2 Clock
-      P_INT_W   : out std_logic;                      -- PS/2 ‘—MŠ„‚è‚İ
-      P_INT_R   : out std_logic                       -- PS/2 óMŠ„‚è‚İ
+      P_INT_W   : out std_logic;                      -- PS/2 é€ä¿¡å‰²ã‚Šè¾¼ã¿
+      P_INT_R   : out std_logic                       -- PS/2 å—ä¿¡å‰²ã‚Šè¾¼ã¿
     );
 end TAC_PS2;
 
@@ -56,8 +56,8 @@ architecture Behavioral of TAC_PS2 is
 
 signal PS2D_host : std_logic;
 
--- 50M Hz ƒNƒƒbƒN ‚Æ PS2C ‚Ì “¯Šú
-signal PS2C_buf : std_logic_vector(1 downto 0);       -- ‘O‰ñ‚Æ¡‰ñ‚ÌPS2C‚Ì’l
+-- 50M Hz ã‚¯ãƒ­ãƒƒã‚¯ ã¨ PS2C ã® åŒæœŸ
+signal PS2C_buf : std_logic_vector(1 downto 0);       -- å‰å›ã¨ä»Šå›ã®PS2Cã®å€¤
 
 -- Address Decode
 signal IOW_PS2_Dat  : std_logic;                      -- Write Data
@@ -66,23 +66,23 @@ signal IOW_PS2_Ctl  : std_logic;                      -- Control (Write)
 signal IOR_PS2_Sta  : std_logic;                      -- Status (Read)
 
 
--- ƒfƒoƒCƒX‚©‚ç‚ÌóM—p
+-- ãƒ‡ãƒã‚¤ã‚¹ã‹ã‚‰ã®å—ä¿¡ç”¨
 signal R_D_Reg      : std_logic_vector(7 downto 0);
-signal R_S_Reg      : std_logic_vector(7 downto 0);   -- ƒVƒtƒgƒŒƒWƒXƒ^
-signal R_Full       : std_logic;                      -- óMŠ®—¹ = 1
+signal R_S_Reg      : std_logic_vector(7 downto 0);   -- ã‚·ãƒ•ãƒˆãƒ¬ã‚¸ã‚¹ã‚¿
+signal R_Full       : std_logic;                      -- å—ä¿¡å®Œäº† = 1
 signal R_Ena        : std_logic;                      -- Read Enable
-signal R_Int_Ena    : std_logic;                      -- Š„‚è‚İ‹–‰Â
-signal R_bitcnt     : std_logic_vector(3 downto 0);   -- óMƒrƒbƒgƒJƒEƒ“ƒ^
+signal R_Int_Ena    : std_logic;                      -- å‰²ã‚Šè¾¼ã¿è¨±å¯
+signal R_bitcnt     : std_logic_vector(3 downto 0);   -- å—ä¿¡ãƒ“ãƒƒãƒˆã‚«ã‚¦ãƒ³ã‚¿
 signal R_WaitCnt    : std_logic_vector(12 downto 0);
 signal R_Parity     : std_logic;
 
--- ƒfƒoƒCƒX‚Ö‚Ì‘—M—p
+-- ãƒ‡ãƒã‚¤ã‚¹ã¸ã®é€ä¿¡ç”¨
 signal W_D_Reg      : std_logic_vector(7 downto 0);
-signal W_S_Reg      : std_logic_vector(7 downto 0);   -- ƒVƒtƒgƒŒƒWƒXƒ^
-signal W_Full       : std_logic;                      -- ‘—MŠ®—¹ = 0
+signal W_S_Reg      : std_logic_vector(7 downto 0);   -- ã‚·ãƒ•ãƒˆãƒ¬ã‚¸ã‚¹ã‚¿
+signal W_Full       : std_logic;                      -- é€ä¿¡å®Œäº† = 0
 signal W_Ena        : std_logic;                      -- Write Enable
-signal W_Int_Ena    : std_logic;                      -- Š„‚è‚İ‹–‰Â
-signal W_bitcnt     : std_logic_vector(3 downto 0);   -- ‘—MƒrƒbƒgƒJƒEƒ“ƒ^
+signal W_Int_Ena    : std_logic;                      -- å‰²ã‚Šè¾¼ã¿è¨±å¯
+signal W_bitcnt     : std_logic_vector(3 downto 0);   -- é€ä¿¡ãƒ“ãƒƒãƒˆã‚«ã‚¦ãƒ³ã‚¿
 signal W_State      : std_logic_vector( 1 downto 0 );
 signal W_Wait_Cnt   : std_logic_vector(12 downto 0);
 signal W_Parity     : std_logic;
@@ -131,7 +131,7 @@ begin
         end if;
     end process;
     
-    -- 2‚Â‚ÌƒNƒƒbƒNŠÔ‚Å“¯Šú‚ğ‚Æ‚é
+    -- 2ã¤ã®ã‚¯ãƒ­ãƒƒã‚¯é–“ã§åŒæœŸã‚’ã¨ã‚‹
     process(P_CLK , P_RESET)
     begin
         if(P_RESET = '0' ) then
@@ -142,7 +142,7 @@ begin
     end process;
     
     
-    -- Write (‘—M)
+    -- Write (é€ä¿¡)
     process(P_CLK, P_RESET)
     begin
         if( P_RESET = '0' ) then
@@ -170,25 +170,25 @@ begin
             W_Parity <= '1';
         elsif( P_CLK'event and P_CLK = '1' ) then
             if( W_Ena = '1' ) then
-                -- o—Í
+                -- å‡ºåŠ›
                 case W_State is
                     when "00" =>
                         if( W_Wait_Cnt = 5010 ) then
-                            -- 100usecˆÈã‘Ò‚Á‚½Œã
-                            -- ‘—M —v‹
+                            -- 100usecä»¥ä¸Šå¾…ã£ãŸå¾Œ
+                            -- é€ä¿¡ è¦æ±‚
                             W_State <= "01";
                         else
                             W_Wait_Cnt <= W_Wait_Cnt + '1';
                         end if;
                     when "01" =>
-                        if( PS2C_buf = "01" ) then  -- ƒlƒKƒeƒBƒuƒGƒbƒW
+                        if( PS2C_buf = "01" ) then  -- ãƒã‚¬ãƒ†ã‚£ãƒ–ã‚¨ãƒƒã‚¸
                             if( W_bitcnt < 8 ) then
-                                PS2D_host <= W_S_Reg(0); -- ƒf[ƒ^o—Í
-                                -- ƒpƒŠƒeƒBŒvZ
+                                PS2D_host <= W_S_Reg(0); -- ãƒ‡ãƒ¼ã‚¿å‡ºåŠ›
+                                -- ãƒ‘ãƒªãƒ†ã‚£è¨ˆç®—
                                 W_Parity <= W_Parity xor W_S_Reg(0);
                                 W_S_Reg <= '0' & W_S_Reg(7 downto 1);
                             elsif( W_bitcnt = 8 ) then
-                                -- ƒpƒŠƒeƒB ƒrƒbƒg ‘—M
+                                -- ãƒ‘ãƒªãƒ†ã‚£ ãƒ“ãƒƒãƒˆ é€ä¿¡
                                 PS2D_host <= W_Parity;
                             elsif( W_bitcnt = 9 ) then
                                 PS2D_host <= 'Z';
@@ -202,7 +202,7 @@ begin
                         end if;
                     when others =>
                         if( P_PS2D = '1' ) then
-                            -- ‘—M I—¹
+                            -- é€ä¿¡ çµ‚äº†
                             W_Ena <= '0';
                         end if;
                     end case;
@@ -218,7 +218,7 @@ begin
         end if;
     end process;
     
-    -- Read (óM)
+    -- Read (å—ä¿¡)
     process(P_CLK, P_RESET)
     begin
         if( P_RESET = '0' ) then
@@ -228,7 +228,7 @@ begin
         elsif( P_CLK'event and P_CLK = '1' ) then
             if( PS2C_buf = "01" and R_bitcnt = "1000" and
                 R_WaitCnt > 5009 and R_Parity = P_PS2D ) then
-                -- ƒpƒŠƒeƒB ‚ª ³‚µ‚¢
+                -- ãƒ‘ãƒªãƒ†ã‚£ ãŒ æ­£ã—ã„
                 R_Full <= '1';
                 R_D_Reg <= R_S_Reg;
                 R_WaitCnt <= "0000000000000";
@@ -250,21 +250,21 @@ begin
             if( W_Ena = '1' ) then
                 R_Ena <= '0';
                 R_bitcnt <= "0000";
-            elsif( PS2C_buf = "01" ) then   -- ƒlƒKƒeƒBƒu ƒGƒbƒW
-                -- óM ˆ—
+            elsif( PS2C_buf = "01" ) then   -- ãƒã‚¬ãƒ†ã‚£ãƒ– ã‚¨ãƒƒã‚¸
+                -- å—ä¿¡ å‡¦ç†
                 if( R_Ena = '1' ) then
                     if( R_bitcnt < 8 ) then
-                        -- ƒVƒtƒgƒŒƒWƒXƒ^‚Éƒf[ƒ^“ü—Í
+                        -- ã‚·ãƒ•ãƒˆãƒ¬ã‚¸ã‚¹ã‚¿ã«ãƒ‡ãƒ¼ã‚¿å…¥åŠ›
                         R_S_Reg(7 downto 0) <= P_PS2D & R_S_Reg(7 downto 1);
-                        R_Parity <= R_Parity xor P_PS2D; -- ƒpƒŠƒeƒBŒvZ
+                        R_Parity <= R_Parity xor P_PS2D; -- ãƒ‘ãƒªãƒ†ã‚£è¨ˆç®—
                         R_bitcnt <= R_bitcnt + '1';
                     else
-                        -- óM I—¹
+                        -- å—ä¿¡ çµ‚äº†
                         R_Ena <= '0';
                         R_bitcnt <= "0000";
                     end if;
                 elsif( P_PS2D = '0') then
-                    -- óM ŠJn
+                    -- å—ä¿¡ é–‹å§‹
                     R_Ena <= '1';
                     R_bitcnt <= "0000";
                     R_Parity <= '1';

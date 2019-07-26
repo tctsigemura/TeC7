@@ -15,8 +15,8 @@ use UNISIM.VComponents.all;
 entity CharGene is
   port (
     P_CLK  : in std_logic;
-    P_CODE : in  std_logic_vector(7 downto 0); -- •¶šƒR[ƒh
-    P_HEIGHT : in  std_logic_vector(3 downto 0); -- ‚‚³
+    P_CODE : in  std_logic_vector(7 downto 0); -- æ–‡å­—ã‚³ãƒ¼ãƒ‰
+    P_HEIGHT : in  std_logic_vector(3 downto 0); -- é«˜ã•
     P_DOUT : out std_logic_vector(7 downto 0)
   );
 end CharGene;
@@ -40,9 +40,9 @@ component CGROM2
   );
 end component;
 
--- ƒƒ‚ƒŠ‚É“ü—Í‚·‚éƒAƒhƒŒƒX
+-- ãƒ¡ãƒ¢ãƒªã«å…¥åŠ›ã™ã‚‹ã‚¢ãƒ‰ãƒ¬ã‚¹
 signal addr : std_logic_vector(10 downto 0);
--- ƒƒ‚ƒŠ‚©‚ç‚Ìo—Í
+-- ãƒ¡ãƒ¢ãƒªã‹ã‚‰ã®å‡ºåŠ›
 signal code1 : std_logic_vector(7 downto 0);
 signal code2 : std_logic_vector(7 downto 0);
 

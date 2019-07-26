@@ -3,8 +3,8 @@
 --
 -- VGA interface
 --
--- 2016. 1. 8 process ‚ÌƒZƒ“ƒVƒrƒŠƒeƒB[ƒŠƒXƒgC³iwarning ‘Îô), d‘º
--- 2011. 2. 7 ƒGƒ€ƒYƒGƒ“ƒWƒjƒAƒŠƒ“ƒOŠ”®‰ïĞ
+-- 2016. 1. 8 process ã®ã‚»ãƒ³ã‚·ãƒ“ãƒªãƒ†ã‚£ãƒ¼ãƒªã‚¹ãƒˆä¿®æ­£ï¼ˆwarning å¯¾ç­–), é‡æ‘
+-- 2011. 2. 7 ã‚¨ãƒ ã‚ºã‚¨ãƒ³ã‚¸ãƒ‹ã‚¢ãƒªãƒ³ã‚°æ ªå¼ä¼šç¤¾
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -15,8 +15,8 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 entity VGA is
-    Port ( P_CLK   : in std_logic; -- VGA “®ì—p
-           P_CLK_CPU : in std_logic; -- CPU bus —p VideoRAM Access clock
+    Port ( P_CLK   : in std_logic; -- VGA å‹•ä½œç”¨
+           P_CLK_CPU : in std_logic; -- CPU bus ç”¨ VideoRAM Access clock
 			  P_RESET : in std_logic;  -- RESET
            P_WE : in std_logic;
            P_ADDR : in std_logic_vector(10 downto 0);
@@ -29,52 +29,52 @@ end VGA;
 
 architecture Behavioral of VGA is
 
--- “¯ŠúM†—pƒoƒbƒtƒ@
+-- åŒæœŸä¿¡å·ç”¨ãƒãƒƒãƒ•ã‚¡
 signal S_HS : std_logic;
 signal S_VS : std_logic;
--- ‰f‘œM†—pƒoƒbƒtƒ@
+-- æ˜ åƒä¿¡å·ç”¨ãƒãƒƒãƒ•ã‚¡
 signal r_buf : std_logic;
 signal g_buf : std_logic;
 signal b_buf : std_logic;
--- ƒJƒEƒ“ƒ^
-signal CNT_P : std_logic_vector(9 downto 0);    -- …•½ pixel ƒJƒEƒ“ƒ^
-signal CNT_L : std_logic_vector(9 downto 0);    -- ‚’¼ line ƒJƒEƒ“ƒ^
-signal CNT_PC : std_logic_vector(3 downto 0);   -- •¶š pixel ƒJƒEƒ“ƒ^
-signal CNT_LC : std_logic_vector(4 downto 0);   -- •¶š line ƒJƒEƒ“ƒ^
-signal CNT_VA : std_logic_vector(10 downto 0);  -- VRAM address ƒJƒEƒ“ƒ^
-signal CNT_CU : std_logic_vector(25 downto 0);  -- ƒJ[ƒ\ƒ‹‚ÌƒuƒŠƒ“ƒN—p
--- ƒŒƒWƒXƒ^
-signal CNT_VA_prev : std_logic_vector(10 downto 0); -- s“ª‚Ì VRAM address 
-signal outbuf : std_logic_vector(7 downto 0);   -- ƒtƒHƒ“ƒg1—ñ•ªƒVƒtƒgƒŒƒWƒXƒ^
-signal COLOR : std_logic_vector(7 downto 0) := "00001111";  -- •¶šFİ’è
-signal CX    : std_logic_vector(6 downto 0) := "0000000";   -- ƒJ[ƒ\ƒ‹XÀ•W
-signal CY    : std_logic_vector(4 downto 0) := "00000";     -- ƒJ[ƒ\ƒ‹yÀ•W
-signal CXV   : std_logic_vector(6 downto 0) := "0000000";   -- ƒJ[ƒ\ƒ‹XÀ•W
-signal CYV   : std_logic_vector(4 downto 0) := "00000";     -- ƒJ[ƒ\ƒ‹yÀ•W
+-- ã‚«ã‚¦ãƒ³ã‚¿
+signal CNT_P : std_logic_vector(9 downto 0);    -- æ°´å¹³ pixel ã‚«ã‚¦ãƒ³ã‚¿
+signal CNT_L : std_logic_vector(9 downto 0);    -- å‚ç›´ line ã‚«ã‚¦ãƒ³ã‚¿
+signal CNT_PC : std_logic_vector(3 downto 0);   -- æ–‡å­— pixel ã‚«ã‚¦ãƒ³ã‚¿
+signal CNT_LC : std_logic_vector(4 downto 0);   -- æ–‡å­— line ã‚«ã‚¦ãƒ³ã‚¿
+signal CNT_VA : std_logic_vector(10 downto 0);  -- VRAM address ã‚«ã‚¦ãƒ³ã‚¿
+signal CNT_CU : std_logic_vector(25 downto 0);  -- ã‚«ãƒ¼ã‚½ãƒ«ã®ãƒ–ãƒªãƒ³ã‚¯ç”¨
+-- ãƒ¬ã‚¸ã‚¹ã‚¿
+signal CNT_VA_prev : std_logic_vector(10 downto 0); -- è¡Œé ­ã® VRAM address 
+signal outbuf : std_logic_vector(7 downto 0);   -- ãƒ•ã‚©ãƒ³ãƒˆ1åˆ—åˆ†ã‚·ãƒ•ãƒˆãƒ¬ã‚¸ã‚¹ã‚¿
+signal COLOR : std_logic_vector(7 downto 0) := "00001111";  -- æ–‡å­—è‰²è¨­å®š
+signal CX    : std_logic_vector(6 downto 0) := "0000000";   -- ã‚«ãƒ¼ã‚½ãƒ«Xåº§æ¨™
+signal CY    : std_logic_vector(4 downto 0) := "00000";     -- ã‚«ãƒ¼ã‚½ãƒ«yåº§æ¨™
+signal CXV   : std_logic_vector(6 downto 0) := "0000000";   -- ã‚«ãƒ¼ã‚½ãƒ«Xåº§æ¨™
+signal CYV   : std_logic_vector(4 downto 0) := "00000";     -- ã‚«ãƒ¼ã‚½ãƒ«yåº§æ¨™
 signal CA    : std_logic_vector(10 downto 0);
 signal CAY   : std_logic_vector(10 downto 0);
--- ƒCƒl[ƒuƒ‹
+-- ã‚¤ãƒãƒ¼ãƒ–ãƒ«
 signal vram_en : std_logic; -- VRAM enable
 signal font_ld : std_logic; -- FONT ROM output load
-signal h_act_work : std_logic; -- …•½•\¦ƒGƒŠƒA
-signal h_act : std_logic_vector(3 downto 0); -- …•½•\¦ƒGƒŠƒA’x‰„•ª
-signal v_act : std_logic; -- ‚’¼•\¦ƒGƒŠƒA
-signal v_vact : std_logic; -- ‚’¼•¶š•\¦ƒGƒŠƒA
-signal h_end : std_logic; -- …•½•\¦ƒGƒŠƒA—§‚¿‰º‚ª‚è
-signal v_up : std_logic; -- CNT_L ƒJƒEƒ“ƒgƒAƒbƒv
--- ‚»‚Ì‘¼M†ü
-signal CODE : std_logic_vector(7 downto 0); -- •¶š code
-signal LINE : std_logic_vector(7 downto 0); -- ‚Ğ‚Æ•¶š‚P—ñ•ª FONT data
-signal cur  : std_logic;                    -- ƒJ[ƒ\ƒ‹‚ğ•\¦‚·‚éƒ^ƒCƒ~ƒ“ƒO
+signal h_act_work : std_logic; -- æ°´å¹³è¡¨ç¤ºã‚¨ãƒªã‚¢
+signal h_act : std_logic_vector(3 downto 0); -- æ°´å¹³è¡¨ç¤ºã‚¨ãƒªã‚¢é…å»¶åˆ†
+signal v_act : std_logic; -- å‚ç›´è¡¨ç¤ºã‚¨ãƒªã‚¢
+signal v_vact : std_logic; -- å‚ç›´æ–‡å­—è¡¨ç¤ºã‚¨ãƒªã‚¢
+signal h_end : std_logic; -- æ°´å¹³è¡¨ç¤ºã‚¨ãƒªã‚¢ç«‹ã¡ä¸‹ãŒã‚Š
+signal v_up : std_logic; -- CNT_L ã‚«ã‚¦ãƒ³ãƒˆã‚¢ãƒƒãƒ—
+-- ãã®ä»–ä¿¡å·ç·š
+signal CODE : std_logic_vector(7 downto 0); -- æ–‡å­— code
+signal LINE : std_logic_vector(7 downto 0); -- ã²ã¨æ–‡å­—ï¼‘åˆ—åˆ† FONT data
+signal cur  : std_logic;                    -- ã‚«ãƒ¼ã‚½ãƒ«ã‚’è¡¨ç¤ºã™ã‚‹ã‚¿ã‚¤ãƒŸãƒ³ã‚°
 
--- “®ìİ’è’l
+-- å‹•ä½œè¨­å®šå€¤
 constant CX_ADDR : integer := 2045; -- 0x7FD
 constant CY_ADDR : integer := 2046; -- 0x7FE
 constant COLOR_ADDR : integer := 2047; -- 0x7FF
 constant H_WIDTH : integer := 798;
 constant H_ACTIVE : integer := 640;
 constant H_SYNC_START : integer := H_ACTIVE + 5 + 15;
--- "+5" ‚Í Active ƒGƒŠƒA‚Ì’x‰„ŠÔ•ª
+-- "+5" ã¯ Active ã‚¨ãƒªã‚¢ã®é…å»¶æ™‚é–“åˆ†
 constant H_SYNC_END : integer := H_SYNC_START + 96;
 constant CNT_PC_MAX : integer := 8;
 constant CNT_PC_EN : integer := 1;
@@ -82,8 +82,8 @@ constant CNT_PC_LD : integer := CNT_PC_EN + 2;
 constant V_WIDTH : integer := 525;
 constant V_ACTIVE : integer := 475;
 constant V_SYNC_START : integer := V_ACTIVE + 2 + 10;
--- "+2" ‚Í Active ƒGƒŠƒA‚ª 480 ‚É‘Î‚µ‚Ä 5 [line] •s‘«‚Ì‚½‚ß‚Ì’²®
--- ‰æ–Êã•”‚É 3 [line] ‰º•”‚É 2[line] ‘}“ü‚Å’²®
+-- "+2" ã¯ Active ã‚¨ãƒªã‚¢ãŒ 480 ã«å¯¾ã—ã¦ 5 [line] ä¸è¶³ã®ãŸã‚ã®èª¿æ•´
+-- ç”»é¢ä¸Šéƒ¨ã« 3 [line] ä¸‹éƒ¨ã« 2[line] æŒ¿å…¥ã§èª¿æ•´
 constant V_SYNC_END : integer := V_SYNC_START + 2;
 constant V_SYNC_P : integer := H_SYNC_START;
 constant V_VACTIVE : integer := 16;
@@ -91,7 +91,7 @@ constant CNT_LC_MAX : integer := 19;
 
 signal logic0, logic1 : std_logic;
 
----- g—p‚·‚éƒRƒ“ƒ|[ƒlƒ“ƒg‚ÌéŒ¾ ---
+---- ä½¿ç”¨ã™ã‚‹ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆã®å®£è¨€ ---
 -- VideoRAM
 component VideoRAM
     Port ( P_CLKA : in std_logic;
@@ -120,7 +120,7 @@ begin
     logic0 <= '0';
     logic1 <= '1';
 
-    -- ŠeƒRƒ“ƒ|[ƒlƒ“ƒg‚ÆÚ‘±  
+    -- å„ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆã¨æ¥ç¶š  
     -- VideoRAM
     vram : VideoRAM
         port map (
@@ -136,7 +136,7 @@ begin
             P_DOUTB => P_DOUT
         );
     
-    -- CharGeneROMhG
+    -- CharGeneROMâ€ï¼›
     cgrom: CharGene
         port map (
             P_CLK  => P_CLK,
@@ -145,9 +145,9 @@ begin
             P_DOUT => LINE
         );
 
-    -- Fİ’èƒŒƒWƒXƒ^ (COLOR: bit7/4=-, bit6/2=R, bit5/1=G, bit4/0=B)
-    --  upper = ”wŒiF ("0000"=•(Default), "0111"=”’)
-    --  lower = •¶šF ("0000"=•         , "0111"=”’(Default))
+    -- è‰²è¨­å®šãƒ¬ã‚¸ã‚¹ã‚¿ (COLOR: bit7/4=-, bit6/2=R, bit5/1=G, bit4/0=B)
+    --  upper = èƒŒæ™¯è‰² ("0000"=é»’(Default), "0111"=ç™½)
+    --  lower = æ–‡å­—è‰² ("0000"=é»’         , "0111"=ç™½(Default))
     process(P_RESET, P_CLK_CPU)
     begin
         if (P_RESET = '0') then
@@ -159,7 +159,7 @@ begin
         end if;
     end process;
 
-    -- ƒJ[ƒ\ƒ‹ƒAƒhƒŒƒX
+    -- ã‚«ãƒ¼ã‚½ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹
     process(P_RESET, P_CLK_CPU)
     begin
         if (P_RESET = '0') then
@@ -174,7 +174,7 @@ begin
         end if;
     end process;
 
-    -- …•½ pixel ƒJƒEƒ“ƒ^ (CNT_P)
+    -- æ°´å¹³ pixel ã‚«ã‚¦ãƒ³ã‚¿ (CNT_P)
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then
@@ -186,7 +186,7 @@ begin
         end if;
     end process;
 
-    -- …•½“¯ŠúM† (S_HS)
+    -- æ°´å¹³åŒæœŸä¿¡å· (S_HS)
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then
@@ -204,7 +204,7 @@ begin
     h_act_work <= logic1 when (CNT_P <= (H_ACTIVE - 1)) else logic0;
     v_up <= logic1 when (CNT_P = (H_WIDTH - 1)) else logic0;
 
-    -- …•½•\¦—LŒøƒGƒŠƒA
+    -- æ°´å¹³è¡¨ç¤ºæœ‰åŠ¹ã‚¨ãƒªã‚¢
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then
@@ -214,7 +214,7 @@ begin
     
     h_end <= not h_act_work and h_act(0); 
 
-    -- •¶š pixel ƒJƒEƒ“ƒ^ (CNT_PC)
+    -- æ–‡å­— pixel ã‚«ã‚¦ãƒ³ã‚¿ (CNT_PC)
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then
@@ -233,11 +233,11 @@ begin
     vram_en <= logic1 when (CNT_PC = CNT_PC_EN) else logic0;
     font_ld <= logic1 when (CNT_PC = CNT_PC_LD) else logic0;
 
-    -- ƒJ[ƒ\ƒ‹•\¦
+    -- ã‚«ãƒ¼ã‚½ãƒ«è¡¨ç¤º
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then
-          if (CNT_CU=50000000) then                 -- ƒJ[ƒ\ƒ‹ƒuƒŠƒ“ƒNüŠú
+          if (CNT_CU=50000000) then                 -- ã‚«ãƒ¼ã‚½ãƒ«ãƒ–ãƒªãƒ³ã‚¯å‘¨æœŸ
             CNT_CU <= (others => '0');
           else
             CNT_CU <= CNT_CU + 1;
@@ -245,19 +245,19 @@ begin
         end if;
     end process;
 
-    -- ƒJ[ƒ\ƒ‹ƒAƒhƒŒƒX
+    -- ã‚«ãƒ¼ã‚½ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹
     CA  <= (CYV & "000000")+("00" & CYV & "0000") + ("0000" & CXV);
 
     process(P_CLK)
     begin
         if (P_CLK='1' and P_CLK'event) then
-          CXV <= CX;   -- CPU ƒNƒƒbƒN‚©‚çVGA ƒNƒƒbƒN‚É‹´“n‚µ
-          CYV <= CY;   -- (‚±‚Ì•”•ª‚Íƒ^ƒCƒ~ƒ“ƒO§–ñ‚ª–‚½‚³‚ê‚È‚¢‚Ì‚ÅA
-                       --  UCFƒtƒ@ƒCƒ‹‚ÉTIG(ƒ^ƒCƒ~ƒ“ƒO–³‹)‚ğ‘‚¢‚Ä‚¨‚­)
+          CXV <= CX;   -- CPU ã‚¯ãƒ­ãƒƒã‚¯ã‹ã‚‰VGA ã‚¯ãƒ­ãƒƒã‚¯ã«æ©‹æ¸¡ã—
+          CYV <= CY;   -- (ã“ã®éƒ¨åˆ†ã¯ã‚¿ã‚¤ãƒŸãƒ³ã‚°åˆ¶ç´„ãŒæº€ãŸã•ã‚Œãªã„ã®ã§ã€
+                       --  UCFãƒ•ã‚¡ã‚¤ãƒ«ã«TIG(ã‚¿ã‚¤ãƒŸãƒ³ã‚°ç„¡è¦–)ã‚’æ›¸ã„ã¦ãŠã)
 
           if (vram_en=logic1) then
             if (CNT_VA=CA and CNT_CU(25 downto 23)>="011") then
-              cur <= logic1;                        -- ƒJ[ƒ\ƒ‹‚ğ•\¦‚·‚é‚×‚«
+              cur <= logic1;                        -- ã‚«ãƒ¼ã‚½ãƒ«ã‚’è¡¨ç¤ºã™ã‚‹ã¹ã
             else
               cur <= logic0;
             end if;
@@ -265,7 +265,7 @@ begin
         end if;
     end process;
 
-    -- FONT ƒf[ƒ^o—Í •À—ñ¨’¼—ñ•ÏŠ·
+    -- FONT ãƒ‡ãƒ¼ã‚¿å‡ºåŠ› ä¸¦åˆ—â†’ç›´åˆ—å¤‰æ›
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then
@@ -273,7 +273,7 @@ begin
               if (cur=logic0) then
                 outbuf <= LINE;
               else
-                outbuf <= not LINE;                 -- ƒŠ[ƒo[ƒX‚ÅƒJ[ƒ\ƒ‹•\Œ»
+                outbuf <= not LINE;                 -- ãƒªãƒ¼ãƒãƒ¼ã‚¹ã§ã‚«ãƒ¼ã‚½ãƒ«è¡¨ç¾
               end if;
             else
                 outbuf <= outbuf(6 downto 0) & '0';
@@ -281,22 +281,22 @@ begin
         end if;
     end process;
 
-    -- VGA o—Í (R/G/B) Fİ’è•o—Í
+    -- VGA å‡ºåŠ› (R/G/B) è‰²è¨­å®šï¼†å‡ºåŠ›
     --process(P_CLK)
     process(h_act, v_act, outbuf, color, logic0, logic1)
     begin
         --if (P_CLK = '1' and P_CLK'event) then
             if (h_act(3) = logic1 and v_act = logic1) then
-                if (outbuf(7) = logic1) then -- FONT Fİ’è
+                if (outbuf(7) = logic1) then -- FONT è‰²è¨­å®š
                     r_buf <= COLOR(2);
                     g_buf <= COLOR(1);
                     b_buf <= COLOR(0);
-                else                         -- ”wŒiFİ’è
+                else                         -- èƒŒæ™¯è‰²è¨­å®š
                     r_buf <= COLOR(6);
                     g_buf <= COLOR(5);
                     b_buf <= COLOR(4);
                 end if;
-            else                             -- ‚»‚êˆÈŠO‚Í• (R/G/B = "0")
+            else                             -- ãã‚Œä»¥å¤–ã¯é»’ (R/G/B = "0")
                 r_buf <= logic0;
                 g_buf <= logic0;
                 b_buf <= logic0;
@@ -308,7 +308,7 @@ begin
     G <= g_buf;
     B <= b_buf;
 
-    -- VRAM address ƒJƒEƒ“ƒ^ (CNT_VA)
+    -- VRAM address ã‚«ã‚¦ãƒ³ã‚¿ (CNT_VA)
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then
@@ -324,7 +324,7 @@ begin
         end if;
     end process;
 
-    -- VRAM address ƒJƒEƒ“ƒ^ ‰Šú’l (CNT_VA_prev)
+    -- VRAM address ã‚«ã‚¦ãƒ³ã‚¿ åˆæœŸå€¤ (CNT_VA_prev)
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then
@@ -338,7 +338,7 @@ begin
         end if;
     end process;
 
-    -- ‚’¼ line ƒJƒEƒ“ƒ^ (CNT_L)
+    -- å‚ç›´ line ã‚«ã‚¦ãƒ³ã‚¿ (CNT_L)
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then
@@ -354,7 +354,7 @@ begin
         end if;
     end process;
 
-    -- ‚’¼“¯ŠúM† (S_VS)
+    -- å‚ç›´åŒæœŸä¿¡å· (S_VS)
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then
@@ -371,7 +371,7 @@ begin
     VS <= not S_VS;
     v_act <= logic1 when (CNT_L <= (V_ACTIVE - 1)) else logic0;
 
-    -- •¶š line ƒJƒEƒ“ƒ^ (CNT_LC)
+    -- æ–‡å­— line ã‚«ã‚¦ãƒ³ã‚¿ (CNT_LC)
     process(P_CLK)
     begin
         if (P_CLK = '1' and P_CLK'event) then

@@ -6,15 +6,15 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 --  TeC Panel
@@ -51,10 +51,10 @@ entity TEC_PANEL is
          P_RCCW_SW  : in  std_logic;                      -- Rotate SW(CCW)
 
          P_R_LED    : out std_logic;                      -- Run LED
-         P_SPK      : out std_logic;                      -- ���쉹�̏o��
+         P_SPK      : out std_logic;                      -- 操作音の出力
          P_A_LED    : out std_logic_vector(7 downto 0);   -- Address LED
          P_SEL      : out std_logic_vector(2 downto 0);   -- Rotate SW(Output)
-         P_WRITE    : out std_logic;                      -- WRITE�X�C�b�`�̑���
+         P_WRITE    : out std_logic;                      -- WRITEスイッチの操作
          P_INT      : out std_logic                       -- Interrupt SW
         );
 end TEC_PANEL;
@@ -62,7 +62,7 @@ end TEC_PANEL;
 
 architecture RTL of TEC_PANEL is
 
--- �g���K�t���̃X�C�b�`
+-- トリガ付きのスイッチ
 component TRSW
   port ( P_CLK    : in  std_logic;                      -- CLK
          P_RESET  : in  std_logic;                      -- Reset
@@ -73,31 +73,31 @@ component TRSW
        );
 end component;
 
--- ���W�X�^
-signal I_ADR     : std_logic_vector(7 downto 0);        -- �A�h���X���W�X�^
+-- レジスタ
+signal I_ADR     : std_logic_vector(7 downto 0);        -- アドレスレジスタ
 
 -- FF
 signal I_SSFF    : std_logic;                           -- Start/Stop FF
 signal I_ERROR   : std_logic;                           -- Error FF
 
--- LED�̓_�ő��x��X�C�b�`�T���v�����O�^�C�~���O�����߂�^�C�}
-signal I_SMP     : std_logic;                           -- 18.75Hz �̃g���K
-signal I_18_75Hz : std_logic;                           -- �p���X�����p
+-- LEDの点滅速度やスイッチサンプリングタイミングを決めるタイマ
+signal I_SMP     : std_logic;                           -- 18.75Hz のトリガ
+signal I_18_75Hz : std_logic;                           -- パルス生成用
 
--- ���[�^���[�X�C�b�`�̓�����ԂƏo��
+-- ロータリースイッチの内部状態と出力
 signal I_SW    : std_logic_vector(2  downto 0);
 signal I_MM    : std_logic;
 
--- ���쉹���o������
-signal I_CLICK  : std_logic;      -- ���쉹��炷�C�x���g����������
-signal I_BEEP   : std_logic;      -- �C�x���g�� I_SMP �܂ŕۗ�
-signal I_BEEP_D : std_logic;      -- I_SMP 1�����̊ԁA�u�U�[��炷
-signal I_ROT    : std_logic;      -- ���[�^���[�X�C�b�`����]����
-signal I_RESET_D: std_logic;      -- RESET�Ńg���K����邽��
-signal I_SETA_D : std_logic;      -- SETA�Ńg���K����邽��
-signal I_STOP_D : std_logic;      -- STOP�Ńg���K����邽��
+-- 操作音を出すため
+signal I_CLICK  : std_logic;      -- 操作音を鳴らすイベントが発生した
+signal I_BEEP   : std_logic;      -- イベントを I_SMP まで保留
+signal I_BEEP_D : std_logic;      -- I_SMP 1周期の間、ブザーを鳴らす
+signal I_ROT    : std_logic;      -- ロータリースイッチが回転した
+signal I_RESET_D: std_logic;      -- RESETでトリガを作るため
+signal I_SETA_D : std_logic;      -- SETAでトリガを作るため
+signal I_STOP_D : std_logic;      -- STOPでトリガを作るため
 
--- �X�C�b�`�̓��͂��g���K�܂��̓N���b�N�ɓ��������M��
+-- スイッチの入力をトリガまたはクロックに同期した信号
 signal I_RCW   : std_logic;
 signal I_RCCW  : std_logic;
 signal I_INCA  : std_logic;
@@ -108,9 +108,9 @@ signal I_SETA  : std_logic;
 signal I_STOP  : std_logic;
 signal I_RESET : std_logic;
 
-signal I_VOL   : std_logic;                    -- ���쉹�̑傫��(1:�� / 0:��)
+signal I_VOL   : std_logic;                    -- 操作音の大きさ(1:大 / 0:小)
 
--- �萔�p
+-- 定数用
 signal logic0  : std_logic;
 signal logic1  : std_logic;
 
@@ -118,20 +118,20 @@ begin
   logic0 <= '0';
   logic1 <= '1';
 
-  -- �X�C�b�`�T���v�����O�^�C�~���O�p�^�C�}
+  -- スイッチサンプリングタイミング用タイマ
   process(P_CLK)
   begin
     if (P_CLK'event and P_CLK='1') then
-      if (P_18_75Hz='0' and I_18_75Hz='1') then  -- �G�b�W�̌��o
-        I_SMP <= '1';                            -- �T���v�����O�p�̃p���X�𐶐�
+      if (P_18_75Hz='0' and I_18_75Hz='1') then  -- エッジの検出
+        I_SMP <= '1';                            -- サンプリング用のパルスを生成
       else
         I_SMP <= '0';
       end if;
-      I_18_75Hz <= P_18_75Hz;                    -- �G�b�W���o�p��1�N���b�N�x��M��
+      I_18_75Hz <= P_18_75Hz;                    -- エッジ検出用の1クロック遅れ信号
     end if;
   end process;
 
-  -- �X�C�b�`�̑��쉹�̐���   --MM �̏ꍇ��������\�ɕύX(2008.7.10)--
+  -- スイッチの操作音の制御   --MM の場合だけ操作可能に変更(2008.7.10)--
   I_CLICK <= (I_INCA and I_MM)
             or (I_DECA and I_MM)
             or (I_ROT or not I_RESET)
@@ -141,10 +141,10 @@ begin
             or (I_STOP  and not I_STOP_D and I_ERROR)
             or (I_RUN   and not I_SSFF);
 
-  -- ���쉹�����A�ʏ�(I_VOL='0')�Ȃ�u�s�b�I�v�̉��A�����łȂ���΁u�v�`�v�̉�
+  -- 操作音を作る、通常(I_VOL='0')なら「ピッ！」の音、そうでなければ「プチ」の音
   P_SPK <= (I_VOL or P_2_4kHz) and I_BEEP_D;
 
-  -- ���쉹�̌p�����Ԃ����ɕۂ� (1/18.75�b�ɂ���)
+  -- 操作音の継続時間を一定に保つ (1/18.75秒にする)
   process(P_CLK)
   begin
     if (P_CLK'event and P_CLK='1') then
@@ -157,9 +157,9 @@ begin
      end if;
   end process;
 
-  -- ���Z�b�g�X�C�b�`(���s�[�g�����Ȃ�)
-  -- �p���[�I�����Z�b�g�Ɏ��s���邱�Ƃ�����̂ŁA
-  -- �����p���X���o�͂���悤�ɕύX  2004.7.16
+  -- リセットスイッチ(リピートさせない)
+  -- パワーオンリセットに失敗することがあるので、
+  -- 長いパルスを出力するように変更  2004.7.16
   P_RESET <= I_RESET;
   process(P_CLK)
   begin
@@ -181,7 +181,7 @@ begin
      end if;
   end process;
 
-  -- �g���K�t���X�C�b�`
+  -- トリガ付きスイッチ
   INCA_SW  :TRSW port map(P_CLK, I_RESET, P_INCA_SW,  I_SMP, logic1, I_INCA  );
   DECA_SW  :TRSW port map(P_CLK, I_RESET, P_DECA_SW,  I_SMP, logic1, I_DECA  );
   WRITE_SW :TRSW port map(P_CLK, I_RESET, P_WRITE_SW, I_SMP, I_MM,   I_WRITE );
@@ -189,7 +189,7 @@ begin
   RCW_SW   :TRSW port map(P_CLK, I_RESET, P_RCW_SW,   I_SMP, logic1, I_RCW   );
   RCCW_SW  :TRSW port map(P_CLK, I_RESET, P_RCCW_SW,  I_SMP, logic1, I_RCCW  );
 
-  -- STOP�CSETA �X�C�b�`(���s�[�g���Ă��ǂ�)
+  -- STOP，SETA スイッチ(リピートしても良い)
   process(P_CLK)
   begin
     if (P_CLK'event and P_CLK='1') then
@@ -202,7 +202,7 @@ begin
     end if;
   end process;
 
-  -- ���[�^���[�X�C�b�`�̑��
+  -- ロータリースイッチの代替
   I_MM  <= I_SW(2) and not I_SW(1) and I_SW(0);
   P_SEL <= I_SW;
   process(P_CLK)
@@ -220,13 +220,13 @@ begin
      end if;
   end process;
 
-  -- �p�l�����甭�����鏑�����ݐM��
+  -- パネルから発生する書き込み信号
   P_WRITE  <= not I_SSFF and I_WRITE;
 
-  -- �p�l�����甭�����銄�荞��
+  -- パネルから発生する割り込み
   P_INT    <=     I_SSFF and I_WRITE;
 
-  -- �A�h���X���W�X�^ --MM �̏ꍇ��������\�ɕύX(2008.7.10)--
+  -- アドレスレジスタ --MM の場合だけ操作可能に変更(2008.7.10)--
   P_A_LED  <= I_ADR when I_MM='1' else "00000000";
   process(P_CLK, I_RESET)
   begin

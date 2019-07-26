@@ -6,24 +6,24 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\������߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含ﾟて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 
 --
 -- TaC/tac_timer.vhd : TaC TIMER
 --
--- 2018.12.31 : CPU ����~���̓^�C�}�[����~����悤�ɕύX
--- 2016.01.08 : TMR_ENA �����������o�O�����
--- 2012.03.02 : �V�K�쐬
+-- 2018.12.31 : CPU が停止中はタイマーも停止するように変更
+-- 2016.01.08 : TMR_ENA が無視されるバグを訂正
+-- 2012.03.02 : 新規作成
 --
 -- $Id
 --
@@ -48,17 +48,17 @@ entity TAC_TIMER is
 end TAC_TIMER;
 
 architecture Behavioral of TAC_TIMER is
-signal TMR_Cnt    : std_logic_vector(15 downto 0);  -- �^�C�}�[�̃J�E���^
-signal TMR_Max    : std_logic_vector(15 downto 0);  -- �^�C�}�[�̎���
-signal TMR_Ena  : std_logic;                     -- �^�C�}�[�̃X�^�[�g/�X�g�b�v
-signal TMR_Int    : std_logic;                     -- �^�C�}�[�����ݔ�����
-signal TMR_Int_Ena: std_logic;                     -- �^�C�}�[�����݋���
-signal I_TMR_Mat  : std_logic;                     -- Max �� Cnt ����v����
-signal I_INT_TMR_P: std_logic;                     -- �����ݔ������Ƀp���X�𔭐�
+signal TMR_Cnt    : std_logic_vector(15 downto 0);  -- タイマーのカウンタ
+signal TMR_Max    : std_logic_vector(15 downto 0);  -- タイマーの周期
+signal TMR_Ena  : std_logic;                     -- タイマーのスタート/ストップ
+signal TMR_Int    : std_logic;                     -- タイマー割込み発生中
+signal TMR_Int_Ena: std_logic;                     -- タイマー割込み許可
+signal I_TMR_Mat  : std_logic;                     -- Max と Cnt が一致した
+signal I_INT_TMR_P: std_logic;                     -- 割込み発生時にパルスを発生
 
 begin
-  I_TMR_Mat <= '1' when (TMR_CNT=TMR_Max) else '0';  -- �J�E���^ = �ړI�̒l
-  I_INT_TMR_P <= P_1kHz and I_TMR_Mat;               -- �����ݔ����p���X
+  I_TMR_Mat <= '1' when (TMR_CNT=TMR_Max) else '0';  -- カウンタ = 目的の値
+  I_INT_TMR_P <= P_1kHz and I_TMR_Mat;               -- 割込み発生パルス
   P_INT <= I_INT_TMR_P and TMR_Int_Ena;
   P_DOUT <= TMR_CNT when (P_ADDR='0') else
             TMR_Int & "000000000000000";
@@ -72,14 +72,14 @@ begin
       TMR_Int <= '0';
       TMR_Int_Ena <= '0';
     elsif (P_CLK'event and P_CLK='1') then
-      -- ����,�X�^�[�g�X�g�b�v,�X�^�[�g�X�g�b�v
+      -- 周期,スタートストップ,スタートストップ
       if (P_EN='1' and P_IOW='1') then
         if (P_ADDR='0') then
-          TMR_Max <= P_DIN;               -- ������ύX
-          TMR_Ena <= '0';                 -- �ύX���Ɏ����I�Ɏ~�܂�
+          TMR_Max <= P_DIN;               -- 周期を変更
+          TMR_Ena <= '0';                 -- 変更時に自動的に止まる
         else
-          TMR_Ena <= P_DIN(0);            -- �X�^�[�g�X�g�b�v
-          TMR_Int_Ena <= P_DIN(15);       -- �����݋���
+          TMR_Ena <= P_DIN(0);            -- スタートストップ
+          TMR_Int_Ena <= P_DIN(15);       -- 割込み許可
         end if;
       end if;
 
@@ -90,12 +90,12 @@ begin
         TMR_Int <= '0';
       end if;
 
-      -- �^�C�}�[�̃J�E���^����
+      -- タイマーのカウンタ制御
       if ((P_EN='1' and P_IOW='1' and
            P_ADDR='1') or I_INT_TMR_P='1') then
-        TMR_CNT <= "0000000000000000";  -- Start/Stop�A�R���y�A�}�b�`�Ń��Z�b�g
+        TMR_CNT <= "0000000000000000";  -- Start/Stop、コンペアマッチでリセット
       elsif (P_1kHz='1' and TMR_Ena='1' and P_STOP='0') then
-        TMR_CNT <= TMR_CNT + 1;         -- ����ȊO�ł̓J�E���g�A�b�v
+        TMR_CNT <= TMR_CNT + 1;         -- それ以外ではカウントアップ
       end if;
     end if;
   end process;

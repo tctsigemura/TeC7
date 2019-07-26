@@ -6,21 +6,21 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 -- TeC RAM
 --
--- 2019.03.01 : �V���O���|�[�g���URAM�ɏ���������
---              �i���Ƃ̓f���A���|�[�g�u���b�NRAM�����������\�[�X�s���j
+-- 2019.03.01 : シングルポート分散RAMに書き換える
+--              （もとはデュアルポートブロックRAMだったがリソース不足）
 --
 
 library IEEE;
@@ -38,15 +38,15 @@ entity TEC_RAM is
     P_RW   : in  std_logic;
     P_MR   : in  std_logic;
 
-    P_PNA  : in  std_logic_vector(7 downto 0);  -- �p�l���A�h���X
-    P_PND  : in  std_logic_vector(7 downto 0);  -- �p�l���p�f�[�^����
-    P_SEL  : in  std_logic_vector(2 downto 0);  -- ���[�^���[�X�C�b�`�̈ʒu
-    P_WRITE: in  std_logic;                     -- �p�l���������ݐM��
-    P_MMD  : out std_logic_vector(7 downto 0);  -- �p�l���p�f�[�^�o��
+    P_PNA  : in  std_logic_vector(7 downto 0);  -- パネルアドレス
+    P_PND  : in  std_logic_vector(7 downto 0);  -- パネル用データ入力
+    P_SEL  : in  std_logic_vector(2 downto 0);  -- ロータリースイッチの位置
+    P_WRITE: in  std_logic;                     -- パネル書き込み信号
+    P_MMD  : out std_logic_vector(7 downto 0);  -- パネル用データ出力
 
-    P_MODE : in  std_logic_vector(1 downto 0)   -- 0,1:�ʏ�, 2:�f��1, 3:�f��2
--- �f��1 : �d�q�I���S�[���v���O�������͍�
--- �f��2 : �d�q�I���S�[���v���O�����ƃf�[�^�����͍�
+    P_MODE : in  std_logic_vector(1 downto 0)   -- 0,1:通常, 2:デモ1, 3:デモ2
+-- デモ1 : 電子オルゴールプログラム入力済
+-- デモ2 : 電子オルゴールプログラムとデータが入力済
   );
 end TEC_RAM;
 
@@ -66,19 +66,19 @@ architecture BEHAVE of TEC_RAM is
     end function;
   signal mem : memory := read_file("tec_ram.txt");
 
-  signal dec   : std_logic;                     -- �A�h���X�f�R�[�h����
-  signal we     : std_logic;                    -- �������ݐM��
-  signal addr10 : std_logic_vector(9 downto 0); -- 10�r�b�g�ɂ����A�h���X
+  signal dec   : std_logic;                     -- アドレスデコード結果
+  signal we     : std_logic;                    -- 書き込み信号
+  signal addr10 : std_logic_vector(9 downto 0); -- 10ビットにしたアドレス
 
-  signal ain    : std_logic_vector(9 downto 0); -- RAM�̃A�h���X
-  signal din    : std_logic_vector(7 downto 0); -- RAM�̏������݃f�[�^
-  signal dout   : std_logic_vector(7 downto 0); -- RAM�̓ǂݏo���f�[�^
+  signal ain    : std_logic_vector(9 downto 0); -- RAMのアドレス
+  signal din    : std_logic_vector(7 downto 0); -- RAMの書き込みデータ
+  signal dout   : std_logic_vector(7 downto 0); -- RAMの読み出しデータ
 
   begin
-    -- CPU��BUS���ߎ��s�Ȃ�CPU�̃A�h���X
+    -- CPUがBUS命令実行ならCPUのアドレス
     addr10 <= (P_MODE & P_ADDR) when (P_MR='1') else (P_MODE & P_PNA);
 
-    -- �A�h���X�����b�`�����(BLOCK RAM�ɂȂ�)
+    -- アドレスをラッチすると(BLOCK RAMになる)
     ain <= addr10;
 --  process(P_CLK)
 --    begin
@@ -87,21 +87,21 @@ architecture BEHAVE of TEC_RAM is
 --      end if;
 --    end process;
 
-    -- �������݃A�h���X�̃f�R�[�h
-    -- MODE=0,1 �̎��� E0H�`FFH ���������ݕs��
-    -- MODE=2   �̎��́A������ 80H�`BFH ���������ݕs��
-    -- MODE=3   �̎��́A�X�ɉ����� 00H�`7FH ���������ݕs��
+    -- 書き込みアドレスのデコード
+    -- MODE=0,1 の時は E0H〜FFH が書き込み不可
+    -- MODE=2   の時は、加えて 80H〜BFH が書き込み不可
+    -- MODE=3   の時は、更に加えて 00H〜7FH が書き込み不可
     dec<= not ain(7) or not ain(6) or not ain(5) when P_MODE="00" else
           not ain(7) or not ain(6) or not ain(5) when P_MODE="01" else
           not ain(7) or (ain(6) and not ain(5))  when P_MODE="10" else
           ain(7) and ain(6) and not ain(5);
 
-    -- �������ݔ���
+    -- 書き込み判定
     we <= (P_MR and P_RW and dec) or
           (P_WRITE and P_SEL(2) and not P_SEL(1) and P_SEL(0) and dec);
 
-    -- �������ݐ���i�V���O���|�[�g�ɂ���j
-    din <= P_DIN when P_MR='1' else P_PND;      -- CPU��BUS���ߎ��s�Ȃ�P_DIN
+    -- 書き込み制御（シングルポートにする）
+    din <= P_DIN when P_MR='1' else P_PND;      -- CPUがBUS命令実行ならP_DIN
     process(P_CLK)
       begin
         if (P_CLK'event and P_CLK='0') then
@@ -111,14 +111,14 @@ architecture BEHAVE of TEC_RAM is
         end if;
       end process;
 
-    -- �ǂݏo������iCPU�ǂݏo�����Ƀp�l���̕\�����ω����Ȃ��悤�Ɂj
+    -- 読み出し制御（CPU読み出し時にパネルの表示が変化しないように）
     dout <= mem( conv_integer(ain) );
     P_DOUT <= dout;
     process(P_CLK)
       begin
         if (P_CLK'event and P_CLK='0') then
           if (P_MR='0') then
-            P_MMD <= dout;                      -- CPU��BUS���߈ȊO�Ȃ�p�l��
+            P_MMD <= dout;                      -- CPUがBUS命令以外ならパネル
           end if;
         end if;
       end process;

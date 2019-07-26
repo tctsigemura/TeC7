@@ -6,31 +6,31 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ã‹L’˜ìŒ Ò‚ÍCFree Software Foundation ‚É‚æ‚Á‚ÄŒöŠJ‚³‚ê‚Ä‚¢‚é GNU ˆê”ÊŒö
--- O—˜—p‹–‘øŒ_–ñ‘ƒo[ƒWƒ‡ƒ“‚Q‚É‹Lq‚³‚ê‚Ä‚¢‚éğŒ‚ğ–‚½‚·ê‡‚ÉŒÀ‚èC–{ƒ\[ƒX
--- ƒR[ƒh(–{ƒ\[ƒXƒR[ƒh‚ğ‰ü•Ï‚µ‚½‚à‚Ì‚ğŠÜ‚ŞDˆÈ‰º“¯—l)‚ğg—pE•¡»E‰ü•ÏEÄ”z
--- •z‚·‚é‚±‚Æ‚ğ–³‚Å‹–‘ø‚·‚éD
+--   ä¸Šè¨˜è‘—ä½œæ¨©è€…ã¯ï¼ŒFree Software Foundation ã«ã‚ˆã£ã¦å…¬é–‹ã•ã‚Œã¦ã„ã‚‹ GNU ä¸€èˆ¬å…¬
+-- è¡†åˆ©ç”¨è¨±è«¾å¥‘ç´„æ›¸ãƒãƒ¼ã‚¸ãƒ§ãƒ³ï¼’ã«è¨˜è¿°ã•ã‚Œã¦ã„ã‚‹æ¡ä»¶ã‚’æº€ãŸã™å ´åˆã«é™ã‚Šï¼Œæœ¬ã‚½ãƒ¼ã‚¹
+-- ã‚³ãƒ¼ãƒ‰(æœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã‚’æ”¹å¤‰ã—ãŸã‚‚ã®ã‚’å«ã‚€ï¼ä»¥ä¸‹åŒæ§˜)ã‚’ä½¿ç”¨ãƒ»è¤‡è£½ãƒ»æ”¹å¤‰ãƒ»å†é…
+-- å¸ƒã™ã‚‹ã“ã¨ã‚’ç„¡å„Ÿã§è¨±è«¾ã™ã‚‹ï¼
 --
---   –{ƒ\[ƒXƒR[ƒh‚Í–‘S‚­‚Ì–³•ÛØ–‚Å’ñ‹Ÿ‚³‚ê‚é‚à‚Ì‚Å‚ ‚éBã‹L’˜ìŒ Ò‚¨‚æ‚Ñ
--- ŠÖ˜A‹@ŠÖEŒÂl‚Í–{ƒ\[ƒXƒR[ƒh‚ÉŠÖ‚µ‚ÄC‚»‚Ì“K—p‰Â”\«‚àŠÜ‚ß‚ÄC‚¢‚©‚È‚é•ÛØ
--- ‚às‚í‚È‚¢D‚Ü‚½C–{ƒ\[ƒXƒR[ƒh‚Ì—˜—p‚É‚æ‚è’¼Ú“I‚Ü‚½‚ÍŠÔÚ“I‚É¶‚¶‚½‚¢‚©‚È
--- ‚é‘¹ŠQ‚ÉŠÖ‚µ‚Ä‚àC‚»‚ÌÓ”C‚ğ•‰‚í‚È‚¢D
+--   æœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã¯ï¼Šå…¨ãã®ç„¡ä¿è¨¼ï¼Šã§æä¾›ã•ã‚Œã‚‹ã‚‚ã®ã§ã‚ã‚‹ã€‚ä¸Šè¨˜è‘—ä½œæ¨©è€…ãŠã‚ˆã³
+-- é–¢é€£æ©Ÿé–¢ãƒ»å€‹äººã¯æœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã«é–¢ã—ã¦ï¼Œãã®é©ç”¨å¯èƒ½æ€§ã‚‚å«ã‚ã¦ï¼Œã„ã‹ãªã‚‹ä¿è¨¼
+-- ã‚‚è¡Œã‚ãªã„ï¼ã¾ãŸï¼Œæœ¬ã‚½ãƒ¼ã‚¹ã‚³ãƒ¼ãƒ‰ã®åˆ©ç”¨ã«ã‚ˆã‚Šç›´æ¥çš„ã¾ãŸã¯é–“æ¥çš„ã«ç”Ÿã˜ãŸã„ã‹ãª
+-- ã‚‹æå®³ã«é–¢ã—ã¦ã‚‚ï¼Œãã®è²¬ä»»ã‚’è² ã‚ãªã„ï¼
 --
 --
 
 --
 -- TaC/tac_cpu.vhd : TaC CPU VHDL Source Code
 --
--- 2019.01.29           : MPC‚Ì•Ï‰»ƒ^ƒCƒ~ƒ“ƒO‚ğ5ns‘‚­(MROM‚ªŠÔ‚É‡‚í‚È‚¢‚Ì‚Åj
--- 2019.01.17           : I/O“ÁŒ ƒ‚[ƒhi‹÷“c‚Ì¬‰Êj‚ğæ‚è‚Ş
--- 2016.01.08           : "DR ‚Ì§Œä" •”•ª warning ‘Î‰
--- 2012.09.27           : TaC-CPU V2 ‘Î‰Š®—¹
--- 2012.01.22           : entity –¼AŒ©’¼‚µ
--- 2011.07.18           : ƒŒƒWƒXƒ^ G12 ‚ğ TMP ‚É’u‚«Š·‚¦‚é
--- 2011.07.18           : ƒŒƒWƒXƒ^w’è RxP ‚ğ TMP ‚É’u‚«Š·‚¦‚é
--- 2011.06.10           : TeC7 —p‚É‘‚«Š·‚¦‚é
--- 2010.07.23           : ƒCƒ“ƒfƒ“ƒg‚Ì’²®
--- 2010.07.20           : Subversion ‚É‚æ‚éŠÇ—‚ğŠJn
+-- 2019.01.29           : MPCã®å¤‰åŒ–ã‚¿ã‚¤ãƒŸãƒ³ã‚°ã‚’5nsæ—©ã(MROMãŒé–“ã«åˆã‚ãªã„ã®ã§ï¼‰
+-- 2019.01.17           : I/Oç‰¹æ¨©ãƒ¢ãƒ¼ãƒ‰ï¼ˆéš…ç”°ã®æˆæœï¼‰ã‚’å–ã‚Šè¾¼ã‚€
+-- 2016.01.08           : "DR ã®åˆ¶å¾¡" éƒ¨åˆ† warning å¯¾å¿œ
+-- 2012.09.27           : TaC-CPU V2 å¯¾å¿œå®Œäº†
+-- 2012.01.22           : entity åã€è¦‹ç›´ã—
+-- 2011.07.18           : ãƒ¬ã‚¸ã‚¹ã‚¿ G12 ã‚’ TMP ã«ç½®ãæ›ãˆã‚‹
+-- 2011.07.18           : ãƒ¬ã‚¸ã‚¹ã‚¿æŒ‡å®š RxP ã‚’ TMP ã«ç½®ãæ›ãˆã‚‹
+-- 2011.06.10           : TeC7 ç”¨ã«æ›¸ãæ›ãˆã‚‹
+-- 2010.07.23           : ã‚¤ãƒ³ãƒ‡ãƒ³ãƒˆã®èª¿æ•´
+-- 2010.07.20           : Subversion ã«ã‚ˆã‚‹ç®¡ç†ã‚’é–‹å§‹
 --
 -- $Id
 --
@@ -84,7 +84,7 @@ constant ALU_LROT : std_logic_vector(3 downto 0) := "1101";
 constant ALU_SFT  : std_logic_vector(3 downto 0) := "1110";
 constant ALU_SUBC : std_logic_vector(3 downto 0) := "1111";
 
--- ƒŒƒWƒXƒ^‚Ìw’è
+-- ãƒ¬ã‚¸ã‚¹ã‚¿ã®æŒ‡å®š
 constant REG_NO   : std_logic_vector(2 downto 0) := "000";
 constant REG_FP   : std_logic_vector(2 downto 0) := "000";
 constant REG_SP   : std_logic_vector(2 downto 0) := "001";
@@ -95,7 +95,7 @@ constant REG_RdP  : std_logic_vector(2 downto 0) := "101";
 constant REG_Rx   : std_logic_vector(2 downto 0) := "110";
 constant REG_TMP  : std_logic_vector(2 downto 0) := "111";
 
--- ƒtƒ‰ƒO‘€ì‚Ìw’è
+-- ãƒ•ãƒ©ã‚°æ“ä½œã®æŒ‡å®š
 constant FLG_NO   : std_logic_vector(2 downto 0) := "000";
 constant FLG_LF   : std_logic_vector(2 downto 0) := "001";
 constant FLG_STI  : std_logic_vector(2 downto 0) := "010";
@@ -119,8 +119,8 @@ constant BUS_MEMWB: std_logic_vector(3 downto 0) := "1011";
 constant BUS_IORB : std_logic_vector(3 downto 0) := "1100";
 constant BUS_IOWB : std_logic_vector(3 downto 0) := "1101";
 
--- JP ƒtƒB[ƒ‹ƒh‚Ì’l
--- ƒWƒƒƒ“ƒv‚ÌğŒ
+-- JP ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã®å€¤
+-- ã‚¸ãƒ£ãƒ³ãƒ—ã®æ¡ä»¶
 constant JMP_NO   : std_logic_vector(3 downto 0) := "0000";
 constant JMP_ALL  : std_logic_vector(3 downto 0) := "0001";
 constant JMP_OP   : std_logic_vector(3 downto 0) := "0010";
@@ -137,7 +137,7 @@ constant JMP_NPRV : std_logic_vector(3 downto 0) := "1100";
 constant JMP_ZERO : std_logic_vector(3 downto 0) := "1101";
 constant JMP_NIOPR: std_logic_vector(3 downto 0) := "1110";
 
--- ƒŒƒWƒXƒ^ƒtƒ@ƒCƒ‹
+-- ãƒ¬ã‚¸ã‚¹ã‚¿ãƒ•ã‚¡ã‚¤ãƒ«
 signal I_G0  : std_logic_vector(15 downto 0);  -- G0
 signal I_G1  : std_logic_vector(15 downto 0);  -- G1
 signal I_G2  : std_logic_vector(15 downto 0);  -- G2
@@ -156,7 +156,7 @@ signal I_USP : std_logic_vector(15 downto 0);  -- USP
 signal I_PC  : std_logic_vector(15 downto 0);  -- PC
 signal I_TMP : std_logic_vector(15 downto 0);  -- TMP
 
--- ƒtƒ‰ƒO
+-- ãƒ•ãƒ©ã‚°
 signal I_E   : std_logic;                     -- Interrupt Enable
 signal I_P   : std_logic;                     -- Privilege
 signal I_IOP : std_logic;                     -- IO Privilege
@@ -165,31 +165,31 @@ signal I_C   : std_logic;                     -- Carry
 signal I_S   : std_logic;                     -- Sign
 signal I_Z   : std_logic;                     -- Zero
 
--- ƒŒƒWƒXƒ^ƒtƒ@ƒCƒ‹‚Ì§Œä
+-- ãƒ¬ã‚¸ã‚¹ã‚¿ãƒ•ã‚¡ã‚¤ãƒ«ã®åˆ¶å¾¡
 signal I_WRA : std_logic_vector(5 downto 0);  -- Write Address(MSB = Enable)
 signal I_RRA : std_logic_vector(4 downto 0);  -- Read  Address
 signal I_RRD : std_logic_vector(15 downto 0); -- Read  Data
-signal I_RRX : std_logic_vector(15 downto 0); -- IX —p‚Ì Read  Data
+signal I_RRX : std_logic_vector(15 downto 0); -- IX ç”¨ã® Read  Data
 
--- ƒŒƒWƒXƒ^
+-- ãƒ¬ã‚¸ã‚¹ã‚¿
 signal I_DR  : std_logic_vector(15 downto 0); -- DR
 signal I_OPR : std_logic_vector(15 downto 0); -- OPR 
 signal I_AR  : std_logic_vector(15 downto 0); -- AR
 signal I_MPC : std_logic_vector(7 downto 0);  -- MPC
-signal I_OP  : std_logic_vector(7 downto 0);  -- IR ‚Ì OP
-signal I_RD  : std_logic_vector(3 downto 0);  -- IR ‚Ì Rd
-signal I_RX  : std_logic_vector(3 downto 0);  -- IR ‚Ì Rx
-signal I_CT  : std_logic_vector(3 downto 0);  -- ŒJ‚è•Ô‚µ—pƒJƒEƒ“ƒ^
--- “à•””zü
-signal I_ALUT : std_logic_vector(16 downto 0); -- ALU ‚Ì“à•”‚Åg—p
-signal I_ALU  : std_logic_vector(15 downto 0); -- ALU ‚Ìo—Í
+signal I_OP  : std_logic_vector(7 downto 0);  -- IR ã® OP
+signal I_RD  : std_logic_vector(3 downto 0);  -- IR ã® Rd
+signal I_RX  : std_logic_vector(3 downto 0);  -- IR ã® Rx
+signal I_CT  : std_logic_vector(3 downto 0);  -- ç¹°ã‚Šè¿”ã—ç”¨ã‚«ã‚¦ãƒ³ã‚¿
+-- å†…éƒ¨é…ç·š
+signal I_ALUT : std_logic_vector(16 downto 0); -- ALU ã®å†…éƒ¨ã§ä½¿ç”¨
+signal I_ALU  : std_logic_vector(15 downto 0); -- ALU ã®å‡ºåŠ›
 signal I_CTP1 : std_logic_vector(3  downto 0); -- I_CT + 1
-signal I_AV   : std_logic;                     -- ALU ‚Ì Over flow o—Í
-signal I_AC   : std_logic;                     -- ALU ‚Ì Carry o—Í
-signal I_AZ   : std_logic;                     -- ALU ‚Ì Zero  o—Í
-signal I_AS   : std_logic;                     -- ALU ‚Ì Sign  o—Í
+signal I_AV   : std_logic;                     -- ALU ã® Over flow å‡ºåŠ›
+signal I_AC   : std_logic;                     -- ALU ã® Carry å‡ºåŠ›
+signal I_AZ   : std_logic;                     -- ALU ã® Zero  å‡ºåŠ›
+signal I_AS   : std_logic;                     -- ALU ã® Sign  å‡ºåŠ›
 
-signal I_JMP     : std_logic;                  -- ‹@ŠBŒê‚ÌƒWƒƒƒ“ƒvğŒ‚ª¬—§
+signal I_JMP     : std_logic;                  -- æ©Ÿæ¢°èªã®ã‚¸ãƒ£ãƒ³ãƒ—æ¡ä»¶ãŒæˆç«‹
 signal I_MPCLDAB : std_logic_vector(1 downto 0);  -- MPC (LD & A/B)
 
 -- instruction decode ROM output
@@ -314,8 +314,8 @@ begin
   P_DOUT(15 downto 8) <= I_OPR(15 downto 8) when (M_BT='0')
                          else I_OPR(7 downto 0);
 
-  -- MPC ‚Ì§Œä
-  process(I_RD, I_V, I_C, I_Z, I_S)     -- JMP_C •”•ª
+  -- MPC ã®åˆ¶å¾¡
+  process(I_RD, I_V, I_C, I_Z, I_S)     -- JMP_C éƒ¨åˆ†
   begin
     case I_RD is
       when "0000" => I_JMP <= I_Z;                        -- JZ
@@ -338,7 +338,7 @@ begin
   end process;
 
   I_CTP1 <= I_CT + 1;
-  process(P_CLK0, P_RESET)              -- CT •”•ª
+  process(P_CLK0, P_RESET)              -- CT éƒ¨åˆ†
   begin
     if (P_RESET='0') then
       I_CT <= "0000";
@@ -359,7 +359,7 @@ begin
 
   process(M_JP, I_RX, I_JMP, P_Intr, P_STOP,
           I_E, I_CT, I_P, I_IOP, I_Z, I_DR(3 downto 0))
-  begin                                 -- JCC_C •”•ª
+  begin                                 -- JCC_C éƒ¨åˆ†
     case M_JP is
       when JMP_ALL  =>                                       -- JMP
         I_MPCLDAB <= "10";
@@ -434,7 +434,7 @@ begin
     end case;
   end process;
 
-  process(P_CLK0, P_RESET)              -- MPC •”•ª
+  process(P_CLK0, P_RESET)              -- MPC éƒ¨åˆ†
   begin
     if (P_RESET='0') then
       I_MPC <= "00000000";
@@ -447,7 +447,7 @@ begin
     end if;
   end process;
 
-  -- IR ‚Ì§Œä
+  -- IR ã®åˆ¶å¾¡
   process(P_CLK0, P_RESET)
   begin
     if (P_RESET='0') then
@@ -463,7 +463,7 @@ begin
     end if;
   end process;
 
-  -- DR ‚Ì§Œä
+  -- DR ã®åˆ¶å¾¡
   process(P_CLK0, P_RESET)
   begin
     if (P_RESET='0') then
@@ -472,7 +472,7 @@ begin
       if (M_LD='1') then
         if (M_IX='1') then
           I_DR <= I_RRX;
-        elsif (M_LI='1') then                             --ƒVƒ‡[ƒgƒCƒ~ƒfƒCƒg—p
+        elsif (M_LI='1') then                             --ã‚·ãƒ§ãƒ¼ãƒˆã‚¤ãƒŸãƒ‡ã‚¤ãƒˆç”¨
           if (P_DIN(3)='1') then
             I_DR <= "111111111111" & P_DIN(3 downto 0);
           else
@@ -491,7 +491,7 @@ begin
     end if;
   end process;
 
-  -- OPR ‚Ì§Œä
+  -- OPR ã®åˆ¶å¾¡
   process(P_CLK0, P_RESET)
   begin
     if (P_RESET='0') then
@@ -503,7 +503,7 @@ begin
     end if;
   end process;
 
-  -- AR ‚Ì§Œä
+  -- AR ã®åˆ¶å¾¡
   P_ADDR <= I_AR;
   process(P_CLK0, P_RESET)
   begin
@@ -516,8 +516,8 @@ begin
     end if;
   end process;
 
-  -- ƒŒƒWƒXƒ^ƒtƒ@ƒCƒ‹‚Ì§Œä
-  -- ‘‚İƒŒƒWƒXƒ^‚ÌŒˆ’è
+  -- ãƒ¬ã‚¸ã‚¹ã‚¿ãƒ•ã‚¡ã‚¤ãƒ«ã®åˆ¶å¾¡
+  -- æ›¸è¾¼ã¿ãƒ¬ã‚¸ã‚¹ã‚¿ã®æ±ºå®š
   process(M_WR, I_RD, I_RX)
   begin
     case M_WR is
@@ -532,7 +532,7 @@ begin
     end case;
   end process;
 
-  -- ‘‚«‚İ§Œä
+  -- æ›¸ãè¾¼ã¿åˆ¶å¾¡
   process(P_CLK0, P_RESET)
   begin
     if (P_RESET='0') then
@@ -576,18 +576,18 @@ begin
         when "101110" => I_USP <= I_ALU;
         when "101111" => I_PC  <= I_ALU;
         when "110000" => I_TMP <= I_ALU;
-          -- "110001" : FLAG ‚Ì•Ï‰»‚Í‰º‚Ì process •¶‚ÉW–ñ
+          -- "110001" : FLAG ã®å¤‰åŒ–ã¯ä¸‹ã® process æ–‡ã«é›†ç´„
         when others => NULL;
       end case;
     end if;
   end process;
 
-  -- FLAG ‚Ì§Œä
+  -- FLAG ã®åˆ¶å¾¡
   process(P_CLK0, P_RESET)
   begin
     if (P_RESET='0') then
       I_E   <= '0';
-      I_P   <= '1';                       -- “ÁŒ ƒ‚[ƒh‚Ån‚Ü‚é
+      I_P   <= '1';                       -- ç‰¹æ¨©ãƒ¢ãƒ¼ãƒ‰ã§å§‹ã¾ã‚‹
       I_IOP <= '0';
       I_V   <= '0';
       I_C   <= '0';
@@ -612,13 +612,13 @@ begin
           when FLG_CLI => I_E <= '0';
           when FLG_STP => I_P <= '1';
           when FLG_CLP => I_P <= '0';
-          when others  => NULL; -- FLAG ‚Í•Ï‰»‚µ‚È‚¢
+          when others  => NULL; -- FLAG ã¯å¤‰åŒ–ã—ãªã„
         end case;
       end if;
     end if;
   end process;
 
-  -- “Ç‚İ‚¾‚µƒŒƒWƒXƒ^”Ô†
+  -- èª­ã¿ã ã—ãƒ¬ã‚¸ã‚¹ã‚¿ç•ªå·
   process(M_RR, I_RD, I_RX)
   begin
     case M_RR is
@@ -634,7 +634,7 @@ begin
     end case;
   end process;
 
-  -- “Ç‚İ‚¾‚µ§Œä
+  -- èª­ã¿ã ã—åˆ¶å¾¡
   process(I_G0, I_G1, I_G2, I_G3, I_G4, I_G5, I_G6, I_G7, I_G8, I_G9, I_G10,
           I_G11, I_G12, I_SSP, I_USP, I_PC, I_TMP,
           I_E, I_P, I_IOP, I_V, I_C, I_S, I_Z, I_RRA)
@@ -665,7 +665,7 @@ begin
     end case;
   end process;
 
-  -- IX—p‚Ì“Ç‚İ‚¾‚µ§Œä
+  -- IXç”¨ã®èª­ã¿ã ã—åˆ¶å¾¡
   process(I_G0, I_G1, I_G2, I_G3, I_G4, I_G5, I_G6, I_G7, I_G8, I_G9, I_G10,
           I_G11, I_G12, I_SSP, I_USP, I_PC, I_E, I_P, I_V, I_C, I_S, I_Z, I_RX)
   begin
@@ -693,7 +693,7 @@ begin
     end case;
   end process;
 
-  -- ALU ‚Ì§Œä
+  -- ALU ã®åˆ¶å¾¡
   I_ALU <= I_ALUT(15 downto 0);
   process(I_RRD,I_DR,M_ALU,I_C,I_S,I_Z,I_RX,I_OP(4 downto 3))
   begin
@@ -735,11 +735,11 @@ begin
     end case;
   end process;
 
-  -- ALU ‚Ìƒtƒ‰ƒOo—Í
+  -- ALU ã®ãƒ•ãƒ©ã‚°å‡ºåŠ›
   I_AS <= I_ALUT(15);
   I_AC <= I_ALUT(16);
   I_AZ <= '1' when (I_ALU(15 downto 0)="0000000000000000") else '0';
-  -- Vƒtƒ‰ƒO‚ÌŒˆ’è
+  -- Vãƒ•ãƒ©ã‚°ã®æ±ºå®š
   process(M_ALU, I_RRD(15), I_DR(15), I_ALUT(15), I_OP, I_V)
   begin
     case M_ALU is

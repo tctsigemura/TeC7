@@ -6,23 +6,23 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 
 --
---  trsw.vhd : push �X�C�b�`�̓��͂��A�`���^�����O�̂Ȃ��g���K�M���ɕϊ�����
+--  trsw.vhd : push スイッチの入力を、チャタリングのないトリガ信号に変換する
 --
 --
--- 2010.07.20           : Subversion �ɂ��Ǘ����J�n
+-- 2010.07.20           : Subversion による管理を開始
 --
 -- $Id
 --
@@ -45,8 +45,8 @@ architecture RTL of TRSW is
 
 -- Flip Flop
 signal I_PREV     : std_logic;
-signal I_CNT1     : std_logic_vector(3 downto 0);      -- ���s�[�g�J�n�^�C�}
-signal I_CNT2     : std_logic_vector(1 downto 0);      -- ���s�[�g�Ԋu�^�C�}
+signal I_CNT1     : std_logic_vector(3 downto 0);      -- リピート開始タイマ
+signal I_CNT2     : std_logic_vector(1 downto 0);      -- リピート間隔タイマ
 
 begin
   P_Q <= P_SMP and P_S and (not I_PREV);

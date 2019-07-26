@@ -1,13 +1,13 @@
 --
--- 8x16rk\8x16rk.bin
+-- 8x16rkÂ¥8x16rk.bin
 --
--- ƒtƒHƒ“ƒg‚Ì’˜ìŒ 
+-- ãƒ•ã‚©ãƒ³ãƒˆã®è‘—ä½œæ¨©
 -- Copyright 1989 by Sony Corp.
 --
 --
 -- TeC16 VHDL Source Code
 -- CharacterGeneratorROM
--- 00 ` 7F
+-- 00 ã€œ 7F
 --
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -288,7 +288,7 @@ architecture BEHAVE of CGROM1 is
 -- TeC16 VHDL Source Code
 --
 -- TeC16 CharacterGeneratorROM
--- 80 ` FF
+-- 80 ã€œ FF
 --
 
 library IEEE;

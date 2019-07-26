@@ -6,32 +6,32 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
--- 2019.02.18 : TaC ���[�h�ȊO�ł� SETA+RESET �� TaC �����Z�b�g����悤�ɕύX
--- 2019.02.09 : �}�C�N��SD�J�[�h�̑}�������m�ł���悤�ɂ���
--- 2019.02.03 : TeC�̃R���\�[����TaC������ł���悤�ɂ���
--- 2019.02.02 : ��I/O�A�h���X�̃��[�h�� 00H �ɂȂ�悤�ɕύX
--- 2019.01.27 : MMU ��ǉ�
--- 2018.12.31 : CPU ����~���̓^�C�}�[����~����悤�ɕύX
--- 2018.12.09 : PIO �̏o�͂��ő�12�r�b�g��
--- 2016.01.07 : �암�łƓ���
--- 2012.09.26 : TaC-CUP V2 �Ή�����
--- 2012.01.22 : TeC �Ƃ̃C���^�t�F�[�X���폜
--- 2011.09.18 : �V�K�쐬
+-- 2019.02.18 : TaC モード以外では SETA+RESET で TaC をリセットするように変更
+-- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
+-- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
+-- 2019.02.02 : 空きI/Oアドレスのリードは 00H になるように変更
+-- 2019.01.27 : MMU を追加
+-- 2018.12.31 : CPU が停止中はタイマーも停止するように変更
+-- 2018.12.09 : PIO の出力を最大12ビット化
+-- 2016.01.07 : 川部版と統合
+-- 2012.09.26 : TaC-CUP V2 対応完了
+-- 2012.01.22 : TeC とのインタフェースを削除
+-- 2011.09.18 : 新規作成
 --
 -- $Id
 --
@@ -315,11 +315,11 @@ component TAC_SIO
          P_ADDR    : in  std_logic;                      -- Address
          P_DOUT    : out std_logic_vector(7 downto 0);   -- Data Output
          P_DIN     : in  std_logic_vector(7 downto 0);   -- Data Input
-         P_INT_TxD : out std_logic;                      -- SIO ���M���荞��
-         P_INT_RxD : out std_logic;                      -- SIO ��M���荞��
+         P_INT_TxD : out std_logic;                      -- SIO 送信割り込み
+         P_INT_RxD : out std_logic;                      -- SIO 受信割り込み
 
-         P_TxD     : out std_logic;                      -- �V���A���o��
-         P_RxD     : in  std_logic                       -- �V���A������
+         P_TxD     : out std_logic;                      -- シリアル出力
+         P_RxD     : in  std_logic                       -- シリアル入力
        );
 end component;
 
@@ -381,8 +381,8 @@ component TAC_PS2 is
            P_PS2D    : inout std_logic;                    -- PS/2 Data
            P_PS2C    : inout std_logic;                    -- PS/2 Clock
            
-           P_INT_W   : out std_logic;                      -- PS/2 ���M���荞��
-           P_INT_R   : out std_logic                       -- PS/2 ��M���荞��
+           P_INT_W   : out std_logic;                      -- PS/2 送信割り込み
+           P_INT_R   : out std_logic                       -- PS/2 受信割り込み
          );
 end component;
 
@@ -437,23 +437,23 @@ component TAC_TEC is
 end component;
 
 begin
-  -- �������̂���
-  i_int_bit(2)  <= '0';  -- INT(�g�p�\��Ȃ�)
-  i_int_bit(3)  <= '0';  -- INT(CONSOLE�����ݗp�ɗ\��)
+  -- 未実装のため
+  i_int_bit(2)  <= '0';  -- INT(使用予定なし)
+  i_int_bit(3)  <= '0';  -- INT(CONSOLE割込み用に予定)
 
-  -- �A�h���X�ᔽ�p(��������)
+  -- アドレス違反用(将来実装)
   i_int_bit(10) <= '0';
 
-  -- �}�C�N���v���O���������������O�� 12 �` 15 ���g�p
+  -- マイクロプログラムが発生する例外が 12 〜 15 を使用
   i_int_bit(12) <= '0';
   i_int_bit(13) <= '0';
   i_int_bit(14) <= '0';
   i_int_bit(15) <= '0';
 
-  -- TaC���[�h�ȊO�ł� RESET+SETA ��TaC�����Z�b�g�ł���
+  -- TaCモード以外では RESET+SETA でTaCをリセットできる
   i_reset_panel <= P_RESET_SW when (P_MODE=1) else P_TEC_RESET and P_TEC_SETA;
 
-  -- CNT16 (1kHz �̃p���X�𔭐�����)
+  -- CNT16 (1kHz のパルスを発生する)
   process(P_CLK0, P_RESET)
     begin
       if (P_RESET='0') then
@@ -505,15 +505,15 @@ begin
   
   i_iow       <= i_ir and i_rw and (not i_li);
   i_ior       <= i_ir and (not i_rw) and (not i_li);
-  i_en_tmr0   <= '1' when (i_addr(7 downto 2)="000000") else '0'; -- 00~03
-  i_en_tmr1   <= '1' when (i_addr(7 downto 2)="000001") else '0'; -- 04~07
-  i_en_sio    <= '1' when (i_addr(7 downto 2)="000010") else '0'; -- 08~0b
-  i_en_ps2    <= '1' when (i_addr(7 downto 2)="000011") else '0'; -- 0c~0f
-  i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10~17
-  i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18~1f
-  i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30~37
-  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110")  else '0'; -- f0~f7
-  i_en_vga    <= '1' when (i_addr(15 downto 12)="1110") else '0'; -- e000~efff
+  i_en_tmr0   <= '1' when (i_addr(7 downto 2)="000000") else '0'; -- 00‾03
+  i_en_tmr1   <= '1' when (i_addr(7 downto 2)="000001") else '0'; -- 04‾07
+  i_en_sio    <= '1' when (i_addr(7 downto 2)="000010") else '0'; -- 08‾0b
+  i_en_ps2    <= '1' when (i_addr(7 downto 2)="000011") else '0'; -- 0c‾0f
+  i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10‾17
+  i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18‾1f
+  i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30‾37
+  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110")  else '0'; -- f0‾f7
+  i_en_vga    <= '1' when (i_addr(15 downto 12)="1110") else '0'; -- e000‾efff
   i_vga_we    <= '1' when (i_en_vga and i_mr and i_rw)='1' else '0';
  
   i_din_cpu <= ("00000000" & i_dout_vga) when (i_mr='1' and i_en_vga='1') else
