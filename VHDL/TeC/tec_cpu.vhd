@@ -6,21 +6,21 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 -- TeC CPU VHDL Source Code
 --
--- 2016.01.08 : MROM �̃A�h���X, MPC �� 7bit �ɕύX
---              (M_JA �� 8bit �Ȃ̂Ōx���͑���)
+-- 2016.01.08 : MROM のアドレス, MPC を 7bit に変更
+--              (M_JA は 8bit なので警告は続く)
 --
 
 library IEEE;
@@ -77,13 +77,13 @@ constant ALU_OUTF : std_logic_vector(3 downto 0) := "1011";
 constant ALU_INF  : std_logic_vector(3 downto 0) := "1100";
 constant ALU_SFT  : std_logic_vector(3 downto 0) := "1101";
 
--- ���W�X�^�̎w��
+-- レジスタの指定
 constant REG_SP   : std_logic_vector(1 downto 0) := "00";
 constant REG_PC   : std_logic_vector(1 downto 0) := "01";
 constant REG_Rd   : std_logic_vector(1 downto 0) := "10";
 constant REG_Rx   : std_logic_vector(1 downto 0) := "11";
 
--- �W�����v�̏���
+-- ジャンプの条件
 constant JMP_NO   : std_logic_vector(2 downto 0) := "000";
 constant JMP_ALL  : std_logic_vector(2 downto 0) := "001";
 constant JMP_OP   : std_logic_vector(2 downto 0) := "010";
@@ -93,7 +93,7 @@ constant JMP_JP   : std_logic_vector(2 downto 0) := "101";
 constant JMP_NJP  : std_logic_vector(2 downto 0) := "110";
 constant JMP_DI   : std_logic_vector(2 downto 0) := "111";
 
--- ���W�X�^�t�@�C��
+-- レジスタファイル
 signal I_G0  : std_logic_vector(7 downto 0);  -- G0
 signal I_G1  : std_logic_vector(7 downto 0);  -- G1
 signal I_G2  : std_logic_vector(7 downto 0);  -- G2
@@ -105,41 +105,41 @@ signal I_RRA : std_logic_vector(2 downto 0);  -- Read  Address
 signal I_WRD : std_logic_vector(7 downto 0);  -- Write Data
 signal I_RRD : std_logic_vector(7 downto 0);  -- Read  Data
 
--- ���W�X�^
+-- レジスタ
 signal I_DR  : std_logic_vector(7 downto 0);  -- DR
 signal I_OPR : std_logic_vector(7 downto 0);  -- OPR 
 signal I_AR  : std_logic_vector(7 downto 0);  -- AR
 signal I_MPC : std_logic_vector(6 downto 0);  -- MPC
-signal I_OP  : std_logic_vector(3 downto 0);  -- IR �� OP
-signal I_RD  : std_logic_vector(1 downto 0);  -- IR �� Rd
-signal I_RX  : std_logic_vector(1 downto 0);  -- IR �� Rx
+signal I_OP  : std_logic_vector(3 downto 0);  -- IR の OP
+signal I_RD  : std_logic_vector(1 downto 0);  -- IR の Rd
+signal I_RX  : std_logic_vector(1 downto 0);  -- IR の Rx
 
--- �t���O
+-- フラグ
 signal I_C   : std_logic;                     -- Carry
 signal I_S   : std_logic;                     -- Sign
 signal I_Z   : std_logic;                     -- Zero
 signal I_EI  : std_logic;                     -- Enable Interrupt
 
--- �����z��
-signal I_ALUT: std_logic_vector(8 downto 0);  -- ALU �̓����Ŏg�p
-signal I_ALU : std_logic_vector(7 downto 0);  -- ALU �̏o��
+-- 内部配線
+signal I_ALUT: std_logic_vector(8 downto 0);  -- ALU の内部で使用
+signal I_ALU : std_logic_vector(7 downto 0);  -- ALU の出力
 
-signal I_AC  : std_logic;                     -- ALU �� Carry �o��
-signal I_AZ  : std_logic;                     -- ALU �� Zero  �o��
-signal I_AS  : std_logic;                     -- ALU �� Sign  �o��
+signal I_AC  : std_logic;                     -- ALU の Carry 出力
+signal I_AZ  : std_logic;                     -- ALU の Zero  出力
+signal I_AS  : std_logic;                     -- ALU の Sign  出力
 
-signal I_JMP : std_logic;                     -- �@�B��̃W�����v����������
-signal I_MPCLD : std_logic;                   -- MPC �̒l��ω�
-signal I_MPCAB : std_logic;                   -- MPC �̓��͑I��
+signal I_JMP : std_logic;                     -- 機械語のジャンプ条件が成立
+signal I_MPCLD : std_logic;                   -- MPC の値を変化
+signal I_MPCAB : std_logic;                   -- MPC の入力選択
 
--- �f�R�[�hROM�̓��o��
+-- デコードROMの入出力
 signal I_DADDR : std_logic_vector(7 downto 0);
 signal I_DCODE : std_logic_vector(7 downto 0);
 
--- �}�C�N���R�[�hROM�̏o��
+-- マイクロコードROMの出力
 signal I_MCODE : std_logic_vector(31 downto 0);
 
--- �}�C�N���R�[�h
+-- マイクロコード
 signal M_ALU : std_logic_vector(3 downto 0);
 signal M_RR  : std_logic_vector(1 downto 0);
 signal M_WR  : std_logic_vector(1 downto 0);
@@ -178,21 +178,21 @@ component TEC_DROM
 end component;
 
 begin
-  -- �}�C�N���R�[�h�q�n�l
+  -- マイクロコードＲＯＭ
   mrom0: TEC_MROM
      port map (P_CLK   => P_CLK,
                P_RESET => P_RESET,
                P_ADDR  => I_MPC,
                P_DOUT  => I_MCODE);
 
-  -- �f�R�[�h�q�n�l
+  -- デコードＲＯＭ
   drom0: TEC_DROM
      port map (P_CLK   => P_CLK,
                P_RESET => P_RESET,
                P_ADDR  => I_DADDR,
                P_DOUT  => I_DCODE);
 
-  -- �}�C�N���R�[�h����
+  -- マイクロコード入力
   M_ALU <= I_MCODE(31 downto 28);
   M_RR  <= I_MCODE(27 downto 26);
   M_WR  <= I_MCODE(25 downto 24);
@@ -212,7 +212,7 @@ begin
   M_JP  <= I_MCODE(10 downto 8);
   M_JA  <= I_MCODE(7 downto 0);
 
-  -- �R���g���[���o�X�o��
+  -- コントロールバス出力
   P_LI  <= M_LI;
   P_HL  <= M_HL;
   P_ER  <= M_ER;
@@ -220,22 +220,22 @@ begin
   P_MR  <= M_MR;
   P_IR  <= M_IR;
 
-  -- �f�[�^�o�X�o��
+  -- データバス出力
   P_DOUT <= I_OPR;
 
-  -- �p�l����LED�ւ̏o��
+  -- パネルのLEDへの出力
   P_C   <= I_C;
   P_S   <= I_S;
   P_Z   <= I_Z;
 
-  -- �p�l���p�Ƀ��W�X�^���o��
+  -- パネル用にレジスタを出力
   P_G0D <= I_G0;
   P_G1D <= I_G1;
   P_G2D <= I_G2;
   P_SPD <= I_SP;
   P_PCD <= I_PC;
 
-  -- IR �̐���
+  -- IR の制御
   process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -251,7 +251,7 @@ begin
     end if;
   end process;
 
-  -- DR �̐���
+  -- DR の制御
   process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -263,7 +263,7 @@ begin
     end if;
   end process;
 
-  -- OPR �̐���
+  -- OPR の制御
   process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -275,7 +275,7 @@ begin
     end if;
   end process;
 
-  -- AR �̐���
+  -- AR の制御
   P_ADDR <= I_AR;
   process(P_CLK, P_RESET)
   begin
@@ -288,7 +288,7 @@ begin
     end if;
   end process;
 
-  -- FLAG �̐���
+  -- FLAG の制御
   process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -304,7 +304,7 @@ begin
     end if;
   end process;
 
-  -- ���荞�݂̐���
+  -- 割り込みの制御
   process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -320,7 +320,7 @@ begin
     end if;
   end process;
 
-  -- MPC �̐���
+  -- MPC の制御
   I_DADDR <= (I_OP & I_RD & I_RX);
   process(I_RD, I_C, I_Z, I_S)
   begin
@@ -376,8 +376,8 @@ begin
     end if;
   end process;
 
-  -- ���W�X�^�t�@�C���̐���
-  -- �������݃��W�X�^�̌���
+  -- レジスタファイルの制御
+  -- 書き込みレジスタの決定
   process(M_WR, M_LR, P_WRITE, I_RD, I_RX, P_SEL)
   begin
     if (M_LR='1') then
@@ -390,11 +390,11 @@ begin
     elsif (P_WRITE='1') then
       I_WRA <= P_SEL;
     else
-      I_WRA <= "111";                         -- �������܂Ȃ�
+      I_WRA <= "111";                         -- 書き込まない
     end if;
   end process;
 
-  -- �������݃f�[�^
+  -- 書き込みデータ
   process(M_LR, I_ALU, P_PND)
   begin
     if (M_LR='1') then
@@ -404,11 +404,11 @@ begin
     end if;
   end process;
 
-  -- �������ݐ���
+  -- 書き込み制御
   process(P_CLK, P_RESET, P_MODE)
   begin
     if (P_CLK' event and P_CLK='1') then
-      if (P_RESET='0') then              -- �񓯊�RESET�ł�I_PC[7]��NG
+      if (P_RESET='0') then              -- 非同期RESETではI_PC[7]がNG
         I_G0 <= "00000000";
         I_G1 <= "00000000";
         I_G2 <= "00000000";
@@ -423,7 +423,7 @@ begin
     end if;
   end process;
 
-  -- �ǂ݂������W�X�^�ԍ�
+  -- 読みだしレジスタ番号
   process(M_RR, I_RD, I_RX)
   begin
     case M_RR is
@@ -434,7 +434,7 @@ begin
     end case;
   end process;
 
-  -- �ǂ݂�������
+  -- 読みだし制御
   process(I_G0, I_G1, I_G2, I_SP, I_PC, I_RRA)
   begin
     case I_RRA is
@@ -446,7 +446,7 @@ begin
     end case;
   end process;
 
-  -- ALU �̐���
+  -- ALU の制御
   I_ALU <= I_ALUT(7 downto 0);
 
   process(I_RRD,I_DR,M_ALU,I_EI,I_C,I_S,I_Z,I_RX)
@@ -481,7 +481,7 @@ begin
     end case;
   end process;
 
-  -- ALU �̃t���O�o��
+  -- ALU のフラグ出力
   process (I_ALUT, M_ALU, I_DR)
   begin
     if (M_ALU = ALU_INF) then

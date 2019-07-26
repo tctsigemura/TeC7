@@ -6,22 +6,22 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 --  TeC/tec_io.vhd : TeC I/O
 --
---  2018.12.31 : CPU ����~���̓^�C�}�[����~����悤�ɕύX
---  2018.12.08 : PIO�̏o�͂��ő� 12 �r�b�g��
---  2016.01.08 : ADC �� if �����̏������ύX (warning ����������)
+--  2018.12.31 : CPU が停止中はタイマーも停止するように変更
+--  2018.12.08 : PIOの出力を最大 12 ビット化
+--  2016.01.08 : ADC の if 条件の書き方変更 (warning を消すため)
 --
 
 library IEEE;
@@ -38,12 +38,12 @@ entity TEC_IO is
          P_ADDR     : in  std_logic_vector(3 downto 0);
          P_DOUT     : out std_logic_vector(7 downto 0);
          P_DIN      : in  std_logic_vector(7 downto 0);
-         P_INT_TXD  : out std_logic;                     -- SIO ���M���荞��
-         P_INT_RXD  : out std_logic;                     -- SIO ��M���荞��
-         P_INT_TMR  : out std_logic;                     -- TIMER ���荞��
-         P_INT_CON  : out std_logic;                     -- �R���\�[�����荞��
+         P_INT_TXD  : out std_logic;                     -- SIO 送信割り込み
+         P_INT_RXD  : out std_logic;                     -- SIO 受信割り込み
+         P_INT_TMR  : out std_logic;                     -- TIMER 割り込み
+         P_INT_CON  : out std_logic;                     -- コンソール割り込み
 
-         P_INT_SW   : in  std_logic;                     -- �R���\�[�����荞��SW
+         P_INT_SW   : in  std_logic;                     -- コンソール割り込みSW
          P_DATA_SW  : in  std_logic_vector(7 downto 0);
          P_SPK      : out std_logic;
          P_RXD      : in  std_logic;
@@ -102,37 +102,37 @@ signal I_RXD1     : std_logic;
 signal I_RXD2     : std_logic;
 
 -- TMR
-signal TMR_Cnt    : std_logic_vector(7 downto 0); -- �^�C�}�[�̃J�E���^
-signal TMR_Max    : std_logic_vector(7 downto 0); -- �^�C�}�[�̎���
-signal TMR_Ena    : std_logic;                    -- �^�C�}�[�̃X�^�[�g/�X�g�b�v
-signal TMR_Int    : std_logic;                    -- �^�C�}�[�����ݔ�����
-signal TMR_Int_Ena: std_logic;                    -- �^�C�}�[�����݋���
+signal TMR_Cnt    : std_logic_vector(7 downto 0); -- タイマーのカウンタ
+signal TMR_Max    : std_logic_vector(7 downto 0); -- タイマーの周期
+signal TMR_Ena    : std_logic;                    -- タイマーのスタート/ストップ
+signal TMR_Int    : std_logic;                    -- タイマー割込み発生中
+signal TMR_Int_Ena: std_logic;                    -- タイマー割込み許可
 
-signal I_TMR_Mat  : std_logic;                    -- Max �� Cnt ����v����
-signal I_INT_TMR_P: std_logic;                    -- �����ݔ������Ƀp���X�𔭐�
-signal I_75Hz_D   : std_logic;                    -- 75Hz �̃G�b�W���o�p
-signal I_75Hz_P   : std_logic;                    -- 75Hz �̃G�b�W���o�p���X
+signal I_TMR_Mat  : std_logic;                    -- Max と Cnt が一致した
+signal I_INT_TMR_P: std_logic;                    -- 割込み発生時にパルスを発生
+signal I_75Hz_D   : std_logic;                    -- 75Hz のエッジ検出用
+signal I_75Hz_P   : std_logic;                    -- 75Hz のエッジ検出パルス
 
 -- ADC
-signal ADC_CNT    : std_logic_vector(10 downto 0); -- DAC�֏o�͂���l
-signal ADC_CNT_D  : std_logic_vector(7 downto 0);  -- �P�N���b�N�O��DAC
-signal ADC_TMP0   : std_logic_vector(7 downto 0);  -- CH0�p�A�ő�l��T��
-signal ADC_TMP1   : std_logic_vector(7 downto 0);  -- CH�P�p�A�ő�l��T��
-signal ADC_TMP2   : std_logic_vector(7 downto 0);  -- CH2�p�A�ő�l��T��
-signal ADC_TMP3   : std_logic_vector(7 downto 0);  -- CH3�p�A�ő�l��T��
-signal ADC_VAL0   : std_logic_vector(7 downto 0);  -- CH0�p�A�ϊ�����
-signal ADC_VAL1   : std_logic_vector(7 downto 0);  -- CH1�p�A�ϊ�����
-signal ADC_VAL2   : std_logic_vector(7 downto 0);  -- CH2�p�A�ϊ�����
-signal ADC_VAL3   : std_logic_vector(7 downto 0);  -- CH3�p�A�ϊ�����
-signal ADC_CARRY  : std_logic;                     -- �J�E���^���I�[�o�t���[����
-signal ADC_SMP0   : std_logic;                     -- �R���p���[�^�o�͂�
-signal ADC_SMP1   : std_logic;                     --  �N���b�N�ɓ���������
-signal ADC_SMP2   : std_logic;                     --   �M��
+signal ADC_CNT    : std_logic_vector(10 downto 0); -- DACへ出力する値
+signal ADC_CNT_D  : std_logic_vector(7 downto 0);  -- １クロック前のDAC
+signal ADC_TMP0   : std_logic_vector(7 downto 0);  -- CH0用、最大値を探す
+signal ADC_TMP1   : std_logic_vector(7 downto 0);  -- CH１用、最大値を探す
+signal ADC_TMP2   : std_logic_vector(7 downto 0);  -- CH2用、最大値を探す
+signal ADC_TMP3   : std_logic_vector(7 downto 0);  -- CH3用、最大値を探す
+signal ADC_VAL0   : std_logic_vector(7 downto 0);  -- CH0用、変換結果
+signal ADC_VAL1   : std_logic_vector(7 downto 0);  -- CH1用、変換結果
+signal ADC_VAL2   : std_logic_vector(7 downto 0);  -- CH2用、変換結果
+signal ADC_VAL3   : std_logic_vector(7 downto 0);  -- CH3用、変換結果
+signal ADC_CARRY  : std_logic;                     -- カウンタがオーバフローした
+signal ADC_SMP0   : std_logic;                     -- コンパレータ出力を
+signal ADC_SMP1   : std_logic;                     --  クロックに同期させた
+signal ADC_SMP2   : std_logic;                     --   信号
 signal ADC_SMP3   : std_logic;
 
 
 begin
-  -- �A�h���X�f�R�[�_
+  -- アドレスデコーダ
   IOW <= P_IR and P_RW;
   IOR <= P_IR and not P_RW;
   with P_ADDR select
@@ -165,7 +165,7 @@ begin
   IOW_EXT_DAT <= IOW and DEC_OUT(7);
   IOW_EXT_HI  <= IOW and DEC_OUT(12);
 
-  -- �u�U�[,�X�s�[�J,�R���\�[�����荞�ݕ���
+  -- ブザー,スピーカ,コンソール割り込み部分
   P_SPK  <= I_SPK xor ((I_BEEP or I_PINT_B) and P_2_4kHz);
   P_INT_CON <= I_PINT and P_INT_SW;
   process (P_CLK, P_RESET)
@@ -198,7 +198,7 @@ begin
     end if;
   end process;
 
-  -- SIO �̕���
+  -- SIO の部分
   P_TXD     <= Tx_Out or (not Tx_Ena);
   P_INT_TXD <= (not Tx_Full) and Tx_Int_Ena;
   P_INT_RXD <=      Rx_Full  and Rx_Int_Ena;
@@ -317,9 +317,9 @@ begin
   end process;
 
   -- Timer
-  I_TMR_Mat <= '1' when (TMR_CNT=TMR_Max) else '0';  -- �J�E���^ = �ړI�̒l
-  I_75Hz_P <= not P_75Hz and I_75Hz_D and TMR_Ena;   -- ������������o
-  I_INT_TMR_P <= I_75Hz_P and I_TMR_Mat;             -- �����ݔ����p���X
+  I_TMR_Mat <= '1' when (TMR_CNT=TMR_Max) else '0';  -- カウンタ = 目的の値
+  I_75Hz_P <= not P_75Hz and I_75Hz_D and TMR_Ena;   -- 立下がりを検出
+  I_INT_TMR_P <= I_75Hz_P and I_TMR_Mat;             -- 割込み発生パルス
   P_INT_TMR <= I_INT_TMR_P and TMR_Int_Ena;
   process (P_CLK, P_RESET)
   begin
@@ -333,31 +333,31 @@ begin
     elsif (P_CLK'event and P_CLK='1') then
       I_75Hz_D <= P_75Hz;
 
-      -- �^�C�}�[�̎������W�X�^
+      -- タイマーの周期レジスタ
       if (IOW_TMR_CNT='1') then
-        TMR_Max <= P_DIN;             -- ������ύX
+        TMR_Max <= P_DIN;             -- 周期を変更
       end if;
 
-      -- �^�C�}�[�̃X�^�[�g�X�g�b�v����
+      -- タイマーのスタートストップ制御
       if (IOW_TMR_CNT='1') then
-        TMR_Ena <= '0';               -- �ύX���ɁA�^�C�}�[�͎����I�Ɏ~�܂�
+        TMR_Ena <= '0';               -- 変更時に、タイマーは自動的に止まる
       elsif (IOW_TMR_CTL='1') then
-        TMR_Ena <= P_DIN(0);          -- �^�C�}�[�̃X�^�[�g�X�g�b�v
-        TMR_Int_Ena <= P_DIN(7);      -- �^�C�}�[�̊����݋���
+        TMR_Ena <= P_DIN(0);          -- タイマーのスタートストップ
+        TMR_Int_Ena <= P_DIN(7);      -- タイマーの割込み許可
       end if;
 
-      -- �^�C�}�[�̃J�E���^����
+      -- タイマーのカウンタ制御
       if (IOW_TMR_CTL='1' or I_INT_TMR_P='1') then
-        TMR_CNT <= "00000000";        -- Start/Stop�A�R���y�A�}�b�`�Ń��Z�b�g
+        TMR_CNT <= "00000000";        -- Start/Stop、コンペアマッチでリセット
       elsif (I_75Hz_P='1' and P_STOP='0') then
-        TMR_CNT <= TMR_CNT + 1;       -- ����ȊO�ł̓J�E���g�A�b�v
+        TMR_CNT <= TMR_CNT + 1;       -- それ以外ではカウントアップ
       end if;
 
-      -- �|�[�����O�r�b�g�̐���
+      -- ポーリングビットの制御
       if (IOW_TMR_CTL='1') then
-        TMR_Int <= '0';               -- CPU ���^�C�}�[���X�^�[�g�����烊�Z�b�g
+        TMR_Int <= '0';               -- CPU がタイマーをスタートしたらリセット
       elsif (I_INT_TMR_P='1') then
-        TMR_Int <= '1';               -- ���荞�ݔ����̂Ɠ����ɃZ�b�g
+        TMR_Int <= '1';               -- 割り込み発生のと同時にセット
       end if;
     end if;
   end process;
@@ -405,7 +405,7 @@ begin
     end if;
   end process;
         
-  -- I/O �|�[�g
+  -- I/O ポート
   process (P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -422,7 +422,7 @@ begin
     end if;
   end process;
   
-  -- Data Bus �̏o�͑I��
+  -- Data Bus の出力選択
   P_DOUT <= P_DATA_SW when (P_ADDR="0000") else
             P_DATA_SW when (P_ADDR="0001") else
             Rx_D_Reg  when (P_ADDR="0010") else
