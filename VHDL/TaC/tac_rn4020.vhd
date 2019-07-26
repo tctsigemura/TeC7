@@ -6,26 +6,26 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 
 --
---  TaC/tac_RN4020.vhd : RN4020 �C���^�t�F�[�X
+--  TaC/tac_RN4020.vhd : RN4020 インタフェース
 --
--- 2019.04.13 : TeC7d �p�� RN4020_CON �ǉ��CRN4020_SW �폜
--- 2019.02.26 : �ڑ���Ԃ��L�^���邽�߂�RESET����Ȃ����W�X�^�ǉ�
--- 2018.07.13 : ��M�o�b�t�@�iFIFO�j��ǉ�
--- 2018.07.12 : SIO����荞��
--- 2017.05.09 : �V�K�쐬
+-- 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
+-- 2019.02.26 : 接続状態を記録するためのRESETされないレジスタ追加
+-- 2018.07.13 : 受信バッファ（FIFO）を追加
+-- 2018.07.12 : SIOを取り込む
+-- 2017.05.09 : 新規作成
 --
 -- $Id
 --
@@ -43,11 +43,11 @@ entity TAC_RN4020 is
          P_ADDR    : in  std_logic_vector(1 downto 0);   -- Address(2 downto 1)
          P_DOUT    : out std_logic_vector(7 downto 0);   -- Data Output
          P_DIN     : in  std_logic_vector(7 downto 0);   -- Data Input
-         P_INT_TxD : out std_logic;                      -- ���M���荞��
-         P_INT_RxD : out std_logic;                      -- ��M���荞��
+         P_INT_TxD : out std_logic;                      -- 送信割り込み
+         P_INT_RxD : out std_logic;                      -- 受信割り込み
 
-         P_TxD     : out std_logic;                      -- �V���A���o��
-         P_RxD     : in  std_logic;                      -- �V���A������
+         P_TxD     : out std_logic;                      -- シリアル出力
+         P_RxD     : in  std_logic;                      -- シリアル入力
          P_CTS     : in  std_logic;                      -- Clear To Send
          P_RTS     : out std_logic;                      -- Request To Send
 
@@ -107,7 +107,7 @@ signal i_rx_red   : std_logic;
 signal i_rx_emp   : std_logic;
 signal i_rx_smp   : std_logic;
 
--- �{�[���[�g�����肷��萔
+-- ボーレートを決定する定数
 constant BAUDIV  : std_logic_vector(12 downto 0) := "0000110101011";
 -- 49.1520MHz / 9600   = 5120  (0001 0100 0000 0000b)
 -- 49.1520MHz / 19200  = 2560  (0000 1010 0000 0000b)
@@ -169,8 +169,8 @@ begin
   -- CMD
   P_CMD <= i_cmd(1);
   P_HW  <= i_cmd(2);
-  i_cts <= (not i_cmd(3)) or P_CTS;     -- �n�[�h�E�F�A�t���[����OFF�Ȃ�펞ON
-  P_RTS <= (not i_cmd(3)) or i_rts;     -- �n�[�h�E�F�A�t���[����OFF�Ȃ�펞ON
+  i_cts <= (not i_cmd(3)) or P_CTS;     -- ハードウェアフロー制御OFFなら常時ON
+  P_RTS <= (not i_cmd(3)) or i_rts;     -- ハードウェアフロー制御OFFなら常時ON
     
   process (P_CLK, P_RESET)
   begin

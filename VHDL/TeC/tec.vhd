@@ -6,22 +6,22 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   ��L���쌠�҂́CFree Software Foundation �ɂ���Č��J����Ă��� GNU ��ʌ�
--- �O���p�����_�񏑃o�[�W�����Q�ɋL�q����Ă�������𖞂����ꍇ�Ɍ���C�{�\�[�X
--- �R�[�h(�{�\�[�X�R�[�h�����ς������̂��܂ށD�ȉ����l)���g�p�E�����E���ρE�Ĕz
--- �z���邱�Ƃ𖳏��ŋ�������D
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   �{�\�[�X�R�[�h�́��S���̖��ۏ؁��Œ񋟂������̂ł���B��L���쌠�҂����
--- �֘A�@�ցE�l�͖{�\�[�X�R�[�h�Ɋւ��āC���̓K�p�\�����܂߂āC�����Ȃ�ۏ�
--- ���s��Ȃ��D�܂��C�{�\�[�X�R�[�h�̗��p�ɂ�蒼�ړI�܂��͊ԐړI�ɐ�����������
--- �鑹�Q�Ɋւ��Ă��C���̐ӔC�𕉂�Ȃ��D
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 -- TeC/tec.vhd : TeC Top Level
 --
 --
--- 2018.12.31 : CPU ����~���̓^�C�}�[����~����悤�ɕύX
--- 2018.12.08 : PIO �̏o�͂� 12 �r�b�g��
+-- 2018.12.31 : CPU が停止中はタイマーも停止するように変更
+-- 2018.12.08 : PIO の出力を 12 ビット化
 --
 
 library IEEE;
@@ -82,55 +82,55 @@ end TEC;
 architecture RTL of TEC is
 
 -- clock
-signal I_CNT     : std_logic_vector(19 downto 0);  -- �����p�o�C�i���J�E���^
-signal I_2_4kHz  : std_logic;                      -- �u�U�[���̉����p(2.4KHz)
-signal I_75Hz    : std_logic;                      -- �C���^�[�o���^�C�}�p(75Hz)
-signal I_18_75Hz : std_logic;                      -- SW �T���v�����O�p(18.75Hz)
-signal I_2_3Hz   : std_logic;                      -- LED �_�ŗp(2.3Hz)
+signal I_CNT     : std_logic_vector(19 downto 0);  -- 分周用バイナリカウンタ
+signal I_2_4kHz  : std_logic;                      -- ブザー等の音源用(2.4KHz)
+signal I_75Hz    : std_logic;                      -- インターバルタイマ用(75Hz)
+signal I_18_75Hz : std_logic;                      -- SW サンプリング用(18.75Hz)
+signal I_2_3Hz   : std_logic;                      -- LED 点滅用(2.3Hz)
 
--- ���荞�݃R���g���[���֌W
-signal I_VECT    : std_logic_vector(1 downto 0); -- ���荞�ݔԍ�
-signal I_INTR    : std_logic;                    -- CPU �ւ̊�����
+-- 割り込みコントローラ関係
+signal I_VECT    : std_logic_vector(1 downto 0); -- 割り込み番号
+signal I_INTR    : std_logic;                    -- CPU への割込み
 
 -- Address BUS
-signal I_ADDR    : std_logic_vector(7 downto 0); -- �A�h���X�o�X(CPU�̏o��)
+signal I_ADDR    : std_logic_vector(7 downto 0); -- アドレスバス(CPUの出力)
 
 -- Data BUS
-signal I_DOUT_CPU: std_logic_vector(7 downto 0); -- �f�[�^�o�X(CPU�̏o��)
-signal I_DIN_CPU : std_logic_vector(7 downto 0); -- �f�[�^�o�X(CPU�̓���)
-signal I_DOUT_RAM: std_logic_vector(7 downto 0); -- �f�[�^�o�X(RAM�̏o��)
-signal I_DOUT_IO : std_logic_vector(7 downto 0); -- �f�[�^�o�X(IO�̏o��)
+signal I_DOUT_CPU: std_logic_vector(7 downto 0); -- データバス(CPUの出力)
+signal I_DIN_CPU : std_logic_vector(7 downto 0); -- データバス(CPUの入力)
+signal I_DOUT_RAM: std_logic_vector(7 downto 0); -- データバス(RAMの出力)
+signal I_DOUT_IO : std_logic_vector(7 downto 0); -- データバス(IOの出力)
 
 -- Control BUS
-signal I_RESET  : std_logic;                     -- �N���b�N�����ς݂�RESET
-signal I_LI     : std_logic;                     -- ���߃t�F�b�`(CPU�̏o��)
-signal I_HL     : std_logic;                     -- HALT���ߎ��s(CPU�̏o��)
-signal I_ER     : std_logic;                     -- �s�����ߎ��s(CPU�̏o��)
-signal I_RW     : std_logic;                     -- READ/WRITE(CPU�̏o��)
-signal I_MR     : std_logic;                     -- �������v��(CPU�̏o��)
-signal I_IR     : std_logic;                     -- ���o�͗v��(CPU�̏o��)
-signal I_STOP   : std_logic;                     -- CPU ��~(�p�l���̏o��)
-signal I_INT0   : std_logic;                     -- �^�C�}�[������
-signal I_INT1   : std_logic;                     -- SIO ��M������
-signal I_INT2   : std_logic;                     -- SIO ���M������
-signal I_INT3   : std_logic;                     -- �R���\�[�������� SW
+signal I_RESET  : std_logic;                     -- クロック同期済みのRESET
+signal I_LI     : std_logic;                     -- 命令フェッチ(CPUの出力)
+signal I_HL     : std_logic;                     -- HALT命令実行(CPUの出力)
+signal I_ER     : std_logic;                     -- 不正命令実行(CPUの出力)
+signal I_RW     : std_logic;                     -- READ/WRITE(CPUの出力)
+signal I_MR     : std_logic;                     -- メモリ要求(CPUの出力)
+signal I_IR     : std_logic;                     -- 入出力要求(CPUの出力)
+signal I_STOP   : std_logic;                     -- CPU 停止(パネルの出力)
+signal I_INT0   : std_logic;                     -- タイマー割込み
+signal I_INT1   : std_logic;                     -- SIO 受信割込み
+signal I_INT2   : std_logic;                     -- SIO 送信割込み
+signal I_INT3   : std_logic;                     -- コンソール割込み SW
 
--- �p�l���֌W�̔z��
-signal I_RS_SEL : std_logic_vector(2 downto 0);  -- ���[�^���[�X�C�b�`�̈ʒu
-signal I_RS_DEC : std_logic_vector(5 downto 0);  -- ���[�^���[�X�C�b�`�� LED
-signal I_A_LED  : std_logic_vector(7 downto 0);  -- �A�h���X LED �̒l
-signal I_WRITE  : std_logic;                     -- WRITE SW �������ꂽ
-signal I_PINT   : std_logic;                     -- �R���\�[�����荞��
-signal I_G0D    : std_logic_vector(7 downto 0);  -- CPU ���� G0 �̒l���o��
-signal I_G1D    : std_logic_vector(7 downto 0);  -- CPU ���� G1 �̒l���o��
-signal I_G2D    : std_logic_vector(7 downto 0);  -- CPU ���� G2 �̒l���o��
-signal I_SPD    : std_logic_vector(7 downto 0);  -- CPU ���� SP �̒l���o��
-signal I_PCD    : std_logic_vector(7 downto 0);  -- CPU ���� PC �̒l���o��
-signal I_MMD    : std_logic_vector(7 downto 0);  -- RAM ����̒l�o��
+-- パネル関係の配線
+signal I_RS_SEL : std_logic_vector(2 downto 0);  -- ロータリースイッチの位置
+signal I_RS_DEC : std_logic_vector(5 downto 0);  -- ロータリースイッチの LED
+signal I_A_LED  : std_logic_vector(7 downto 0);  -- アドレス LED の値
+signal I_WRITE  : std_logic;                     -- WRITE SW が押された
+signal I_PINT   : std_logic;                     -- コンソール割り込み
+signal I_G0D    : std_logic_vector(7 downto 0);  -- CPU から G0 の値を出力
+signal I_G1D    : std_logic_vector(7 downto 0);  -- CPU から G1 の値を出力
+signal I_G2D    : std_logic_vector(7 downto 0);  -- CPU から G2 の値を出力
+signal I_SPD    : std_logic_vector(7 downto 0);  -- CPU から SP の値を出力
+signal I_PCD    : std_logic_vector(7 downto 0);  -- CPU から PC の値を出力
+signal I_MMD    : std_logic_vector(7 downto 0);  -- RAM からの値出力
 
--- �����z��
-signal I_SPK_I  : std_logic;                     -- I/O ����X�s�[�J�[�|�[�g
-signal I_SPK_P  : std_logic;                     -- PANEL ����X�s�[�J�[�|�[�g
+-- 内部配線
+signal I_SPK_I  : std_logic;                     -- I/O からスピーカーポート
+signal I_SPK_P  : std_logic;                     -- PANEL からスピーカーポート
 
 component TEC_PANEL
   port ( P_CLK      : in  std_logic;                      -- Clock
@@ -146,7 +146,7 @@ component TEC_PANEL
          P_STOP     : out std_logic;                      -- Stop
          P_INT      : out std_logic;                      -- Interrupt SW
 
-         -- �p�l���̃X�C�b�`����
+         -- パネルのスイッチ入力
          P_DATA_SW  : in  std_logic_vector(7 downto 0);   -- Data  SW
          P_RESET_SW : in  std_logic;                      -- Reset SW
          P_SETA_SW  : in  std_logic;                      -- SETA  SW
@@ -160,12 +160,12 @@ component TEC_PANEL
          P_RCW_SW   : in  std_logic;                      -- Rotate SW(CW)
          P_RCCW_SW  : in  std_logic;                      -- Rotate SW(CCW)
 
-         -- �p�l���ւ̏o��
+         -- パネルへの出力
          P_R_LED    : out std_logic;                      -- Run LED
-         P_SPK      : out std_logic;                      -- ���쉹�̏o��
+         P_SPK      : out std_logic;                      -- 操作音の出力
          P_A_LED    : out std_logic_vector(7 downto 0);   -- Address LED
          P_SEL      : out std_logic_vector(2 downto 0);   -- Rotate SW(Output)
-         P_WRITE    : out std_logic                       -- WRITE�X�C�b�`�̑���
+         P_WRITE    : out std_logic                       -- WRITEスイッチの操作
         );
 end component;
 
@@ -181,7 +181,7 @@ component TEC_INTC
          P_INT3  : in  std_logic;                        -- INT3 (Console)
 
          P_INTR  : out std_logic;                        -- Interrupt
-         P_VECT  : out std_logic_vector(1 downto 0)      -- �����ݔԍ�
+         P_VECT  : out std_logic_vector(1 downto 0)      -- 割込み番号
         );
 end component;
 
@@ -219,19 +219,19 @@ end component;
 component TEC_IO
   port ( P_CLK      : in  std_logic;                      -- CLK  
          P_2_4kHz  : in  std_logic;                       -- Pi!
-         P_75Hz     : in  std_logic;                      -- 75Hz(�^�C�}�[�p)
+         P_75Hz     : in  std_logic;                      -- 75Hz(タイマー用)
          P_RESET    : in  std_logic;                      -- Reset
          P_RW       : in  std_logic;
          P_IR       : in  std_logic;
          P_ADDR     : in  std_logic_vector(3 downto 0);
          P_DOUT     : out std_logic_vector(7 downto 0);
          P_DIN      : in  std_logic_vector(7 downto 0);
-         P_INT_TXD  : out std_logic;                      -- SIO ���M���荞��
-         P_INT_RXD  : out std_logic;                      -- SIO ��M���荞��
-         P_INT_TMR  : out std_logic;                      -- �^�C�}�[���荞��
-         P_INT_CON  : out std_logic;                      -- �R���\�[�����荞��
+         P_INT_TXD  : out std_logic;                      -- SIO 送信割り込み
+         P_INT_RXD  : out std_logic;                      -- SIO 受信割り込み
+         P_INT_TMR  : out std_logic;                      -- タイマー割り込み
+         P_INT_CON  : out std_logic;                      -- コンソール割り込み
 
-         P_INT_SW   : in  std_logic;                      -- �R���\�[�����荞��SW
+         P_INT_SW   : in  std_logic;                      -- コンソール割り込みSW
          P_DATA_SW  : in  std_logic_vector(7 downto 0);
          P_SPK      : out std_logic;
          P_RXD      : in  std_logic;
@@ -252,18 +252,18 @@ component TEC_RAM
          P_RW       : in  std_logic;
          P_MR       : in  std_logic;
 
-         P_PNA      : in  std_logic_vector(7 downto 0);  -- �p�l���A�h���X
-         P_PND      : in  std_logic_vector(7 downto 0);  -- �p�l���p�f�[�^����
-         P_SEL      : in  std_logic_vector(2 downto 0);  -- ���[�^���[SW�̈ʒu
-         P_WRITE    : in  std_logic;                     -- �p�l���������ݐM��
-         P_MMD      : out std_logic_vector(7 downto 0);  -- �p�l���p�f�[�^�o��
+         P_PNA      : in  std_logic_vector(7 downto 0);  -- パネルアドレス
+         P_PND      : in  std_logic_vector(7 downto 0);  -- パネル用データ入力
+         P_SEL      : in  std_logic_vector(2 downto 0);  -- ロータリーSWの位置
+         P_WRITE    : in  std_logic;                     -- パネル書き込み信号
+         P_MMD      : out std_logic_vector(7 downto 0);  -- パネル用データ出力
 
          P_MODE     : in  std_logic_vector(1 downto 0)
         );
 end component;
 
 begin
-  -- �N���b�N�����
+  -- クロックを作る
   I_2_4kHz  <= I_CNT(9);                    -- 2.4kHz
   I_75Hz    <= I_CNT(14);                   -- 75Hz
   I_18_75Hz <= I_CNT(15);                   -- 18.75Hz
@@ -277,10 +277,10 @@ begin
     end if;
   end process;
   
-  -- I/O �ƃp�l���̃X�s�[�J�o�͂���������
+  -- I/O とパネルのスピーカ出力を合成する
   P_BUZ <= I_SPK_I xor I_SPK_P;
 
-  -- �p�l��
+  -- パネル
   P_A_LED <= I_A_LED;
   panel0  : TEC_PANEL
     port map ( P_CLK      => P_CLK,
@@ -316,7 +316,7 @@ begin
                P_INT      => I_PINT
               );
 
--- �����݃R���g���[��
+-- 割込みコントローラ
 intr0 : TEC_INTC
     port map ( P_CLK   => P_CLK,
                P_RESET => I_RESET,
@@ -363,7 +363,7 @@ cpu0 : TEC_CPU
                P_MODE  => P_MODE(1)
               );
 
-  -- ��L��
+  -- 主記憶
   ram0: TEC_RAM
     port map ( P_CLK   => P_CLK,
                P_ADDR  => I_ADDR,
@@ -381,7 +381,7 @@ cpu0 : TEC_CPU
                P_MODE  => P_MODE
               );
 
-  -- ���Ӊ�H
+  -- 周辺回路
   io0: TEC_IO
     port map ( P_CLK      => P_CLK,
                P_2_4kHz   => I_2_4kHz,
@@ -409,12 +409,12 @@ cpu0 : TEC_CPU
                P_STOP     => I_STOP
               );
 
-  -- �f�[�^�o�X�łb�o�t�̓��͂����肷�镔��
+  -- データバスでＣＰＵの入力を決定する部分
   I_DIN_CPU <= I_DOUT_RAM        when (I_MR='1') else       -- RAM
                "110111" & I_VECT when (I_LI='1') else       -- Vector Read
                I_DOUT_IO;                                   -- I/O
 
-  -- �f�[�^LED
+  -- データLED
   with I_RS_SEL select
     P_D_LED <= I_G0D when "000",       -- G0
                I_G1D when "001",       -- G1
@@ -423,7 +423,7 @@ cpu0 : TEC_CPU
                I_PCD when "100",       -- PC
                I_MMD when others;      -- MM
   
-  -- ���[�^���[�X�C�b�`�̕\��
+  -- ロータリースイッチの表示
   with I_RS_SEL select
     I_RS_DEC <= "100000" when "000",   -- G0
                 "010000" when "001",   -- G1
