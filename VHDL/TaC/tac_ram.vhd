@@ -21,12 +21,13 @@
 --
 
 --
--- 2019.02.28           : IPLを3バンク化
--- 2017.05.06           : TaC7b 対応 (60KiB)
--- 2014.01.10           : DMA対応（デュアルポート版）
--- 2012.09.26           : TAC-CPU V2 対応完了
--- 2012.01.22           : entity 名、見直し
--- 2011.09.19           : 新規作成
+-- 2019.07.30 : Mem1k のアドレス範囲，アドレスビット数のバグ訂正
+-- 2019.02.28 : IPLを3バンク化
+-- 2017.05.06 : TaC7b 対応 (60KiB)
+-- 2014.01.10 : DMA対応（デュアルポート版）
+-- 2012.09.26 : TAC-CPU V2 対応完了
+-- 2012.01.22 : entity 名、見直し
+-- 2011.09.19 : 新規作成
 --
 -- $Id
 --
@@ -66,7 +67,7 @@ architecture BEHAVE of TAC_RAM is
   type Mem8kB  is array(0 to  8191) of Byte;           --  8kB
   type Mem4kB  is array(0 to  4095) of Byte;           --  4kB
   type Mem2kB  is array(0 to  2047) of Byte;           --  2kB
-  type Mem1kB  is array(0 to  1024) of Byte;           --  2kB
+  type Mem1kB  is array(0 to  1023) of Byte;           --  1kB
   type Mem2kw  is array(0 to  2047) of Word;           --  2kw(4kB,IPL)
   function read_file (fname : in string) return Mem2kw is
     file data_in : text is in fname;
@@ -287,9 +288,9 @@ architecture BEHAVE of TAC_RAM is
       begin
         if (P_CLK'event and P_CLK='0') then
           if (weB4='1' and high='1') then
-            memB4H(conv_integer(P_AIN1(11 downto 1))) := P_DIN1(15 downto 8);
+            memB4H(conv_integer(P_AIN1(10 downto 1))) := P_DIN1(15 downto 8);
           end if;
-          memB4(15 downto 8) <= memB4H(conv_integer(P_AIN1(11 downto 1)));
+          memB4(15 downto 8) <= memB4H(conv_integer(P_AIN1(10 downto 1)));
         end if;
       end process;
 --    memB4(15 downto 8) <= "00000000";
@@ -299,9 +300,9 @@ architecture BEHAVE of TAC_RAM is
       begin
         if (P_CLK'event and P_CLK='0') then
           if (weB4='1' and low='1') then
-            memB4L(conv_integer(P_AIN1(11 downto 1))) := P_DIN1(7 downto 0);
+            memB4L(conv_integer(P_AIN1(10 downto 1))) := P_DIN1(7 downto 0);
           end if;
-          memB4( 7 downto 0) <= memB4L(conv_integer(P_AIN1(11 downto 1)));
+          memB4( 7 downto 0) <= memB4L(conv_integer(P_AIN1(10 downto 1)));
         end if;
       end process;
 --    memB4(7 downto 0) <= "00000000";

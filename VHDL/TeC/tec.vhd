@@ -133,7 +133,8 @@ signal I_SPK_I  : std_logic;                     -- I/O からスピーカーポ
 signal I_SPK_P  : std_logic;                     -- PANEL からスピーカーポート
 
 component TEC_PANEL
-  port ( P_CLK      : in  std_logic;                      -- Clock
+  port ( P_RESET_IN : in  std_logic;                      -- パワーオンリセット
+         P_CLK      : in  std_logic;                      -- Clock
          P_2_4kHz   : in  std_logic;                      -- 2.4kHz
          P_18_75Hz  : in  std_logic;                      -- 18.75Hz
          P_2_3Hz    : in  std_logic;                      -- 2.3Hz
@@ -283,7 +284,8 @@ begin
   -- パネル
   P_A_LED <= I_A_LED;
   panel0  : TEC_PANEL
-    port map ( P_CLK      => P_CLK,
+    port map ( P_RESET_IN => P_RESET,
+               P_CLK      => P_CLK,
                P_2_4kHz   => I_2_4kHz,
                P_18_75Hz  => I_18_75Hz,
                P_2_3Hz    => I_2_3Hz,

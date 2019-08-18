@@ -21,6 +21,7 @@
 --
 -- TaC/tac_spi.vhd : TaC SPI
 --
+-- 2019.08.07 : レジスタ長が長すぎて使用していないビットの警告を消す
 -- 2019.02.16 : 前回の変更箇所で P_CD をセンシビリティリストに追加忘れ訂正
 -- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2016.01.10 : 予期しない割込が発生するバグを修正(エッジトリガーの処理追加)
@@ -121,30 +122,30 @@ architecture Behavioral of TAC_SPI is
   signal Init_Req     : std_logic;                     -- 初期化リクエスト
   signal Initializing : std_logic;                     -- 初期化中FF
   signal Init_State   : std_logic_vector( 3 downto 0); -- ステート
-  signal Init_Counter : std_logic_vector( 7 downto 0); -- 汎用カウンタ
+  signal Init_Counter : std_logic_vector( 6 downto 0); -- 汎用カウンタ
   signal Init_Clk_Cnt : std_logic_vector( 7 downto 0); -- 400kHz生成用カウンタ
-  signal Init_Byte_Buffer : std_logic_vector( 7 downto 0); -- バイトバッファ
+  signal Init_Byte_Buffer : std_logic_vector( 6 downto 0); -- バイトバッファ
   signal Init_Error       : std_logic;                     -- エラー発生FF
   
   -- Read
   signal Read_Req     : std_logic;                     -- 読み込みリクエスト
   signal Reading      : std_logic;                     -- 読み込み中FF
   signal Read_State   : std_logic_vector( 2 downto 0); -- ステート
-  signal Read_Counter : std_logic_vector( 7 downto 0); -- 汎用カウンタ
-  signal Read_Clk_Cnt : std_logic_vector( 7 downto 0); -- 25MkHz生成用カウンタ
-  signal Read_Byte_Buffer : std_logic_vector( 7 downto 0); -- バイトバッファ
+  signal Read_Counter : std_logic_vector( 4 downto 0); -- 汎用カウンタ
+  signal Read_Clk_Cnt : std_logic;                     -- 25MHz生成用カウンタ
+  signal Read_Byte_Buffer : std_logic_vector( 6 downto 0); -- バイトバッファ
   signal Read_Error       : std_logic;            -- エラー発生FF
   
   signal Read_Counter256 : std_logic_vector( 7 downto 0); -- データ受信カウンタ
-  signal Read_Word_Buffer : std_logic_vector(15 downto 0);  -- ワードバッファ
+  signal Read_Word_Buffer : std_logic_vector(14 downto 0);  -- ワードバッファ
   
   -- Write
   signal Write_Req     : std_logic;            -- 書き込みリクエスト
   signal Writing       : std_logic;            -- 書き込み中FF
   signal Write_State   : std_logic_vector( 3 downto 0);  -- ステート
-  signal Write_Counter : std_logic_vector( 7 downto 0);  -- 汎用カウンタ
-  signal Write_Clk_Cnt : std_logic_vector( 7 downto 0);  -- 25MHz生成用カウンタ
-  signal Write_Byte_Buffer : std_logic_vector( 7 downto 0);  -- バイトバッファ
+  signal Write_Counter : std_logic_vector( 4 downto 0);  -- 汎用カウンタ
+  signal Write_Clk_Cnt : std_logic;                      -- 25MHz生成用カウンタ
+  signal Write_Byte_Buffer : std_logic_vector( 6 downto 0);  -- バイトバッファ
   signal Write_Error       : std_logic;            -- エラー発生FF
   
   signal Write_Counter256 : std_logic_vector( 7 downto 0); -- データ送信カウンタ
@@ -296,10 +297,10 @@ begin
   begin
     if (P_RESET = '0') then
       Init_Clk_Cnt     <= "00000000";
-      Init_Counter     <= "00000000";
+      Init_Counter     <= "0000000";
       Init_State       <= "0000";
       Initializing     <= '0';
-      Init_Byte_Buffer <= "11111111";
+      Init_Byte_Buffer <= "1111111";
       i_init_cs        <= '1';
       i_init_sclk      <= '1';
       i_init_do        <= '1';
@@ -354,7 +355,7 @@ begin
           -- 80回のダミークロック
           when "0000" =>
             if (Init_Counter = 0) then
-              Init_Counter <= conv_std_logic_vector(47, 8);
+              Init_Counter <= conv_std_logic_vector(47, 7);
               Init_State <= "0001";
             else
               Init_Counter <= Init_Counter - 1;
@@ -362,20 +363,20 @@ begin
           -- CMD0の送信
           when "0001" =>
             if (Init_Counter = 0) then
-              Init_Counter <= conv_std_logic_vector(7, 8);
+              Init_Counter <= conv_std_logic_vector(7, 7);
               Init_State <= "0010";
             else
               Init_Counter <= Init_Counter - 1;
             end if;
           -- R1レスポンス(0x01)の受信  
           when "0010" =>
-            Init_Byte_Buffer(7 downto 0) <= Init_Byte_Buffer(6 downto 0) & P_DI;
+            Init_Byte_Buffer(6 downto 0) <= Init_Byte_Buffer(5 downto 0) & P_DI;
             if (Init_Counter = 0) then
               if (Init_Byte_Buffer(6 downto 0) & P_DI = X"01") then
-                Init_Counter <= conv_std_logic_vector(7, 8);
+                Init_Counter <= conv_std_logic_vector(7, 7);
                 Init_State <= "0011";
               elsif (Init_Byte_Buffer(6 downto 0) & P_DI = X"FF") then
-                Init_Counter <= conv_std_logic_vector(7, 8);
+                Init_Counter <= conv_std_logic_vector(7, 7);
               else
                 Init_Error   <= '1';
                 Initializing <= '0';
@@ -390,7 +391,7 @@ begin
           -- 8回のダミークロック
           when "0011" =>
             if (Init_Counter = 0) then
-              Init_Counter <= conv_std_logic_vector(47, 8);
+              Init_Counter <= conv_std_logic_vector(47, 7);
               Init_State <= "0100";
             else
               Init_Counter <= Init_Counter - 1;
@@ -398,22 +399,22 @@ begin
           -- CMD1の送信
           when "0100" =>
             if (Init_Counter = 0) then
-              Init_Counter <= conv_std_logic_vector(7, 8);
+              Init_Counter <= conv_std_logic_vector(7, 7);
               Init_State <= "0101";
             else
               Init_Counter <= Init_Counter - 1;
             end if;
           -- R1レスポンス(0x00)の受信
           when "0101" =>
-            Init_Byte_Buffer(7 downto 0) <= Init_Byte_Buffer(6 downto 0) & P_DI;
+            Init_Byte_Buffer(6 downto 0) <= Init_Byte_Buffer(5 downto 0) & P_DI;
             if (Init_Counter = 0) then
               if (Init_Byte_Buffer(6 downto 0) & P_DI = X"00") then
-                Init_Counter <= conv_std_logic_vector(7, 8);
+                Init_Counter <= conv_std_logic_vector(7, 7);
                 Init_State <= "0110";
               elsif (Init_Byte_Buffer(6 downto 0) & P_DI = X"FF") then
-                Init_Counter <= conv_std_logic_vector(7, 8);
+                Init_Counter <= conv_std_logic_vector(7, 7);
               elsif (Init_Byte_Buffer(6 downto 0) & P_DI = X"01") then
-                Init_Counter <= conv_std_logic_vector(7, 8);
+                Init_Counter <= conv_std_logic_vector(7, 7);
                 Init_State <= "0011";
               else
                 Init_Error   <= '1';
@@ -429,7 +430,7 @@ begin
           -- 8回のダミークロック
           when "0110" =>
             if (Init_Counter = 0) then
-              Init_Counter <= conv_std_logic_vector(47, 8);
+              Init_Counter <= conv_std_logic_vector(47, 7);
               Init_State <= "0111";
             else
               Init_Counter <= Init_Counter - 1;
@@ -438,14 +439,14 @@ begin
           -- CMD16の送信
           when "0111" =>
             if (Init_Counter = 0) then
-              Init_Counter <= conv_std_logic_vector(7, 8);
+              Init_Counter <= conv_std_logic_vector(7, 7);
               Init_State <= "1000";
             else
               Init_Counter <= Init_Counter - 1;
             end if;
           -- R1レスポンス(0x00)待ち
           when "1000" =>
-            Init_Byte_Buffer(7 downto 0) <= Init_Byte_Buffer(6 downto 0) & P_DI;
+            Init_Byte_Buffer(6 downto 0) <= Init_Byte_Buffer(5 downto 0) & P_DI;
             if (Init_Counter = 0) then
               if (Init_Byte_Buffer(6 downto 0) & P_DI = X"00") then
                 Initializing <= '0';
@@ -454,7 +455,7 @@ begin
                 i_init_do   <= '1';
                 i_init_led   <= '0';
               elsif (Init_Byte_Buffer(6 downto 0) & P_DI = X"FF") then
-                Init_Counter <= conv_std_logic_vector(7, 8);
+                Init_Counter <= conv_std_logic_vector(7, 7);
               else
                 Init_Error   <= '1';
                 Initializing <= '0';
@@ -475,9 +476,9 @@ begin
       elsif (Init_Req = '1') then        -- 初期化リクエストがあったら
         Initializing   <= '1';           -- 初期化中FFをセット
         Init_Clk_Cnt   <= "00000000";
-        Init_Counter   <= conv_std_logic_vector(79, 8);  -- 80回のダミークロック
+        Init_Counter   <= conv_std_logic_vector(79, 7);  -- 80回のダミークロック
         Init_State     <= "0000";
-        Init_Byte_Buffer <= "11111111";
+        Init_Byte_Buffer <= "1111111";
         i_init_cs     <= '1';
         i_init_sclk     <= '1';
         i_init_do     <= '1';
@@ -495,13 +496,13 @@ begin
   process (P_CLK, P_RESET)
   begin
     if (P_RESET = '0') then
-      Read_Clk_Cnt   <= "00000000";
-      Read_Counter   <= "00000000";
+      Read_Clk_Cnt   <= '0';
+      Read_Counter   <= "00000";
       Read_Counter256   <= "00000000";
       Read_State     <= "000";
       Reading       <= '0';
-      Read_Byte_Buffer <= "11111111";
-      Read_Word_Buffer <= "1111111111111111";
+      Read_Byte_Buffer <= "1111111";
+      Read_Word_Buffer <= "111111111111111";
       Read_Addr_DMA   <= "000000000000000";
       i_read_cs     <= '1';
       i_read_sclk     <= '1';
@@ -510,8 +511,8 @@ begin
       i_read_mr     <= '0';
     elsif (P_CLK' event and P_CLK = '1') then
       if (Reading = '1') then
-        if (Read_Clk_Cnt = 0) then   -- このif文の中は25MHz毎(ネガティブエッジ)
-          Read_Clk_Cnt <= Read_Clk_Cnt + 1;
+        if (Read_Clk_Cnt = '0') then -- このif文の中は25MHz毎(ネガティブエッジ)
+          Read_Clk_Cnt <= '1';
           i_read_sclk <= '0';        -- uSDのクロックを立ち下げる
           
           case Read_State is
@@ -541,8 +542,8 @@ begin
           when others =>
           end case;
           
-        elsif (Read_Clk_Cnt = 1) then -- このif文の中は25MHz毎(ポジティブエッジ)
-          Read_Clk_Cnt <= "00000000";
+        elsif (Read_Clk_Cnt='1') then --このif文の中は25MHz毎(ポジティブエッジ)
+          Read_Clk_Cnt <= '0';
           i_read_sclk <= '1';         -- uSDのクロックを立ち上げる
           
           case Read_State is
@@ -550,7 +551,7 @@ begin
           -- CMD17
           when "000" =>
             if (Read_Counter = 0) then
-              Read_Counter <= conv_std_logic_vector(31, 8);
+              Read_Counter <= conv_std_logic_vector(31, 5);
               Read_State <= "001";
             else
               Read_Counter <= Read_Counter - 1;
@@ -558,7 +559,7 @@ begin
           -- 引数(バイトアドレス)
           when "001" =>
             if (Read_Counter = 0) then
-              Read_Counter <= conv_std_logic_vector(7, 8);
+              Read_Counter <= conv_std_logic_vector(7, 5);
               Read_State <= "010";
             else
               Read_Counter <= Read_Counter - 1;
@@ -566,20 +567,20 @@ begin
           -- CRC
           when "010" =>
             if (Read_Counter = 0) then
-              Read_Counter <= conv_std_logic_vector(7, 8);
+              Read_Counter <= conv_std_logic_vector(7, 5);
               Read_State <= "011";
             else
               Read_Counter <= Read_Counter - 1;
             end if;
           -- R1レスポンス(0x00)の受信
           when "011" =>
-            Read_Byte_Buffer(7 downto 0) <= Read_Byte_Buffer(6 downto 0) & P_DI;
+            Read_Byte_Buffer <= Read_Byte_Buffer(5 downto 0) & P_DI;
             if (Read_Counter = 0) then
-              if (Read_Byte_Buffer(6 downto 0) & P_DI = X"00") then
-                Read_Counter <= conv_std_logic_vector(7, 8);
+              if (Read_Byte_Buffer & P_DI = X"00") then
+                Read_Counter <= conv_std_logic_vector(7, 5);
                 Read_State <= "100";
-              elsif (Read_Byte_Buffer(6 downto 0) & P_DI = X"FF") then
-                Read_Counter <= conv_std_logic_vector(7, 8);
+              elsif (Read_Byte_Buffer & P_DI = X"FF") then
+                Read_Counter <= conv_std_logic_vector(7, 5);
               else
                 Read_Error  <= '1';
                 Reading    <= '0';
@@ -594,14 +595,14 @@ begin
             end if;
           -- スタートバイト(0xFE)の受信
           when "100" =>
-            Read_Byte_Buffer(7 downto 0) <= Read_Byte_Buffer(6 downto 0) & P_DI;
+            Read_Byte_Buffer <= Read_Byte_Buffer(5 downto 0) & P_DI;
             if (Read_Counter = 0) then
-              if (Read_Byte_Buffer(6 downto 0) & P_DI = X"FE") then
-                Read_Counter <= conv_std_logic_vector(15, 8);
+              if (Read_Byte_Buffer & P_DI = X"FE") then
+                Read_Counter <= conv_std_logic_vector(15, 5);
                 Read_Counter256 <= conv_std_logic_vector(255, 8);
                 Read_State <= "101";
-              elsif (Read_Byte_Buffer(6 downto 0) & P_DI = X"FF") then
-                Read_Counter <= conv_std_logic_vector(7, 8);
+              elsif (Read_Byte_Buffer & P_DI = X"FF") then
+                Read_Counter <= conv_std_logic_vector(7, 5);
               else
                 -- カード範囲外の可能性
                 Read_Error  <= '1';
@@ -617,10 +618,10 @@ begin
             end if;
           -- データブロックの受信
           when "101" =>
-            Read_Word_Buffer(15 downto 0) <= Read_Word_Buffer(14 downto 0)&P_DI;
+            Read_Word_Buffer(14 downto 0) <= Read_Word_Buffer(13 downto 0)&P_DI;
             -- 2バイト(1ワード)受信したか(ワード受信判定)
             if (Read_Counter = 0) then
-              Read_Counter <= conv_std_logic_vector(15, 8);
+              Read_Counter <= conv_std_logic_vector(15, 5);
               -- DMA開始
               P_DOUT_DMA <= Read_Word_Buffer(14 downto 0) & P_DI;
               if (not (Read_Counter256 = 255)) then
@@ -630,7 +631,7 @@ begin
               i_read_mr <= '1';
               -- 512バイト(256ワード)受信したか(ブロック受信判定)
               if (Read_Counter256 = 0) then
-                Read_Counter <= conv_std_logic_vector(24, 8);
+                Read_Counter <= conv_std_logic_vector(24, 5);
                 Read_State <= "110";
               else
                 Read_Counter256 <= Read_Counter256 - 1;
@@ -654,7 +655,7 @@ begin
           end case;
         
         else 
-          Read_Clk_Cnt <= Read_Clk_Cnt + 1;
+          Read_Clk_Cnt <= '1';
         end if;
         
         -- DMA(Buffer -> TaC RAM)
@@ -665,11 +666,11 @@ begin
         
       elsif (Read_Req = '1') then        -- 読み込みリクエストがあったら
         Reading       <= '1';      -- 読み込み中FFをセット
-        Read_Clk_Cnt   <= "00000000";
-        Read_Counter   <= conv_std_logic_vector(7, 8);
+        Read_Clk_Cnt   <= '0';
+        Read_Counter   <= conv_std_logic_vector(7, 5);
         Read_State     <= "000";
-        Read_Byte_Buffer <= "11111111";
-        Read_Word_Buffer <= "1111111111111111";
+        Read_Byte_Buffer <= "1111111";
+        Read_Word_Buffer <= "111111111111111";
         i_read_cs     <= '1';
         i_read_sclk     <= '1';
         i_read_do     <= '1';
@@ -689,12 +690,12 @@ begin
   process (P_CLK, P_RESET)
   begin
     if (P_RESET = '0') then
-      Write_Clk_Cnt     <= "00000000";
-      Write_Counter     <= "00000000";
+      Write_Clk_Cnt     <= '0';
+      Write_Counter     <= "00000";
       Write_Counter256  <= "00000000";
       Write_State      <= "0000";
       Writing        <= '0';
-      Write_Byte_Buffer <= "11111111";
+      Write_Byte_Buffer <= "1111111";
       Write_Word_Buffer <= "0000000000000000";
       Write_Addr_DMA    <= "000000000000000";
       i_write_cs      <= '1';
@@ -704,8 +705,8 @@ begin
       i_write_mr      <= '0';
     elsif (P_CLK' event and P_CLK = '1') then
       if (Writing = '1') then
-        if (Write_Clk_Cnt = 0) then -- このif文の中は25MHz毎(ネガティブエッジ)
-          Write_Clk_Cnt <= Write_Clk_Cnt + 1;
+        if (Write_Clk_Cnt='0') then -- このif文の中は25MHz毎(ネガティブエッジ)
+          Write_Clk_Cnt <= '1';
           i_write_sclk <= '0';      -- uSDのクロックを立ち下げる
                     
           case Write_State is
@@ -750,8 +751,8 @@ begin
           when others =>
           end case;
           
-        elsif (Write_Clk_Cnt = 1) then -- 25MHz毎(ポジティブエッジ)
-          Write_Clk_Cnt <= "00000000";
+        elsif (Write_Clk_Cnt='1') then -- 25MHz毎(ポジティブエッジ)
+          Write_Clk_Cnt <= '0';
           i_write_sclk <= '1';      -- uSDのクロックを立ち上げる
           
           case Write_State is
@@ -759,7 +760,7 @@ begin
           -- CMD24
           when "0000" =>
             if (Write_Counter = 0) then
-              Write_Counter <= conv_std_logic_vector(31, 8);
+              Write_Counter <= conv_std_logic_vector(31, 5);
               Write_State <= "0001";
             else
               Write_Counter <= Write_Counter - 1;
@@ -767,7 +768,7 @@ begin
           -- 引数(バイトアドレス)
           when "0001" =>
             if (Write_Counter = 0) then
-              Write_Counter <= conv_std_logic_vector(7, 8);
+              Write_Counter <= conv_std_logic_vector(7, 5);
               Write_State <= "0010";
             else
               Write_Counter <= Write_Counter - 1;
@@ -775,20 +776,20 @@ begin
           -- CRC
           when "0010" =>
             if (Write_Counter = 0) then
-              Write_Counter <= conv_std_logic_vector(7, 8);
+              Write_Counter <= conv_std_logic_vector(7, 5);
               Write_State <= "0011";
             else
               Write_Counter <= Write_Counter - 1;
             end if;
           -- R1レスポンス(0x00)の受信
           when "0011" =>
-            Write_Byte_Buffer(7 downto 0) <= Write_Byte_Buffer(6 downto 0)&P_DI;
+            Write_Byte_Buffer <= Write_Byte_Buffer(5 downto 0)&P_DI;
             if (Write_Counter = 0) then
-              if (Write_Byte_Buffer(6 downto 0) & P_DI = X"00") then
-                Write_Counter <= conv_std_logic_vector(7, 8);
+              if (Write_Byte_Buffer & P_DI = X"00") then
+                Write_Counter <= conv_std_logic_vector(7, 5);
                 Write_State <= "0100";
-              elsif (Write_Byte_Buffer(6 downto 0) & P_DI = X"FF") then
-                Write_Counter <= conv_std_logic_vector(7, 8);
+              elsif (Write_Byte_Buffer & P_DI = X"FF") then
+                Write_Counter <= conv_std_logic_vector(7, 5);
               else
                 Write_Error   <= '1';
                 Writing     <= '0';
@@ -804,7 +805,7 @@ begin
           -- スタートバイト(0xFE)の送信
           when "0100" =>
             if (Write_Counter = 0) then
-              Write_Counter <= conv_std_logic_vector(15, 8);
+              Write_Counter <= conv_std_logic_vector(15, 5);
               Write_Counter256 <= conv_std_logic_vector(255, 8);
               Write_State <= "0101";
             else
@@ -813,9 +814,9 @@ begin
           -- データの送信
           when "0101" =>
             if (Write_Counter = 0) then
-              Write_Counter <= conv_std_logic_vector(15, 8);
+              Write_Counter <= conv_std_logic_vector(15, 5);
               if (Write_Counter256 = 0) then
-                Write_Counter <= conv_std_logic_vector(15, 8);
+                Write_Counter <= conv_std_logic_vector(15, 5);
                 Write_State <= "0110";
               else
                 Write_Counter256 <= Write_Counter256 - 1;
@@ -826,19 +827,19 @@ begin
           -- CRC(ダミークロック2byte)の送信
           when "0110" =>
             if (Write_Counter = 0) then
-              Write_Counter <= conv_std_logic_vector(7, 8);
+              Write_Counter <= conv_std_logic_vector(7, 5);
               Write_State <= "0111";
             else
               Write_Counter <= Write_Counter - 1;
             end if;
           -- データレスポンス(0x5)の受信
           when "0111" =>
-            Write_Byte_Buffer(7 downto 0) <= Write_Byte_Buffer(6 downto 0)&P_DI;
+            Write_Byte_Buffer <= Write_Byte_Buffer(5 downto 0)&P_DI;
             if (Write_Counter = 0) then
-              if (Write_Byte_Buffer(6 downto 0) & P_DI = X"FF") then
-                Write_Counter <= conv_std_logic_vector(7, 8);
+              if (Write_Byte_Buffer & P_DI = X"FF") then
+                Write_Counter <= conv_std_logic_vector(7, 5);
               elsif (Write_Byte_Buffer(3 downto 0) & P_DI = X"5") then
-                Write_Counter <= conv_std_logic_vector(7, 8);
+                Write_Counter <= conv_std_logic_vector(7, 5);
                 Write_State <= "1000";
               else
                 -- カード範囲外の可能性
@@ -855,12 +856,12 @@ begin
             end if;
           -- busyの間待つ
           when "1000" =>
-            Write_Byte_Buffer(7 downto 0) <= Write_Byte_Buffer(6 downto 0)&P_DI;
+            Write_Byte_Buffer <= Write_Byte_Buffer(5 downto 0)&P_DI;
             if (Write_Counter = 0) then
-              if (Write_Byte_Buffer(6 downto 0) & P_DI = X"00") then
-                Write_Counter <= conv_std_logic_vector(7, 8);
+              if (Write_Byte_Buffer & P_DI = X"00") then
+                Write_Counter <= conv_std_logic_vector(7, 5);
               else
-                Write_Counter <= conv_std_logic_vector(7, 8);
+                Write_Counter <= conv_std_logic_vector(7, 5);
                 Write_State <= "1001";
               end if;
             else
@@ -882,7 +883,7 @@ begin
           end case;
           
         else 
-          Write_Clk_Cnt <= Write_Clk_Cnt + 1;
+          Write_Clk_Cnt <= '1';
         end if;
         
         -- DMA(TaC RAM -> Buffer)
@@ -893,10 +894,10 @@ begin
         
       elsif (Write_Req = '1') then      -- 書き込みリクエストがあったら
         Writing        <= '1';      -- 書き込み中FFをセット
-        Write_Clk_Cnt    <= "00000000";
-        Write_Counter    <= conv_std_logic_vector(7, 8);
+        Write_Clk_Cnt    <= '0';
+        Write_Counter    <= conv_std_logic_vector(7, 5);
         Write_State     <= "0000";
-        Write_Byte_Buffer <= "11111111";
+        Write_Byte_Buffer <= "1111111";
         Write_Word_Buffer <= "0000000000000000";
         i_write_cs       <= '1';
         i_write_sclk    <= '1';

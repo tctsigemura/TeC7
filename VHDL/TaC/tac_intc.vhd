@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002 - 2013 by
+-- Copyright (C) 2002 - 2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,10 +21,11 @@
 --
 -- TaC/tac_intc.vhd : Interrupt Controler
 --
--- 2013.01.06           : TaC-CPU V2 対応
--- 2012.01.22           : entity 名見直し
--- 2011.06.16           : TeC7 用に書き換える
--- 2010.07.20           : Subversion による管理を開始
+-- 2019.07.30 : 使用していない割込に関する警告を消す
+-- 2013.01.06 : TaC-CPU V2 対応
+-- 2012.01.22 : entity 名見直し
+-- 2011.06.16 : TeC7 用に書き換える
+-- 2010.07.20 : Subversion による管理を開始
 --
 -- $Id
 --
@@ -40,27 +41,27 @@ entity TAC_INTC is
          P_DOUT     : out std_logic_vector(15 downto 0);
          P_VR       : in  std_logic;
          P_INTR     : out std_logic;
-         P_INT_BIT  : in  std_logic_vector(15 downto 0)
+         P_INT_BIT  : in  std_logic_vector(11 downto 0)
        );
 end TAC_INTC;
 
 architecture RTL of TAC_INTC is
 
 -- register
-signal intReg  : std_logic_vector(15 downto 0);
-signal intInp  : std_logic_vector(15 downto 0);
-signal intInpD : std_logic_vector(15 downto 0);
+signal intReg  : std_logic_vector(11 downto 0);
+signal intInp  : std_logic_vector(11 downto 0);
+signal intInpD : std_logic_vector(11 downto 0);
 
 -- signal
-signal intSnd  : std_logic_vector(15 downto 0);
-signal intMsk  : std_logic_vector(15 downto 1);
+signal intSnd  : std_logic_vector(11 downto 0);
+signal intMsk  : std_logic_vector(11 downto 1);
 
 begin
   -- synchronize with CLK
   process(P_RESET, P_CLK)
   begin
     if (P_RESET='0') then
-      intInp <= "0000000000000000";
+      intInp <= "000000000000";
     elsif (P_CLK'event and P_CLK='1') then
       intInp <= P_INT_BIT;
     end if;
@@ -70,8 +71,8 @@ begin
   process(P_RESET, P_CLK)
   begin
     if (P_RESET='0') then
-      intReg  <= "0000000000000000";
-      intInpD <= "0000000000000000";
+      intReg  <= "000000000000";
+      intInpD <= "000000000000";
     elsif (P_CLK'event and P_CLK='1') then
       intReg <= (intReg and not intSnd) or
                 (intInp and (intInpD xor intInp));
@@ -81,9 +82,9 @@ begin
 
   -- select send signal
   intMsk(1) <= intReg(0);
-  intMsk(15 downto 2) <= intMsk(14 downto 1) or intReg(14 downto 1);
+  intMsk(11 downto 2) <= intMsk(10 downto 1) or intReg(10 downto 1);
   intSnd <= intReg and (not (intMsk & "0")) when (P_VR='1') else
-            "0000000000000000";
+            "000000000000";
 
   -- to cpu
   P_INTR  <= '0' when (intReg = 0) else '1';
@@ -101,9 +102,9 @@ begin
             "1001" when (intReg(9)  = '1') else  -- Int9
             "1010" when (intReg(10) = '1') else  -- Int10
             "1011" when (intReg(11) = '1') else  -- Int11
-            "1100" when (intReg(12) = '1') else  -- Int12
-            "1101" when (intReg(13) = '1') else  -- Int13
-            "1110" when (intReg(14) = '1') else  -- Int14
+--          "1100" when (intReg(12) = '1') else  -- Int12
+--          "1101" when (intReg(13) = '1') else  -- Int13
+--          "1110" when (intReg(14) = '1') else  -- Int14
             "1111";                              -- Int15
   P_DOUT(0) <= '0';
 end RTL;
