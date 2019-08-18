@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2012-2018 by
+-- Copyright (C) 2012-2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac_pio.vhd : TaC PIO
 --
+-- 2019.07.30           : P_IOR に関する警告を消す
 -- 2018.12.09           : PIOの出力を最大 12 ビット化
 -- 2018.07.13           : モードを3ビットに変更
 -- 2012.01.10           : 新規作成
@@ -39,7 +40,7 @@ entity TAC_PIO is
     Port ( P_CLK      : in  std_logic;
            P_RESET    : in  std_logic;
            P_EN       : in  std_logic;
-           P_IOR      : in  std_logic;
+--         P_IOR      : in  std_logic;
            P_IOW      : in  std_logic;
            P_INT      : out  std_logic;
            P_ADDR     : in  std_logic_vector (1 downto 0);

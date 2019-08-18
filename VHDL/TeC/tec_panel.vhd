@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2011 by
+-- Copyright (C) 2002 - 2019 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -19,259 +19,251 @@
 --
 --  TeC Panel
 --
+--
+-- 2019.08.05 : パワーオン時に「ピ」音を鳴らすために，起動後にリセットし直す
+-- 2019.07.30 : 外部インタフェースを残して，新しい設計に置き換え
+--
 
-library IEEE;
-use IEEE.std_logic_1164.all;
-use IEEE.std_logic_unsigned.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 
 entity TEC_PANEL is
-  port ( P_CLK      : in  std_logic;                      -- Clock
-         P_2_4kHz   : in  std_logic;                      -- 2.4kHz
-         P_18_75Hz  : in  std_logic;                      -- 18.75Hz
-         P_2_3Hz    : in  std_logic;                      -- 2.3Hz
-         P_RESET    : out std_logic;                      -- Reset Out Put
-         P_AIN      : in  std_logic_vector(7 downto 0);   -- ADDR BUS
-         P_LI       : in  std_logic;                      -- Instruction Fetch
-         P_HL       : in  std_logic;                      -- Halt Request
-         P_ER       : in  std_logic;                      -- Error
-         P_MR       : in  std_logic;                      -- Memory Request
-         P_STOP     : out std_logic;                      -- Stop
-
-         P_RESET_SW : in  std_logic;                      -- Reset SW
-         P_DATA_SW  : in  std_logic_vector(7 downto 0);   -- Data  SW
-         P_SETA_SW  : in  std_logic;                      -- SETA  SW
-         P_INCA_SW  : in  std_logic;                      -- INCA  SW
-         P_DECA_SW  : in  std_logic;                      -- DECA  SW
-         P_WRITE_SW : in  std_logic;                      -- WRITE SW
-         P_STEP_SW  : in  std_logic;                      -- STEP  SW
-         P_BREAK_SW : in  std_logic;                      -- BREAK SW
-         P_STOP_SW  : in  std_logic;                      -- STOP  SW
-         P_RUN_SW   : in  std_logic;                      -- RUN   SW
-         P_RCW_SW   : in  std_logic;                      -- Rotate SW(CW)
-         P_RCCW_SW  : in  std_logic;                      -- Rotate SW(CCW)
-
-         P_R_LED    : out std_logic;                      -- Run LED
-         P_SPK      : out std_logic;                      -- 操作音の出力
-         P_A_LED    : out std_logic_vector(7 downto 0);   -- Address LED
-         P_SEL      : out std_logic_vector(2 downto 0);   -- Rotate SW(Output)
-         P_WRITE    : out std_logic;                      -- WRITEスイッチの操作
-         P_INT      : out std_logic                       -- Interrupt SW
-        );
+  Port ( P_RESET_IN : in  std_logic;                     -- パワーオンリセット
+         P_CLK      : in  std_logic;                     -- 2.4576MHz
+         P_2_4kHz   : in  std_logic;                     -- 2.4KHz
+         P_18_75Hz  : in  std_logic;                     -- 18.75Hz
+         P_2_3Hz    : in  std_logic;                     -- 2.3Hz
+         P_RESET    : out std_logic;                     -- Reset Out Put
+         P_AIN      : in  std_logic_vector (7 downto 0); -- Addr BUS
+         P_LI       : in  std_logic;                     -- Instruction Fetch
+         P_HL       : in  std_logic;                     -- Halt
+         P_ER       : in  std_logic;                     -- Error
+         P_MR       : in  std_logic;                     -- Memory Request
+         P_STOP     : out std_logic;                     -- Stop
+         -- スイッチからの入力
+         P_DATA_SW  : in  std_logic_vector (7 downto 0); -- Data  SW
+         P_RESET_SW : in  std_logic;                     -- Reset SW
+         P_SETA_SW  : in  std_logic;                     -- SETA  SW
+         P_INCA_SW  : in  std_logic;                     -- INCA  SW
+         P_DECA_SW  : in  std_logic;                     -- DECA  SW
+         P_WRITE_SW : in  std_logic;                     -- WRITE SW
+         P_STEP_SW  : in  std_logic;                     -- STEP  SW
+         P_BREAK_SW : in  std_logic;                     -- BREAK SW
+         P_STOP_SW  : in  std_logic;                     -- STOP  SW
+         P_RUN_SW   : in  std_logic;                     -- RUN   SW
+         P_RCW_Sw   : in  std_logic;                     -- 右回り「→」
+         P_RCCW_SW  : in  std_logic;                     -- 左回り「←」
+         -- 出力
+         P_R_LED    : out std_logic;                     -- Run LED
+         P_SPK      : out std_logic;                     -- 操作音の出力
+         P_A_LED    : out std_logic_vector (7 downto 0); -- Address LED
+         P_SEL      : out std_logic_vector (2 downto 0); -- ロータリSwの位置
+         P_WRITE    : out std_logic;                     -- WRITE が押された
+         P_INT      : out std_logic                      -- Interrupt
+         );
 end TEC_PANEL;
 
-
 architecture RTL of TEC_PANEL is
-
--- トリガ付きのスイッチ
-component TRSW
-  port ( P_CLK    : in  std_logic;                      -- CLK
-         P_RESET  : in  std_logic;                      -- Reset
-         P_S      : in  std_logic;                      -- S
-         P_SMP    : in  std_logic;                      -- Sample
-         P_RPT    : in  std_logic;                      -- Repeate
-         P_Q      : out std_logic                       -- Q
-       );
-end component;
-
--- レジスタ
-signal I_ADR     : std_logic_vector(7 downto 0);        -- アドレスレジスタ
-
--- FF
-signal I_SSFF    : std_logic;                           -- Start/Stop FF
-signal I_ERROR   : std_logic;                           -- Error FF
-
--- LEDの点滅速度やスイッチサンプリングタイミングを決めるタイマ
-signal I_SMP     : std_logic;                           -- 18.75Hz のトリガ
-signal I_18_75Hz : std_logic;                           -- パルス生成用
-
--- ロータリースイッチの内部状態と出力
-signal I_SW    : std_logic_vector(2  downto 0);
-signal I_MM    : std_logic;
-
--- 操作音を出すため
-signal I_CLICK  : std_logic;      -- 操作音を鳴らすイベントが発生した
-signal I_BEEP   : std_logic;      -- イベントを I_SMP まで保留
-signal I_BEEP_D : std_logic;      -- I_SMP 1周期の間、ブザーを鳴らす
-signal I_ROT    : std_logic;      -- ロータリースイッチが回転した
-signal I_RESET_D: std_logic;      -- RESETでトリガを作るため
-signal I_SETA_D : std_logic;      -- SETAでトリガを作るため
-signal I_STOP_D : std_logic;      -- STOPでトリガを作るため
-
--- スイッチの入力をトリガまたはクロックに同期した信号
-signal I_RCW   : std_logic;
-signal I_RCCW  : std_logic;
-signal I_INCA  : std_logic;
-signal I_DECA  : std_logic;
-signal I_WRITE : std_logic;
-signal I_RUN   : std_logic;
-signal I_SETA  : std_logic;
-signal I_STOP  : std_logic;
-signal I_RESET : std_logic;
-
-signal I_VOL   : std_logic;                    -- 操作音の大きさ(1:大 / 0:小)
-
--- 定数用
-signal logic0  : std_logic;
-signal logic1  : std_logic;
+-- クロック・パルス
+  signal c18_75HzDly: std_logic;                  -- 18.75Hz（前回の値）
+  signal p18_75Hz: std_logic;                     -- 18.75Hz（パルス）
+-- Debounce
+  signal BtnDly1: std_logic_vector(8 downto 0);   -- ９つの押しボタンで
+  signal BtnDly2: std_logic_vector(8 downto 0);   --  まとめて Debounce を行う
+  signal BtnDbnc: std_logic_vector(8 downto 0);
+-- ボタンのリピート
+  signal RptBtn : std_logic;                      -- ボタンが操作押された
+  signal RptGo  : std_logic;                      -- リピート中
+  signal RptCnt1: std_logic_vector(3 downto 0);   -- リピート開始タイマ
+  signal RptCnt2: std_logic_vector(2 downto 0);   -- リピート間隔タイマ
+-- 操作音
+  signal Pi     : std_logic;                      -- 「ピ」を鳴らしている
+  signal Slnt   : std_logic;                      -- 音を小さくする
+-- コンソールの機能
+  signal Addr   : std_logic_vector(7 downto 0);   -- メモリのアドレス
+  signal Pos    : std_logic_vector(2 downto 0);   -- ロータリースイッチの位置
+  signal G0     : std_logic;                      -- G0 選択中
+  signal Mm     : std_logic;                      -- MM 選択中
+  signal Run    : std_logic;                      -- CPU 実行/停止
+  signal Rst    : std_logic;                      -- リセットの内部配線
+  signal IntDly1: std_logic;                      -- 割込ボタンの Debounce 用
+  signal IntDly2: std_logic;                      -- 割込ボタンの Debounce 用
+-- 命令フェッチ
+  signal Fetch  : std_logic;                      -- 命令フェッチ中
 
 begin
-  logic0 <= '0';
-  logic1 <= '1';
-
-  -- スイッチサンプリングタイミング用タイマ
+-- 53ms 間隔のパルスを作る
   process(P_CLK)
   begin
     if (P_CLK'event and P_CLK='1') then
-      if (P_18_75Hz='0' and I_18_75Hz='1') then  -- エッジの検出
-        I_SMP <= '1';                            -- サンプリング用のパルスを生成
+      if (P_18_75Hz='1' and c18_75HzDly='0') then -- エッジを検出する
+        p18_75Hz <= '1';                          -- 18.75Hz のパルスを作る
       else
-        I_SMP <= '0';
+        p18_75Hz <= '0';
       end if;
-      I_18_75Hz <= P_18_75Hz;                    -- エッジ検出用の1クロック遅れ信号
+      c18_75HzDly <= P_18_75Hz;                   -- エッジ検出用
     end if;
   end process;
 
-  -- スイッチの操作音の制御   --MM の場合だけ操作可能に変更(2008.7.10)--
-  I_CLICK <= (I_INCA and I_MM)
-            or (I_DECA and I_MM)
-            or (I_ROT or not I_RESET)
-            or (I_WRITE and not I_SSFF )
-            or (I_SETA  and not I_SETA_D and I_MM)
-            or (I_STOP  and not I_STOP_D and I_SSFF)
-            or (I_STOP  and not I_STOP_D and I_ERROR)
-            or (I_RUN   and not I_SSFF);
-
-  -- 操作音を作る、通常(I_VOL='0')なら「ピッ！」の音、そうでなければ「プチ」の音
-  P_SPK <= (I_VOL or P_2_4kHz) and I_BEEP_D;
-
-  -- 操作音の継続時間を一定に保つ (1/18.75秒にする)
-  process(P_CLK)
+-- 押しボタン９個分の Debounce 回路
+  process(P_CLK, P_RESET_IN)
   begin
-    if (P_CLK'event and P_CLK='1') then
-         if (I_CLICK='1') then
-              I_BEEP   <= '1';
-         elsif (I_SMP='1') then
-              I_BEEP_D <= I_BEEP;
-              I_BEEP   <= '0';
-         end if;
-     end if;
-  end process;
-
-  -- リセットスイッチ(リピートさせない)
-  -- パワーオンリセットに失敗することがあるので、
-  -- 長いパルスを出力するように変更  2004.7.16
-  P_RESET <= I_RESET;
-  process(P_CLK)
-  begin
-    if (P_CLK'event and P_CLK='1') then
-        if (I_SMP='1') then
-            if (P_RESET_SW='1' and I_RESET_D='0') then
-                I_RESET   <= '0';
-                I_RESET_D <= '1';
-                if (P_STOP_SW='1' and P_SETA_SW='0') then
-                    I_VOL <= not I_VOL;
-                end if;
-            else
-              I_RESET   <= '1';
-            end if;
-            if (P_RESET_SW='0') then
-                I_RESET_D <= '0';
-            end if;
+    if (P_RESET_IN='0') then                      -- パワーオンリセット
+      BtnDly1 <= "100000000";                     -- RESET が押されたような
+      BtnDly2 <= "000000000";                     --  状態を作る
+      BtnDbnc <= "000000000";
+    elsif (P_CLK'event and P_CLK='1') then
+      if (p18_75Hz='1') then                      -- 1/18.75秒(53ms)に1回
+        if (RptGo='0' or RptCnt2/="000") then     --  リピートの瞬間以外
+          BtnDly2 <= BtnDly1;                     --   押しボタンの状態を読取る
+        else                                      --  リピートの瞬間
+          BtnDly2 <= "000000000";                 --   一旦，ボタンを戻す
         end if;
-     end if;
-  end process;
-
-  -- トリガ付きスイッチ
-  INCA_SW  :TRSW port map(P_CLK, I_RESET, P_INCA_SW,  I_SMP, logic1, I_INCA  );
-  DECA_SW  :TRSW port map(P_CLK, I_RESET, P_DECA_SW,  I_SMP, logic1, I_DECA  );
-  WRITE_SW :TRSW port map(P_CLK, I_RESET, P_WRITE_SW, I_SMP, I_MM,   I_WRITE );
-  RUN_SW   :TRSW port map(P_CLK, I_RESET, P_RUN_SW,   I_SMP, logic0, I_RUN   );
-  RCW_SW   :TRSW port map(P_CLK, I_RESET, P_RCW_SW,   I_SMP, logic1, I_RCW   );
-  RCCW_SW  :TRSW port map(P_CLK, I_RESET, P_RCCW_SW,  I_SMP, logic1, I_RCCW  );
-
-  -- STOP，SETA スイッチ(リピートしても良い)
-  process(P_CLK)
-  begin
-    if (P_CLK'event and P_CLK='1') then
-      if (I_SMP='1') then
-        I_SETA  <= P_SETA_SW;
-        I_STOP  <= P_STOP_SW;
-      end if;
-      I_SETA_D  <= I_SETA;
-      I_STOP_D  <= I_STOP;
-    end if;
-  end process;
-
-  -- ロータリースイッチの代替
-  I_MM  <= I_SW(2) and not I_SW(1) and I_SW(0);
-  P_SEL <= I_SW;
-  process(P_CLK)
-  begin
-    if (P_CLK'event and P_CLK='1') then
-      if (I_RCW='1' and not (I_SW="101")) then
-        I_SW  <= I_SW + 1;
-        I_ROT <= '1';
-      elsif (I_RCCW='1' and not (I_SW="000")) then
-        I_SW  <= I_SW - 1;
-        I_ROT <= '1';
+        BtnDbnc <= (not BtnDly2) and BtnDly1 and
+                   ('1' & not G0 & not Mm         -- (Rst)  (<-)   (->)
+                    & not Run & Run & Mm          -- (Run)  (Stop) (SetA)
+                    & Mm  & Mm  & not Run);       -- (IncA) (DecA) (Write)
+        BtnDly1 <= P_RESET_SW & P_RCCW_SW         -- 押しボタンの入力を
+                   & P_RCW_SW & P_RUN_SW          --  クロックに
+                   & P_STOP_SW & P_SETA_SW        --   同期しておく
+                   & P_INCA_SW & P_DECA_SW
+                   & P_WRITE_SW;
       else
-        I_ROT <= '0';
-      end if;
-     end if;
-  end process;
-
-  -- パネルから発生する書き込み信号
-  P_WRITE  <= not I_SSFF and I_WRITE;
-
-  -- パネルから発生する割り込み
-  P_INT    <=     I_SSFF and I_WRITE;
-
-  -- アドレスレジスタ --MM の場合だけ操作可能に変更(2008.7.10)--
-  P_A_LED  <= I_ADR when I_MM='1' else "00000000";
-  process(P_CLK, I_RESET)
-  begin
-    if (I_RESET='0') then
-      I_ADR <= "00000000";
-    elsif (P_CLK' event and P_CLK='1') then
-      if (I_SETA='1'and I_SETA_D='0' and I_MM='1') then
-        I_ADR <= P_DATA_SW;
-      elsif ((I_INCA='1' or (I_WRITE='1' and I_SSFF='0')) and I_MM='1') then
-        I_ADR <= I_ADR + 1;
-      elsif (I_DECA='1' and I_MM='1') then
-        I_ADR <= I_ADR - 1;
+        BtnDbnc <= "000000000";
       end if;
     end if;
   end process;
 
-  -- RUN LED
-  P_R_LED <= I_SSFF or (P_2_3Hz and I_ERROR);
+-- リピートする押しボタンが押されているか
+  RptBtn <= '1' when (BtnDly1 and
+            ('0'  & '1'  & '1' & '0'  & '0'       -- (Rst)(<-)(->)(Run)(Stop)
+             & '0'  & '1'  & '1'  & Mm))          -- (SetA)(IncA)(DecA)(Write)
+            /="000000000" else '0';
 
-  -- Start/Stop FF
-  P_STOP <= not I_SSFF;
-  process(P_CLK, I_RESET)
+-- リピート継続中
+  RptGo <= '1' when RptCnt1="1001" else '0';      -- 477ms 経過したら開始
+
+-- 押しボタンのリピート
+  process(P_CLK)
   begin
-    if (I_RESET='0') then
-      I_SSFF <= '0';
-    elsif (P_CLK' event and P_CLK='1') then
-      if (I_STOP='1' or  P_HL='1' or (P_LI='1' and P_MR='1' and P_STEP_SW='1')
-          or (P_LI='1' and P_MR='1' and P_BREAK_SW='1' and P_DATA_SW=P_AIN)) then
-        I_SSFF <= '0';
-      elsif (I_RUN='1') then
-        I_SSFF <= '1';
+    if (P_CLK'event and P_CLK='1') then
+      if (p18_75Hz='1') then                      -- 1/18.75秒(53ms)に1回
+        if (RptBtn='1') then                      -- 操作されている
+          if (RptGo='0') then                     --   リピート開始になってない
+            RptCnt1 <= RptCnt1 + 1;               --     継続時間を測定
+          elsif (RptCnt2/="100") then             --   リピート間隔は 212ms
+            RptCnt2 <= RptCnt2 + 1;
+          else
+            RptCnt2 <= "000";
+          end if;
+        else                                      -- 操作されていない
+          RptCnt1 <= "0000";                      --   タイマリセット
+          RptCnt2 <= "000";
+        end if;
+      end if;
+    end if;
+  end process;
+  
+-- 操作音
+  P_SPK <= (Slnt or P_2_4kHz) and Pi;             -- 音が継続中は 2.4kHz
+
+  process(P_CLK)
+  begin
+    if (P_CLK'event and P_CLK='1') then
+      if (BtnDbnc/="000000000") then              -- どれかボタンが操作された
+        Pi <= '1';                                --   「ピ」開始
+      elsif (p18_75Hz='1') then                   -- 53ms 後に
+        Pi <= '0';                                --   「ピ」終了
       end if;
     end if;
   end process;
 
-  -- Error FF
-  process(P_CLK, I_RESET)
+  process(P_CLK)
   begin
-    if (I_RESET='0') then
-      I_ERROR <= '0';
-    elsif (P_CLK' event and P_CLK='1') then
-      if (P_ER='1') then
-        I_ERROR <= '1';
-      elsif (I_RUN='1'or I_STOP='1') then
-        I_ERROR <= '0';
+    if (P_CLK'event and P_CLK='1') then
+      if (BtnDbnc(8)='1') then                    -- Btn8(Reset) が押された
+        Slnt <= Slnt xor P_STOP_SW;               -- 「ピ」を「ポツ」にする
+      end if;
+    end if;
+  end process;
+
+-- RESET
+  Rst <= BtnDbnc(8) or not P_RESET_IN;            -- Btn8(Reset)
+  P_RESET <= not Rst;                             -- 外部では負論理
+
+-- WRITE
+  P_WRITE  <= (not Run) and BtnDbnc(0);           -- Btn0(Write) 停止中は書込み
+
+-- ロータリースイッチの位置
+  P_SEL <= Pos;                                   -- 外部端子に接続
+  G0 <= '1' when Pos="000" else '0';              -- G0 表示中
+  Mm <= '1' when Pos="101" else '0';              -- メモリ表示中
+  
+  process(P_CLK)
+  begin
+    if (P_CLK'event and P_CLK='1') then
+      if (BtnDbnc(7)='1') then                    -- Btn7(CcwSw)
+        Pos <= Pos - 1;
+      elsif (BtnDbnc(6)='1') then                 -- Btn6(CwSw)
+        Pos <= Pos + 1;
+      end if;
+    end if;
+  end process;
+
+-- CPU の RUN/STOP/ERROR
+  P_STOP <= not Run;                              -- 外部端子に接続
+  P_R_LED <= Run or (P_2_3Hz and P_ER);           -- 外部端子に接続
+  Fetch <= P_LI and P_MR;                         -- CPUが命令をフェッチする
+
+  process(P_CLK, Rst)                             -- Start/Stop の制御
+  begin
+    if (Rst='1') then
+      Run  <= '0';
+    elsif (P_CLK'event and P_CLK='1') then
+      if (BtnDbnc(5)='1') then                    -- Btn5(RUN)
+        Run  <= '1';
+      elsif (P_HL='1' or BtnDbnc(4)='1' or        -- Halt 命令または Btn4(STOP)
+             (Fetch='1' and P_STEP_SW='1') or     -- STEP 実行時
+             (Fetch='1' and P_BREAK_SW='1' and    -- BREAK 実行時
+              P_DATA_SW=P_AIN)) then
+        Run  <= '0';
+      end if;
+    end if;
+  end process;
+  
+-- アドレス LED 関連
+  P_A_LED <= Addr when Mm='1' else "00000000";    -- 外部端子に接続
+  
+  process(P_CLK, Rst)
+  begin
+    if (Rst='1') then
+      Addr <= "00000000";
+    elsif (P_CLK'event and P_CLK='1') then
+      if (BtnDbnc(1)='1') then                    -- Btn1(DECA)
+        Addr <= Addr - 1;
+      elsif (BtnDbnc(2)='1' or                    -- Btn2(INCA)
+             (BtnDbnc(0)='1' and Mm='1')) then    -- Btn0(WRITE)
+        Addr <= Addr + 1;
+      elsif (BtnDbnc(3)='1') then                 -- Btn3(SETA)
+        Addr <= P_DATA_SW;
+      end if;
+    end if;
+  end process;
+
+-- コンソール割り込み
+  process(P_CLK)
+  begin
+    if (P_CLK'event and P_CLK='1') then
+      if (p18_75Hz='1') then                      -- 53ms 毎に
+        if (IntDly2='0' and IntDly1='1') then     --  エッジを検出する
+          P_INT <= Run;                           --   実行中なら割込み発生
+        end if;
+        IntDly2 <= IntDly1;                       -- 53ms 毎にサンプリング
+        IntDly1 <= P_WRITE_SW;
+      else
+        P_INT <= '0';                             -- パルスをクリア
       end if;
     end if;
   end process;

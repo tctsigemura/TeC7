@@ -21,6 +21,7 @@
 --
 -- TaC/tac_tec.vhd : TaC TeC CONSOLE
 --
+-- 2019.07.30           : P_IOR に関する警告を消す
 -- 2019.02.03           : 新規作成
 --
 -- $Id
@@ -37,7 +38,7 @@ entity TAC_TEC is
     Port ( P_CLK      : in  std_logic;
            P_RESET    : in  std_logic;
            P_EN       : in  std_logic;
-           P_IOR      : in  std_logic;
+--         P_IOR      : in  std_logic;
            P_IOW      : in  std_logic;
            P_ADDR     : in  std_logic_vector (1 downto 0);
            P_DIN      : in  std_logic_vector (7 downto 0);
