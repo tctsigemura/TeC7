@@ -21,6 +21,7 @@
 --
 -- TaC/tac_mmu.vhd : TaC Memory Management Unit Source Code
 --
+-- 2019.07.30           : アドレスエラー追加
 -- 2019.01.22           : 新しく追加
 --
 
@@ -34,8 +35,10 @@ entity TAC_MMU is
          P_EN       : in  std_logic;
          P_IOW      : in  std_logic;
          P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
+         P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
-         P_INT      : out std_logic;                     -- Memory Vio inter
+         P_VIO_INT  : out std_logic;                     -- Memory Vio inter
+         P_ADR_INT  : out std_logic;                     -- Bad Address inter
          P_MR       : out std_logic;                     -- Memory Request
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
@@ -48,7 +51,8 @@ signal i_en  : std_logic;                                -- Enable resister
 signal i_b   : std_logic_vector(15 downto 0);            -- Base  register
 signal i_l   : std_logic_vector(15 downto 0);            -- Limit register
 signal i_act : std_logic;                                -- Activate
-signal i_vio : std_logic;                                -- Violation
+signal i_vio : std_logic;                                -- Memory Violation
+signal i_adr : std_logic;                                -- Bad Address
 
 begin
   process(P_RESET, P_CLK)
@@ -71,9 +75,11 @@ begin
   end process;
 
   i_act <= (not P_PR) and P_MMU_MR and i_en;
-  i_vio <= '1' when ((P_MMU_ADDR>=i_l) and (i_act='1')) else '0';
+  i_vio <= '1' when (P_MMU_ADDR>=i_l and i_act='1') else '0';
+  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;
   P_ADDR <= (P_MMU_ADDR + i_b) when (i_act='1') else P_MMU_ADDR;
   P_MR <= P_MMU_MR and (not i_vio);
-  P_INT <= i_vio;
+  P_VIO_INT <= i_vio;
+  P_ADR_INT <= i_adr;
   
 end Behavioral;

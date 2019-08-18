@@ -19,6 +19,7 @@
 --
 -- tec7.vhd : TeC7 Top Level
 --
+-- 2019.07.26 : IBUFG の警告を消す
 -- 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
 -- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
 -- 2019.02.03 : TeCのコンソールをTaCが操作できるようにする
@@ -33,8 +34,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.std_logic_UNSIGNED.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
--- library UNISIM;
--- use UNISIM.VComponents.all;
+library UNISIM;
+use UNISIM.VComponents.all;
 
 entity TeC7 is
     Port ( CLK_IN    : in    std_logic;
@@ -144,17 +145,9 @@ signal i_tec_fnc     : std_logic_vector(7 downto 0);
 signal i_tec_ctl     : std_logic_vector(2 downto 0);
 signal i_tec_ena     : std_logic;
 
-component IBUFG
-    port ( I         : in     std_logic;
-           O         : out    std_logic
-         );
-end component;
-
 component DCM_TAC
     port ( CLK_IN1   : in     std_logic;  --  9.8304MHz
            CLK_OUT1  : out    std_logic;  -- 49.1520MHz 0'
---           CLKFB_IN  : in     std_logic;
---           CLKFB_OUT : in     std_logic;
            LOCKED    : out    std_logic
          );
 end component;
