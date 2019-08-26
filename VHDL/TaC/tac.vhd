@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.08.22 : PIO のアドレスを 18h-1Fh から 18h - 27h に変更
 -- 2019.08.18 : 使用していない配線に関する警告を消す
 -- 2019.05.06 : TeC7a 用に新しいブランチ（RN4020 関連削除）
 -- 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
@@ -339,7 +340,7 @@ component TAC_PIO
 --         P_IOR     : in  STD_LOGIC;
            P_IOW     : in  STD_LOGIC;
            P_INT     : out  STD_LOGIC;
-           P_ADDR    : in  STD_LOGIC_VECTOR (1 downto 0);
+           P_ADDR    : in  STD_LOGIC_VECTOR (2 downto 0);
            P_DIN     : in  STD_LOGIC_VECTOR (7 downto 0);
            P_DOUT    : out  STD_LOGIC_VECTOR (7 downto 0);
               
@@ -404,6 +405,10 @@ component TAC_TEC is
 end component;
 
 begin
+  -- RN4020 の割込み（TeC7a には実装されていない）
+  i_int_bit(2) <= '0';
+  i_int_bit(3) <= '0';
+
   -- A/Dコンバータ用(将来実装)
   i_int_bit(9) <= '0';
 
@@ -468,7 +473,8 @@ begin
   i_en_sio1   <= '1' when (i_addr(7 downto 2)="000010") else '0'; -- 08‾0b
   i_en_sio2   <= '1' when (i_addr(7 downto 2)="000011") else '0'; -- 0c‾0f
   i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10‾17
-  i_en_pio    <= '1' when (i_addr(7 downto 3)="00011")  else '0'; -- 18‾1f
+  i_en_pio    <= '1' when (i_addr(7 downto 3)="00011" or          -- 18‾1f
+                           i_addr(7 downto 3)="00100")  else '0'; -- 20‾27
 --i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28‾2f
   i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30‾37
   i_en_ram    <= '1' when (i_addr(7 downto 1)="1111000")else '0'; -- f0‾f1
@@ -641,7 +647,7 @@ begin
 --       P_IOR      => i_ior,
          P_IOW      => i_iow,
          P_INT      => i_int_bit(9),
-         P_ADDR     => i_addr(2 downto 1),
+         P_ADDR     => i_addr(3 downto 1),
          P_DIN      => i_dout_cpu(7 downto 0),
          P_DOUT     => i_dout_pio,
 
