@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.08.27 : PIO からの割込み機能追加
 -- 2019.08.22 : PIO のアドレスを 18h-1Fh から 18h - 27h に変更
 -- 2019.08.18 : 使用していない配線に関する警告を消す
 -- 2019.05.06 : TeC7a 用に新しいブランチ（RN4020 関連削除）
@@ -408,9 +409,6 @@ begin
   -- RN4020 の割込み（TeC7a には実装されていない）
   i_int_bit(2) <= '0';
   i_int_bit(3) <= '0';
-
-  -- A/Dコンバータ用(将来実装)
-  i_int_bit(9) <= '0';
 
   -- TaCモード以外では RESET+SETA でTaCをリセットできる
   i_reset_panel <= P_RESET_SW when (P_MODE=1) else P_TEC_RESET and P_TEC_SETA;
