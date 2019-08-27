@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.08.27 : PIO からの割込み機能追加
 -- 2019.08.26 : SPI機能の追加のため，PIOのアドレスを18h-1Fhから18h-27hに変更
 -- 2019.08.18 : 使用していない配線に関する警告を消す
 -- 2019.02.28 : TAC_RAMにRESETを配線（IPLの複数バンク化）
@@ -437,9 +438,6 @@ component TAC_TEC is
 end component;
 
 begin
-  -- A/D コンバータ用（将来実装）
-  i_int_bit(9) <= '0';
-
   -- TaCモード以外では RESET+SETA でTaCをリセットできる
   i_reset_panel <= P_RESET_SW when (P_MODE=1) else P_TEC_RESET and P_TEC_SETA;
    
