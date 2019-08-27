@@ -21,6 +21,7 @@
 --
 -- TaC/tac_pio.vhd : TaC PIO
 --
+-- 2019.08.27 : PIO からの割込み機能追加
 -- 2019.08.22 : SPI 機能を追加
 -- 2019.08.19 : ADC_REF の初期値を 0x00 から 0x80 に変更（適切な閾値）
 -- 2019.07.30 : P_IOR に関する警告を消す
@@ -58,6 +59,9 @@ architecture Behavioral of TAC_PIO is
   signal i_ext_mode   : std_logic;
   signal i_adc        : std_logic_vector(7 downto 0);
 
+  signal int_msk      : std_logic_vector(7 downto 0);  -- 割込みマスク
+  signal int_xor      : std_logic_vector(7 downto 0);  -- 割込みの極性
+
   signal spi_cnt8     : std_logic_vector(7 downto 0);  -- 分周用カウンタ
   signal spi_reg8     : std_logic_vector(7 downto 0);  -- コンペア用レジスタ
   signal spi_match    : std_logic;                     -- コンペアマッチ
@@ -76,19 +80,21 @@ begin
         i_ext_mode <= '0';
         i_ext_out <= "000000000000";
         i_adc <= "10000000";
+        int_msk <= "00000000";
+        int_xor <= "00000000";
       elsif (P_CLK'event and P_CLK='1') then
         if (P_EN='1' and P_IOW='1') then
-          if (P_ADDR(2)='1') then
-            if (P_ADDR(1)='0') then
-              if (P_ADDR(0)='0') then                    -- 18h
-                i_ext_out(7 downto 0) <= P_DIN;
-              else
-                i_adc <= P_DIN;                          -- 1Ah
-              end if;
-            else
-              i_ext_mode <= P_DIN(7);                    -- 1Ch, 1Eh
-              i_ext_out(11 downto 8) <= P_DIN(3 downto 0);
-            end if;
+          if (P_ADDR="100") then                       -- 18h
+            i_ext_out(7 downto 0) <= P_DIN;
+          elsif (P_ADDR="101") then
+            i_adc <= P_DIN;                            -- 1Ah
+          elsif (P_ADDR="110") then
+            i_ext_mode <= P_DIN(7);                    -- 1Ch
+            i_ext_out(11 downto 8) <= P_DIN(3 downto 0);
+          elsif (P_ADDR="010") then
+            int_msk <= P_DIN;                          -- 24h
+          elsif (P_ADDR="011") then
+            int_xor <= P_DIN;                          -- 26h
           end if;
         end if;
       end if;
@@ -108,7 +114,7 @@ begin
         end if;
       end if;
     end process;
-    
+
   process(P_RESET, P_CLK)
     begin
       if (P_RESET='0') then
@@ -162,11 +168,11 @@ begin
             ("00000" & P_MODE)    when (P_ADDR(2 downto 0)="111") else -- 1Eh
             (spi_sreg)            when (P_ADDR(2 downto 0)="000") else -- 20h
             ("0000000" & spi_run);                                     -- 22h
-    
+
   P_ADC_REF <= i_adc;
   P_EXT_OUT(11 downto 2) <= i_ext_out(11 downto 2);
   P_EXT_OUT(1) <= i_ext_out(1) xor spi_sclk;
   P_EXT_OUT(0) <= i_ext_out(0) xor spi_so;
   P_EXT_MODE <= i_ext_mode;
-  P_INT <= '0';
+  P_INT <= '1' when ((P_EXT_IN xor int_xor) and int_msk)/= "00000000" else '0';
 end Behavioral;
