@@ -1,6 +1,6 @@
 -- file: DCM_TEC.vhd
 -- 
--- (c) Copyright 2008 - 2010 Xilinx, Inc. All rights reserved.
+-- (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
 -- 
 -- This file contains confidential and proprietary information
 -- of Xilinx, Inc. and is protected under U.S. and
@@ -52,16 +52,15 @@
 -- None
 --
 ------------------------------------------------------------------------------
--- Output     Output      Phase    Duty Cycle   Pk-to-Pk     Phase
--- Clock     Freq (MHz)  (degrees)    (%)     Jitter (ps)  Error (ps)
+-- "Output    Output      Phase     Duty      Pk-to-Pk        Phase"
+-- "Clock    Freq (MHz) (degrees) Cycle (%) Jitter (ps)  Error (ps)"
 ------------------------------------------------------------------------------
--- CLK_OUT1     2.458      0.000      50.0      300.000     50.000
--- CLK_OUT2    25.122      0.000      50.0     3699.714     50.000
+-- CLK_OUT1_____2.458______0.000______50.0______300.000____150.000
 --
 ------------------------------------------------------------------------------
--- Input Clock   Input Freq (MHz)   Input Jitter (UI)
+-- "Input Clock   Freq (MHz)    Input Jitter (UI)"
 ------------------------------------------------------------------------------
--- primary          9.8304            0.010
+-- __primary__________9.8304____________0.010
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -78,7 +77,6 @@ port
   CLK_IN1           : in     std_logic;
   -- Clock out ports
   CLK_OUT1          : out    std_logic;
-  CLK_OUT2          : out    std_logic;
   -- Status and control signals
   LOCKED            : out    std_logic
  );
@@ -86,13 +84,12 @@ end DCM_TEC;
 
 architecture xilinx of DCM_TEC is
   attribute CORE_GENERATION_INFO : string;
-  attribute CORE_GENERATION_INFO of xilinx : architecture is "DCM_TEC,clk_wiz_v1_8,{component_name=DCM_TEC,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=DCM_SP,num_out_clk=2,clkin1_period=101.725260417,clkin2_period=101.725260417,use_power_down=false,use_reset=false,use_locked=true,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=AUTO,manual_override=false}";
+  attribute CORE_GENERATION_INFO of xilinx : architecture is "DCM_TEC,clk_wiz_v3_6,{component_name=DCM_TEC,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=DCM_SP,num_out_clk=1,clkin1_period=101.725260417,clkin2_period=101.725260417,use_power_down=false,use_reset=false,use_locked=true,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=AUTO,manual_override=false}";
 	  -- Input clock buffering / unused connectors
   signal clkin1            : std_logic;
   -- Output clock buffering
   signal clkfb             : std_logic;
   signal clk0              : std_logic;
-  signal clkfx             : std_logic;
   signal clkdv             : std_logic;
   signal clkfbout          : std_logic;
   signal locked_internal   : std_logic;
@@ -102,19 +99,23 @@ begin
 
   -- Input buffering
   --------------------------------------
-  clkin1 <= CLK_IN1;
+  clkin1_buf : BUFG
+  port map
+   (O => clkin1,
+    I => CLK_IN1);
 
 
   -- Clocking primitive
   --------------------------------------
+  
   -- Instantiation of the DCM primitive
   --    * Unused inputs are tied off
   --    * Unused outputs are labeled unused
   dcm_sp_inst: DCM_SP
   generic map
    (CLKDV_DIVIDE          => 4.000,
-    CLKFX_DIVIDE          => 9,
-    CLKFX_MULTIPLY        => 23,
+    CLKFX_DIVIDE          => 1,
+    CLKFX_MULTIPLY        => 4,
     CLKIN_DIVIDE_BY_2     => FALSE,
     CLKIN_PERIOD          => 101.725260417,
     CLKOUT_PHASE_SHIFT    => "NONE",
@@ -133,7 +134,7 @@ begin
     CLK270                => open,
     CLK2X                 => open,
     CLK2X180              => open,
-    CLKFX                 => clkfx,
+    CLKFX                 => open,
     CLKFX180              => open,
     CLKDV                 => clkdv,
    -- Ports for dynamic phase shift
@@ -151,6 +152,7 @@ begin
   LOCKED                <= locked_internal;
 
 
+
   -- Output buffering
   -------------------------------------
   clkf_buf : BUFG
@@ -164,9 +166,6 @@ begin
    (O   => CLK_OUT1,
     I   => clkdv);
 
-  clkout2_buf : BUFG
-  port map
-   (O   => CLK_OUT2,
-    I   => clkfx);
+
 
 end xilinx;
