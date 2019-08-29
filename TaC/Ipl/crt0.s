@@ -30,7 +30,7 @@
 
 ;;; ここからプログラムの実行が始まる
 ipl
-	ld	sp,#0xf000	; 主記憶 60kB
+	ld	sp,#0xe000	; 主記憶 56kB
 	call	_main
 	halt			; リスタート
 	jmp	ipl
