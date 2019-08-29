@@ -103,16 +103,11 @@ architecture Behavioral of TeC7 is
 signal i_reset_tec   : std_logic;
 signal i_reset_tac   : std_logic;
 signal i_mode        : std_logic_vector (2 downto 0);  -- mode
-signal i_locked_tac  : std_logic;
-signal i_locked_delay: std_logic;
-signal i_locked_tec  : std_logic;
 signal i_locked      : std_logic;
-signal i_49_1520MHzNB: std_logic;
 signal i_2_4576MHz   : std_logic;
 signal i_9_8304MHz   : std_logic;
-signal i_25_1221MHz  : std_logic;
-signal i_49_1520MHz0 : std_logic;
-signal i_49_1520MHz90: std_logic;
+signal i_49_152MHz0  : std_logic;
+signal i_49_152MHz90 : std_logic;
 
 signal i_in          : std_logic_vector(27 downto 1);
 signal i_in_tec      : std_logic_vector(27 downto 1);
@@ -145,26 +140,12 @@ signal i_tec_fnc     : std_logic_vector(7 downto 0);
 signal i_tec_ctl     : std_logic_vector(2 downto 0);
 signal i_tec_ena     : std_logic;
 
-component DCM_TAC
-    port ( CLK_IN1   : in     std_logic;  --  9.8304MHz
-           CLK_OUT1  : out    std_logic;  -- 49.1520MHz 0'
-           LOCKED    : out    std_logic
-         );
-end component;
-
-component DELAY90
-    port ( CLK_IN1   : in     std_logic;  -- 49.1520MHz 0'
-           CLK_OUT1  : out    std_logic;  -- 49.1520MHz 0'
-           CLK_OUT2  : out    std_logic;  -- 49.1520MHz 90'
-           LOCKED    : out    std_logic
-         );
-end component;
-
-component DCM_TEC
-    port ( CLK_IN1   : in     std_logic;  --  9.8304MHz
-           CLK_OUT1  : out    std_logic;  --  2.4576MHz
-           CLK_OUT2  : out    std_logic;  -- 25.1221MHz
-           LOCKED    : out    std_logic
+component DCM
+    Port ( P_CLK_IN      : in    std_logic;  -- 9.8304MHz
+           P_49_152MHz0  : out   std_logic;
+           P_49_152MHz90 : out   std_logic;
+           P_2_4576MHz   : out   std_logic;
+           P_LOCKED      : out   std_logic
          );
 end component;
 
@@ -304,29 +285,13 @@ begin
   IBUFG1 : IBUFG
     port map ( O => i_9_8304MHz, I => CLK_IN );
      
-  DCM_TAC1 : DCM_TAC
-    port map ( CLK_IN1  => i_9_8304MHz,
-               CLK_OUT1 => i_49_1520MHzNB,
---               CLKFB_IN => i_dcm_fb,
---               CLKFB_OUT=> i_dcm_fb,
-               LOCKED   => i_locked_tac
+  DCM1 : DCM
+    port map ( P_CLK_IN      => i_9_8304MHz,
+               P_49_152MHz0  => i_49_152MHz0,
+               P_49_152MHz90 => i_49_152MHz90,
+               P_2_4576MHz   => i_2_4576MHz,
+               P_LOCKED      => i_locked
              );
-				 
-  DELAY : DELAY90
-    port map ( CLK_IN1  => i_49_1520MHzNB,
-               CLK_OUT1 => i_49_1520MHz0,
-               CLK_OUT2 => i_49_1520MHz90,
-               LOCKED   => i_locked_delay
-             );
-
-  DCM_TEC1 : DCM_TEC
-    port map ( CLK_IN1  => i_9_8304MHz,
-               CLK_OUT1 => i_2_4576MHz,
---               CLK_OUT2 => i_25_1221MHz,
-               LOCKED   => i_locked_tec
-             );
-
-  i_locked <= i_locked_tac and i_locked_delay and i_locked_tec;
 
   -- Determin TeC/TaC/DEMO1/DEMO2/RESET mode
   MODE1 : MODE
@@ -338,9 +303,9 @@ begin
              );
 
   -- Synchronize TaC reset with TaC clock
-  process(i_49_1520MHz0)
+  process(i_49_152MHz0)
     begin
-      if (i_49_1520MHz0'event and i_49_1520MHz0='1') then
+      if (i_49_152MHz0'event and i_49_152MHz0='1') then
         i_reset_tac <= i_reset_tec;
       end if;
     end process;
@@ -446,8 +411,8 @@ begin
 
   TAC1 : TAC
     port map (
-         P_CLK0     => i_49_1520MHz0,                       -- 49.152MHz 0'
-         P_CLK90    => i_49_1520MHz90,                      -- 49.152MHz 90'
+         P_CLK0     => i_49_152MHz0,                        -- 49.152MHz 0'
+         P_CLK90    => i_49_152MHz90,                       -- 49.152MHz 90'
          P_MODE     => i_mode,                              -- 0:TeC 1:TaC
          P_RESET    => i_reset_tac,
 
@@ -521,4 +486,4 @@ begin
          P_TEC_SETA => SETA_SW
     );
 
-  end Behavioral;
+end Behavioral;

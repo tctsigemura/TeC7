@@ -21,6 +21,7 @@
 --
 
 --
+-- 2019.08.28 : IPLを4KiB*2構成から8KiB*1構成に変更
 -- 2019.07.30 : Mem1k のアドレス範囲，アドレスビット数のバグ訂正
 -- 2019.02.28 : IPLを3バンク化
 -- 2017.05.06 : TaC7b 対応 (60KiB)
@@ -28,8 +29,6 @@
 -- 2012.09.26 : TAC-CPU V2 対応完了
 -- 2012.01.22 : entity 名、見直し
 -- 2011.09.19 : 新規作成
---
--- $Id
 --
 
 library IEEE;
@@ -66,15 +65,13 @@ architecture BEHAVE of TAC_RAM is
   type Mem16kB is array(0 to 16383) of Byte;           -- 16kB
   type Mem8kB  is array(0 to  8191) of Byte;           --  8kB
   type Mem4kB  is array(0 to  4095) of Byte;           --  4kB
-  type Mem2kB  is array(0 to  2047) of Byte;           --  2kB
-  type Mem1kB  is array(0 to  1023) of Byte;           --  1kB
-  type Mem2kw  is array(0 to  2047) of Word;           --  2kw(4kB,IPL)
-  function read_file (fname : in string) return Mem2kw is
+  type Mem4kw  is array(0 to  4095) of Word;           --  4kw(8kB,IPL)
+  function read_file (fname : in string) return Mem4kw is
     file data_in : text is in fname;
     variable line_in: line;
-    variable ram : Mem2kw;
+    variable ram : Mem4kw;
     begin
-      for i in 0 to 2047 loop
+      for i in 0 to 4095 loop
         readline (data_in, line_in);
         read(line_in, ram(i));
       end loop;
@@ -98,42 +95,30 @@ architecture BEHAVE of TAC_RAM is
   shared variable memB2L : Mem4kB;                             -- odd  address
   signal memB2     : std_logic_vector(15 downto 0);
   signal memB2_dma : std_logic_vector(15 downto 0);
-  
-  -- Bank3(E000H-EFFFH)
-  shared variable memB3H : Mem2kB;                             -- even address
-  shared variable memB3L : Mem2kB;                             -- odd  address
+
+  -- Bank3(E000H-FFFFH)
+  shared variable memB3H : Mem4kB;                           -- even address
+  shared variable memB3L : Mem4kB;                           -- odd  address
   signal memB3     : std_logic_vector(15 downto 0);
   signal memB3_dma : std_logic_vector(15 downto 0);
 
-  -- Bank4(F000H-FFFFH)
-  shared variable memB4H : Mem1kB;                             -- even address
-  shared variable memB4L : Mem1kB;                             -- odd  address
-  signal memB4     : std_logic_vector(15 downto 0);
-  signal memB4_dma : std_logic_vector(15 downto 0);
-
   -- IPL bank register
-  signal iplBank   : std_logic_vector(1 downto 0);  -- 00:IPL0, 01:IPL1, 1?:RAM
+  signal iplBank   : std_logic;                                -- 0:IPL, 1:RAM
 
-  -- BankIPL0(F000H-FFFFH)
-  signal memBI0HL  : Mem2kw := read_file("tac_ram0.txt");
-  signal memBI0    : std_logic_vector(15 downto 0);
-
-  -- BankIPL1(F000H-FFFFH)
-  signal memBI1HL   : Mem2kw := read_file("tac_ram1.txt");
-  signal memBI1     : std_logic_vector(15 downto 0);
-
+  -- BankIPL(E000H-FFFFH)
+  shared variable memBIHL : Mem4kw := read_file("tac_ram.txt");
+  signal memBI     : std_logic_vector(15 downto 0);
+  
   -- CPU
   signal csB0   : std_logic;                          -- CS Bank0
   signal csB1   : std_logic;                          -- CS Bank1
   signal csB2   : std_logic;                          -- CS Bank2
   signal csB3   : std_logic;                          -- CS Bank3
-  signal csB4   : std_logic;                          -- CS Bank4
 
   signal weB0   : std_logic;                          -- WE Bank0
   signal weB1   : std_logic;                          -- WE Bank1
   signal weB2   : std_logic;                          -- WE Bank2
   signal weB3   : std_logic;                          -- WE Bank3
-  signal weB4   : std_logic;                          -- WE Bank4
     
   signal high   : std_logic;                          -- High Byte
   signal low    : std_logic;                          -- Low  Byte
@@ -143,23 +128,21 @@ architecture BEHAVE of TAC_RAM is
   signal csB1_dma   : std_logic;                      -- CS Bank1
   signal csB2_dma   : std_logic;                      -- CS Bank2
   signal csB3_dma   : std_logic;                      -- CS Bank3
-  signal csB4_dma   : std_logic;                      -- CS Bank4
 
   signal weB0_dma   : std_logic;                      -- WE Bank0
   signal weB1_dma   : std_logic;                      -- WE Bank1
   signal weB2_dma   : std_logic;                      -- WE Bank2
   signal weB3_dma   : std_logic;                      -- WE Bank3
-  signal weB4_dma   : std_logic;                      -- WE Bank4
   
   begin
     -- IPL bank register
     process(P_RESET, P_CLK)
     begin
       if (P_RESET='0') then
-        iplBank <= "00";                              -- IPL0
+        iplBank <= '0';                               -- IPL0
       elsif (P_CLK'event and P_CLK='1') then
         if (P_IOE='1' and P_IOW='1') then
-          iplBank <= P_DIN1(1 downto 0);
+          iplBank <= P_DIN1(0);
         end if;
       end if;
     end process;
@@ -169,27 +152,22 @@ architecture BEHAVE of TAC_RAM is
     csB1 <=  P_AIN1(15) and (not P_AIN1(14));         -- 8000H - BFFFH
     csB2 <=  P_AIN1(15) and P_AIN1(14)
                and (not P_AIN1(13));                  -- C000H - DFFFH
-    csB3 <=  P_AIN1(15) and P_AIN1(14) and
-              P_AIN1(13) and (not P_AIN1(12));        -- E000H - EFFFH
-    csB4 <=  P_AIN1(15) and P_AIN1(14) and
-              P_AIN1(13) and P_AIN1(12);              -- F000H - FFFFH
+    csB3 <=  P_AIN1(15) and P_AIN1(14)
+               and P_AIN1(13);                        -- E000H - FFFFH
 
     -- read control
-    P_DOUT1 <= memB0 when (csB0='1')
-          else memB1 when (csB1='1')
-          else memB2 when (csB2='1')
-          else memB3 when (csB3='1')
-          else memB4 when (csB4='1' and iplBank(1)='1')  -- RAM(4kB)
-          else memBI0 when (csB4='1' and iplBank(0)='0') -- IPL ROM0(2kW)
-          else memBI1 when (csB4='1' and iplBank(0)='1') -- IPL ROM1(2kW)
+    P_DOUT1 <= memB0 when (csB0='1')                 -- 0000H - 7FFFH
+          else memB1 when (csB1='1')                 -- 8000H - BFFFH
+          else memB2 when (csB2='1')                 -- C000H - DFFFH
+          else memBI when (csB3='1' and iplBank='0') -- E000H - FFFFH(ROM)
+          else memB3 when (csB3='1')                 -- E000H - FFFFH(RAM)
           else "0000000000000000";
  
     -- write control
-    weB0 <= csB0 and P_MR1 and P_RW1;
-    weB1 <= csB1 and P_MR1 and P_RW1;
-    weB2 <= csB2 and P_MR1 and P_RW1;
-    weB3 <= csB3 and P_MR1 and P_RW1;
-    weB4 <= csB4 and P_MR1 and P_RW1;
+    weB0  <= csB0 and P_MR1 and P_RW1;
+    weB1  <= csB1 and P_MR1 and P_RW1;
+    weB2  <= csB2 and P_MR1 and P_RW1;
+    weB3  <= csB3 and P_MR1 and P_RW1;
 
     -- byte control
     high <= not (P_AIN1(0) and P_BT);
@@ -217,7 +195,7 @@ architecture BEHAVE of TAC_RAM is
         end if;
       end process;
 
-      -- Bank1H(CPU)
+    -- Bank1H(CPU)
     process(P_CLK)
       begin
         if (P_CLK'event and P_CLK='0') then
@@ -266,9 +244,9 @@ architecture BEHAVE of TAC_RAM is
       begin
         if (P_CLK'event and P_CLK='0') then
           if (weB3='1' and high='1') then
-            memB3H(conv_integer(P_AIN1(11 downto 1))) := P_DIN1(15 downto 8);
+            memB3H(conv_integer(P_AIN1(12 downto 1))) := P_DIN1(15 downto 8);
           end if;
-          memB3(15 downto 8) <= memB3H(conv_integer(P_AIN1(11 downto 1)));
+          memB3(15 downto 8) <= memB3H(conv_integer(P_AIN1(12 downto 1)));
         end if;
       end process;
 
@@ -277,49 +255,17 @@ architecture BEHAVE of TAC_RAM is
       begin
         if (P_CLK'event and P_CLK='0') then
           if (weB3='1' and low='1') then
-            memB3L(conv_integer(P_AIN1(11 downto 1))) := P_DIN1(7 downto 0);
+            memB3L(conv_integer(P_AIN1(12 downto 1))) := P_DIN1(7 downto 0);
           end if;
-          memB3( 7 downto 0) <= memB3L(conv_integer(P_AIN1(11 downto 1)));
+          memB3( 7 downto 0) <= memB3L(conv_integer(P_AIN1(12 downto 1)));
         end if;
       end process;
 
-    -- Bank4H(CPU)
+    -- BankI(CPU)
     process(P_CLK)
       begin
         if (P_CLK'event and P_CLK='0') then
-          if (weB4='1' and high='1') then
-            memB4H(conv_integer(P_AIN1(10 downto 1))) := P_DIN1(15 downto 8);
-          end if;
-          memB4(15 downto 8) <= memB4H(conv_integer(P_AIN1(10 downto 1)));
-        end if;
-      end process;
---    memB4(15 downto 8) <= "00000000";
-
-    -- Bank4L(CPU)
-    process(P_CLK)
-      begin
-        if (P_CLK'event and P_CLK='0') then
-          if (weB4='1' and low='1') then
-            memB4L(conv_integer(P_AIN1(10 downto 1))) := P_DIN1(7 downto 0);
-          end if;
-          memB4( 7 downto 0) <= memB4L(conv_integer(P_AIN1(10 downto 1)));
-        end if;
-      end process;
---    memB4(7 downto 0) <= "00000000";
-
-    -- BankI0(CPU)
-    process(P_CLK)
-      begin
-        if (P_CLK'event and P_CLK='0') then
-          memBI0 <= memBI0HL(conv_integer(P_AIN1(11 downto 1)));
-        end if;
-      end process;
-
-    -- BankI1(CPU)
-    process(P_CLK)
-      begin
-        if (P_CLK'event and P_CLK='0') then
-          memBI1 <= memBI1HL(conv_integer(P_AIN1(11 downto 1)));
+          memBI <= memBIHL(conv_integer(P_AIN1(12 downto 1)));
         end if;
       end process;
 
@@ -328,25 +274,21 @@ architecture BEHAVE of TAC_RAM is
     csB1_dma <=  P_AIN2(14) and (not P_AIN2(13));      -- 8000H - BFFFH
     csB2_dma <=  P_AIN2(14) and P_AIN2(13)
                   and (not P_AIN2(12));                -- C000H - DFFFH
-    csB3_dma <=  P_AIN2(14) and P_AIN2(13) and
-                  P_AIN2(12) and (not P_AIN2(11));     -- E000H - EFFFH
-    csB4_dma <=  P_AIN2(14) and P_AIN2(13) and
-                  P_AIN2(12) and P_AIN2(11);           -- F000H - FFFFH
+    csB3_dma <=  P_AIN2(14) and P_AIN2(13)
+                  and P_AIN2(12);                      -- E000H - FFFFH
 
     -- write control(DMA)
     weB0_dma <= csB0_dma and P_MR2 and P_RW2;
     weB1_dma <= csB1_dma and P_MR2 and P_RW2;
     weB2_dma <= csB2_dma and P_MR2 and P_RW2;
     weB3_dma <= csB3_dma and P_MR2 and P_RW2;
-    weB4_dma <= csB4_dma and P_MR2 and P_RW2;
 
     -- read control(DMA)
-    P_DOUT2 <= memB0_dma when (csB0_dma='1')
-            else memB1_dma when (csB1_dma='1')
-            else memB2_dma when (csB2_dma='1')
-            else memB3_dma when (csB3_dma='1')
-            else memB4_dma when (csB4_dma='1')
-            else "0000000000000000";
+    P_DOUT2 <= memB0_dma when (csB0_dma='1')         -- 0000H - 7FFFH
+          else memB1_dma when (csB1_dma='1')         -- 8000H - BFFFH
+          else memB2_dma when (csB2_dma='1')         -- C000H - DFFFH
+          else memB3_dma when (csB3_dma='1')         -- E000H - FFFFH
+          else "0000000000000000";
 
     -- Bank0H(DMA)
     process(P_CLK)
@@ -419,9 +361,9 @@ architecture BEHAVE of TAC_RAM is
       begin
         if (P_CLK'event and P_CLK='0') then
           if (weB3_dma='1') then
-            memB3H(conv_integer(P_AIN2(10 downto 0))) := P_DIN2(15 downto 8);
+            memB3H(conv_integer(P_AIN2(11 downto 0))) := P_DIN2(15 downto 8);
           end if;
-          memB3_dma(15 downto 8) <= memB3H(conv_integer(P_AIN2(10 downto 0)));
+          memB3_dma(15 downto 8) <= memB3H(conv_integer(P_AIN2(11 downto 0)));
         end if;
       end process;
 
@@ -430,33 +372,10 @@ architecture BEHAVE of TAC_RAM is
       begin
         if (P_CLK'event and P_CLK='0') then
           if (weB3_dma='1') then
-            memB3L(conv_integer(P_AIN2(10 downto 0))) := P_DIN2(7 downto 0);
+            memB3L(conv_integer(P_AIN2(11 downto 0))) := P_DIN2(7 downto 0);
           end if;
-          memB3_dma( 7 downto 0) <= memB3L(conv_integer(P_AIN2(10 downto 0)));
+          memB3_dma( 7 downto 0) <= memB3L(conv_integer(P_AIN2(11 downto 0)));
         end if;
       end process;
 
-    -- Bank4H(DMA)
-    process(P_CLK)
-      begin
-        if (P_CLK'event and P_CLK='0') then
-          if (weB4_dma='1') then
-            memB4H(conv_integer(P_AIN2(10 downto 0))) := P_DIN2(15 downto 8);
-          end if;
-          memB4_dma(15 downto 8) <= memB4H(conv_integer(P_AIN2(10 downto 0)));
-        end if;
-      end process;
---    memB4_dma(15 downto 8) <= "00000000";
-
---    -- Bank3L(DMA)
-    process(P_CLK)
-      begin
-        if (P_CLK'event and P_CLK='0') then
-          if (weB4_dma='1') then
-            memB4L(conv_integer(P_AIN2(10 downto 0))) := P_DIN2(7 downto 0);
-          end if;
-          memB4_dma( 7 downto 0) <= memB4L(conv_integer(P_AIN2(10 downto 0)));
-        end if;
-      end process;
---    memB4_dma(7 downto 0) <= "00000000";
 end BEHAVE;

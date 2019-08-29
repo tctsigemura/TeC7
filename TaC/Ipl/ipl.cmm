@@ -22,6 +22,7 @@
 /*
  * ipl0.cmm : C-- 言語版の TaC IPL
  *
+ * 2019.08.29 v4.3.0    : IPL0とIPL1を統合（バンクを8KiBに変更）
  * 2019.03.01           : IPL0とIPL1に分離(バンク切替えをする）
  * 2019.02.26           : RN4020との接続・切断を検出する＋DEMO2を廃止する
  * 2019.02.18           : TeCモードで起動時SETAが押されていればTacOSを起動する
@@ -47,16 +48,23 @@
  * 2009.04.10 v.0.1     : 宇野氏と相談しながら実用化
  * 2009.03.13 v.0.0     : 開発開始
  *
- * $Id$
- *
  */
 
 #include "crt0.h"
 #include "util.h"
+#include "loader.h"
 
 // TacOS をロードして起動する
 void runOS() {
-  sjump( 1, TEXT);                            // ipl1 に切り替える
+  putstr("Load kernel ... ");
+
+  initLoader();                               // カーネルローダ初期化
+  int addr = load("KERNEL  ", "BIN");         // "KERNEL.BIN" をロード
+
+  putstr("(Start kernel@0x");
+  puthex( addr );
+  putstr(")\n");
+  sjump( 1, addr);                            // E000h 以降をRAMに切替えて
 }
 
 // RN4020 との接続・切断を調べる
