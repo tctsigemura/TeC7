@@ -21,6 +21,7 @@
 --
 -- TaC/tac_panel.vhd : TaC Console Panel
 --
+-- 2019.08.30 : MA 選択時も WRITE ができるように変更
 -- 2019.08.05 : パワーオン時に「プ」音を鳴らすために，起動後にリセットし直す
 -- 2019.07.31 : CLK90 を削除，TRSW の使用中止
 -- 2019.01.29 : MPCの変化タイミングを5ns早く(MROMが間に合わないので）
@@ -301,11 +302,11 @@ begin  -- RTL
   
   -- FncReg decoder (F_DEC)
   FncReg(3 downto 0) <=
-    "0000" when (Pos(4)='0' and WriteFF='0') else
-    "0001" when (Pos(4)='0' and WriteFF='1') else
-    "1101" when (Pos(4)='1' and Pos(0)='0' and WriteFF='0') else
-    "1110" when (Pos(4)='1' and Pos(0)='0' and WriteFF='1') else
-    "1111";
+    "0000" when (Pos(4)='0' and WriteFF='0') else                -- Reg Read
+    "0001" when (Pos(4)='0' and WriteFF='1') else                -- Reg Write
+    "1101" when (Pos(4)='1' and Pos(0)='0' and WriteFF='0') else -- MD Read
+    "1110" when (Pos(4)='1' and WriteFF='1') else                -- MD,MA Write
+    "1111";                                                      -- MA Read
 
   -- Address Register
   process(P_CLK)
