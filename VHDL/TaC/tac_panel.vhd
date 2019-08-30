@@ -21,6 +21,7 @@
 --
 -- TaC/tac_panel.vhd : TaC Console Panel
 --
+-- 2019.08.30 : 命令フェッチだけでなくデータのアクセスでもBREAKする
 -- 2019.08.30 : MA 選択時も WRITE ができるように変更
 -- 2019.08.05 : パワーオン時に「プ」音を鳴らすために，起動後にリセットし直す
 -- 2019.07.31 : CLK90 を削除，TRSW の使用中止
@@ -333,7 +334,7 @@ begin  -- RTL
       if (BtnDbnc(4)='1' or                             -- Btn4(STOP)
           P_HL='1' or                                   -- halt instruction
           (P_STEP_SW='1' and P_LI='1' and P_MR='1') or  -- step
-          (P_BREAK_SW='1' and P_LI='1' and P_MR='1' and -- break
+          (P_BREAK_SW='1' and P_MR='1' and              -- break
            P_AIN(15 downto 1)=AdrReg(15 downto 1))) then
         Run <= '0';
       elsif (BtnDbnc(5)='1') then                       -- Btn5(RUN)
