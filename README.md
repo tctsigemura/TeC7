@@ -70,7 +70,9 @@ TaC上では
 ```
 + README.md     このファイル
 |
-+ TeC7c.msc     コンパイル済みのTeC7の設計データ
++ TeC7.msc      コンパイル済みのTeC7の設計データ
+|
++ Manual        TeC7 のマニュアル（manual.pdf）
 |
 + Doc +         ドキュメント
 |     |

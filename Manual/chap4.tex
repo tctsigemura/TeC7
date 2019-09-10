@@ -1,0 +1,524 @@
+\chapter{{\tac}の周辺装置}
+
+{\tac}は，\figref{TaCBlk}に示したように，
+コンソール，MMU，割り込みコントローラ，タイマー，
+入出力装置などの周辺装置を持っている．
+これらには，付録\ref{appTac}，
+\figref{tacMap}のI/Oマップに掲載されているポートを通して，
+IN，OUT機械語命令でアクセスする．
+本章では，周辺装置の使用方法を解説する．
+
+%-----------------------------------------
+\section{タイマー}
+Timer0，Timer1の２チャンネルのインターバルタイマーが使用できる．
+タイマーは16ビットのカウンタと16ビットの周期レジスタ等から構成される．
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    00h  &  \multicolumn{2}{| c||}{Timer0カウンタ}
+         &  \multicolumn{2}{| c |}{Timer0周期レジスタ} \\\hline
+    02h  &  \multicolumn{2}{| c||}{Timer0フラグ}
+         &  \multicolumn{2}{| c |}{Timer0制御}     \\\hline
+    04h  &  \multicolumn{2}{| c||}{Timer1カウンタ}
+         &  \multicolumn{2}{| c |}{Timer1周期レジスタ} \\\hline
+    06h  &  \multicolumn{2}{| c||}{Timer1フラグ}
+         &  \multicolumn{2}{| c |}{Timer1制御}     \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[カウンタ]
+  カウンタの現在値を読み出すことができる．
+  タイマー動作中は1ms毎にカウントアップされ，
+  カウンタの値と周期レジスタの値が一致するとゼロにリセットされる．
+  リセットされる時，CPUに割り込みを発生する．
+\item[周期レジスタ]
+  周期レジスタに書き込んだ値がカウンタのリセットされる周期を決める．
+  単位はミリ秒である．
+\item[フラグ]（\texttt{F0000000 00000000}）
+  カウンタの値と周期レジスタの値が一致すると\texttt{F}に`1'がセットされる．
+  同じチャネルのカウンタまたはフラグが読み出されるとリセットされる．
+\item[制御]（\texttt{I0000000 0000000S}）
+  \texttt{I}が割り込み許可ビット，
+  \texttt{S}がカウンタのスタート/ストップ（`1'/`0'）を制御する．
+  制御ワードに書き込みを行うとカウンタがリセットされるので，
+  カウントは必ずリセット状態から開始される．
+\end{description}
+
+%-----------------------------------------
+\section{FT232RL（シリアルI/O）}
+USBシリアル変換IC（FT232RL）を通してPCと通信を行うことができる．
+変調速度は9,600ボーに固定されており変更することはできない．
+送信・受信それぞれで割り込みを発生することができる．
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    08h  &  00 & 受信データ
+         &  -  & 送信データ \\\hline
+    0Ah  &  00 & ステータス
+         &  -  & 制御 \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[受信データ]
+  FT232RLから受信した1バイトのデータを読み出す．
+\item[送信データ]
+  FT232RLへ送信する1バイトのデータを書き込む．
+\item[ステータス]（\texttt{TR00 0000}）
+  送信回路に送信データを書き込み可能なとき\texttt{T}が`1'になる．
+  受信回路に受信済みデータがあり読み出し可能なとき\texttt{R}が`1'になる．
+\item[制御]（\texttt{TR00 0000}）
+  \texttt{T}を`1'にすると次の送信データが
+  書き込み可能になる度に割込みが発生する．
+  \texttt{R}を`1'にすると次の受信データが
+  読み込み可能になる度に割込みが発生する．
+\end{description}
+
+%-----------------------------------------
+\section{TeC（シリアルI/O）}
+TeCとシリアルデータ通信ができる．
+変調速度は9,600ボーに固定されており変更することはできない．
+送信・受信それぞれで割り込みを発生することができる．
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    0Ch  &  00 & 受信データ
+         &  -  & 送信データ \\\hline
+    0Eh  &  00 & ステータス
+         &  -  & 制御 \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[受信データ]
+  TeCから受信した1バイトのデータを読み出す．
+\item[送信データ]
+  TeCへ送信する1バイトのデータを書き込む．
+\item[ステータス]（\texttt{TR00 0000}）
+  送信回路に送信データを書き込み可能なとき\texttt{T}が`1'になる．
+  受信回路に受信済みデータがあり読み出し可能なとき\texttt{R}が`1'になる．
+\item[制御]（\texttt{TR00 0000}）
+  \texttt{T}を`1'にすると次の送信データが
+  書き込み可能になる度に割込みが発生する．
+  \texttt{R}を`1'にすると次の受信データが
+  読み込み可能になる度に割込みが発生する．
+\end{description}
+
+%-----------------------------------------
+\section{マイクロSDホストコントローラ}
+マイクロSDとメモリの間でセクタ単位の読み書きができる．
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    10h  &  00 & ステータス
+         &  -  & 制御 \\\hline
+    12h  &  \multicolumn{2}{|c||}{メモリアドレス}
+         &  \multicolumn{2}{|c| }{メモリアドレス}     \\\hline
+    14h  &  \multicolumn{2}{|c||}{セクタアドレス上位}
+         &  \multicolumn{2}{|c| }{セクタアドレス上位} \\\hline
+    16h  &  \multicolumn{2}{|c||}{セクタアドレス下位}
+         &  \multicolumn{2}{|c| }{セクタアドレス下位} \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[ステータス]（\texttt{IE00 0000}）
+  ホストコントローラの状態を表す．
+  \texttt{I}はアイドル状態を表す．
+  \texttt{E}はエラーが発生したことを表す．
+\item[制御]（\texttt{E000 0IRW}）
+  \texttt{I}に`1'を書き込むと，
+  マイクロSDをSPIモードに切り換え使用できるように初期化する動作を開始する．
+  \texttt{R}に`1'を書き込むとマイクロSDから1セクタ読み込む動作を開始する．
+  \texttt{W}に`1'を書き込むとマイクロSDに1セクタ書き込む動作を開始する．
+  \texttt{E}を`1'にすると上記の動作が完了したとき
+  割り込みが発生するようになる．
+\item[メモリアドレス]
+  セクタから読み込んだデータ，または，セクタに書き込むデータを
+  格納するバッファのメモリアドレスを設定する．
+  ホストコントローラはCPUの力を借りることなく，
+  メモリとマイクロSDの間でデータの転送を行う．
+\item[セクタアドレス上位]
+  データを読み書きするセクタのLBA（Logical Block Addressing）方式の
+  32ビットのアドレスの上位16ビットである．
+\item[セクタアドレス下位]
+  LBA方式の32ビットのアドレスの下位16ビットである．
+\end{description}
+
+%-----------------------------------------
+\section{入出力ポート他}
+{\tecS}の入出力ポート\footnote{\figref{TeC7Photo}参照のこと．}に
+パラレルデータを入出力する．
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    18h  &  00 & 入力ポート
+         &  -  & 出力ポート \\\hline
+    1Ah  &  00 & 00
+         &  -  & ADC参照電圧 \\\hline
+    1Ch  &  00 & 00
+         &  -  & 出力ポート上位 \\\hline
+    1Eh  &  00 & モード
+         &  - & - \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[入力ポート]
+  入出力ポートの\texttt{I7}〜\texttt{I0}\footnote{
+    \figref{TeC7Photo}の入出力ポートコネクタ左にピン配置が印刷されている．
+  }の8ビットの入力値を読み取る
+\item[出力ポート]
+  入出力ポートの\texttt{O7}〜\texttt{O0}の8ビットに値を出力する．
+  下位2ビットはSPIインタフェースの出力とXORがとられる．
+\item[ADC参照電圧]
+  {\tecS}基板上のADコンバータ回路の参照電圧を決定する．
+  {\tac}モードでは，ADコンバータはソフトウェアで制御する必要がある．
+  リセット時は\texttt{0x80}がセットされている．
+\item[出力ポート上位]（\texttt{M000 VVVV}）
+  \texttt{M}を`1'にすると
+  入力ポートの\texttt{I7}〜\texttt{I4}が出力ポートに切り換わる．
+  \texttt{M}と同時に書き込んだ\texttt{VVVV}の4ビットが，
+  \texttt{I7}〜\texttt{I4}に出力される．
+\item[モード]（\texttt{0000 0MMM}）
+  {\tecS}の動作モード\footnote{詳しくは\ref{tec7mode}を参照のこと．}を
+  \texttt{MMM}の3ビットから知ることができる．
+  \texttt{MMM}の意味は，TeCモード（\texttt{000}），TaCモード（\texttt{001}），
+  DEMO1モード（\texttt{010}），DEMO2モード（\texttt{011}），
+  RN4020リセット（\texttt{111}）である．
+\end{description}
+
+%-----------------------------------------
+\section{SPIインタフェース}
+
+\figref{Spi}にSPIインタフェースの概略図を示す．
+入出力ポートの\texttt{O1}ビットにSCLK，\texttt{O0}ビットにSOを出力し，
+\texttt{I6}ビットをSIとして入力するSPIインタフェースである．
+出力の2ビットは出力ポートの下位2ビットとXORをとっているので，
+出力ポートの値で極性を変更することができる．
+SPIで接続した周辺LSIがSCLKを誤って認識しないように，
+出力ポートの値を変更するときは，
+CSをインアクティブにしなければならない．
+シフトレジスタにデータが書かれると動作を開始する．
+（データを受信する際も，シフトレジスタにデータを書き込む．）
+
+\myfigure{tbp}{scale=.8}{Fig/Spi.pdf}{SPIインタフェースの概略}{Spi}
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    20h  &  00 & シフトレジスタ
+         &  -  & シフトレジスタ \\\hline
+    22h  &  00 & ステータス
+         &  -  & SCLK周期       \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[シフトレジスタ]
+  8ビットのデータを読み書きする．
+  データが書き込まれるとデータが1ビットずつSOに出力される．
+  同時にSIからデータが1ビットずつシフトレジスタに読み込まれる．
+\item[ステータス]（\texttt{0000 000B}）
+  シフトレジスタが動作中に\texttt{B(Busy)}ビットが`1'になる．
+\item[SCLK周期]
+  SPIのSCLKの周波数を決める．
+  SCLK周波数は96kHz〜24.576MHz範囲で細かく設定できる．
+  書き込む値を$N$とすると周波数は次の式で計算できる．
+
+  \centerline{$SCLK周波数 = 24.576 \div ( N + 1 ) MHz$}
+\end{description}
+
+\begin{center}
+  \small\begin{tabular}{ r | r }\hline\hline
+  \multicolumn{1}{c|}{N} & \multicolumn{1}{|c}{SCLK周波数（MHz）} \\\hline
+  0   & 24.576 \\
+%  1   & 12.288 \\
+  3   &  6.144 \\
+%  7   &  3.072 \\
+%  15  &  1.536 \\
+  31  &  0.768 \\
+%  63  &  0.384 \\
+%  127 &  0.192 \\
+  255 &  0.096 \\
+  \end{tabular}
+\end{center}
+
+%-----------------------------------------
+\section{入力ポート割り込み}
+入出力ポートの\texttt{I7}〜\texttt{I0}を監視し，
+入力が変化した時に割り込みを発生することができる．
+監視対象のビット全ての論理和をとり，
+結果が`0'から`1'に変化する時に割り込みが発生する．
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    24h  &  00 & 00
+         &  -  & MASK \\\hline
+    26h  &  00 & 00
+         &  -  & XOR \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[MASK]
+  入力ポートの監視するビットを設定する．
+  `1'を設定したビットが監視対象になる．
+\item[XOR]
+  ここに設定した値は監視するビットと排他的論理和をとるために使用する．
+\end{description}
+
+複数のビットを同時に監視する際は，
+「監視対象のビット全ての論理和をとり，
+結果が`0'から`1'に変化する時に割り込みが発生する．」ことを考慮し，
+適切に\texttt{MASK}と\texttt{XOR}の設定を操作する必要がある．
+
+%-----------------------------------------
+\section{RN4020アダプタ}
+Blutetoothモジュール（RN4020）を接続するインタフェースである．
+TeC7aにはない．
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    28h  &  00 & 受信データ
+         &  -  & 送信データ \\\hline
+    2Ah  &  00 & ステータス
+         &  -  & 制御 \\\hline
+    2Ch  &  00 & 00
+         &  -  & コマンド \\\hline
+    2Eh  &  00 & 接続状況
+         &  -  & 接続状況 \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[受信データ]
+  RN4020から受信した１バイトのデータを読み出す．
+\item[送信データ]
+  RN4020へ送信する１バイトのデータを書き込む．
+\item[ステータス]（\texttt{TR00 0000}）
+  送信回路に送信データを書き込み可能なとき\texttt{T}が`1'になる．
+  受信回路に受信済みデータがあり読み出し可能なとき\texttt{R}が`1'になる．
+\item[制御]（\texttt{TR00 0000}）
+  \texttt{T}を`1'にすると次の送信データが
+  書き込み可能になる度に割込みが発生する．
+  \texttt{R}を`1'にすると次の送信データが
+  読み込み可能になる度に割込みが発生する．
+\item[コマンド]（\texttt{0000 FHCS}）
+  \texttt{F}を`1'にするとRN4020と{\tac}間のシリアル通信の
+  ハードウェアフロー制御が有効になる．
+  \texttt{H}はRN4020の\|WAKE_HW|ピンを制御する．
+  \texttt{C}はRN4020の\|CMD/MLDP|ピンを制御する．
+  \texttt{S}はRN4020の\|WAKE_SW|ピンを制御する．
+\item[接続状況]（\texttt{RRRR RRRC}）
+  \texttt{R}はリセットされないメモリである．
+  RESETボタンが押され{\tac}が再起動しても以前の状態を維持している．
+  \texttt{C}の意味は，TeC7b，TeC7cとTeC7dで異なる．
+  \begin{itemize}
+  \item TeC7b，TeC7cの場合\texttt{C}はRESETされない1ビットのメモリである．
+    IPLプログラムとOSはRN4020からの受信データを監視し，
+    BlueTerminal（\url{https://github.com/tctsigemura/BlueTerminal}）との
+    接続確立・切断が発生したことを判定し\texttt{C}に接続状態を書き込む．
+  \item TeC7dの場合\texttt{C}はRN4020の
+    \texttt{CONNECTION LED}ピンの状態を反映する．
+    このビットへの書き込みはできない．（無視される．）
+  \end{itemize}
+\end{description}
+
+%-----------------------------------------
+\section{TeCアダプタ}
+{\tec}モードで動作中に，
+{\tac}のプログラムで{\tec}のコンソールを操作できる．
+{\tac}のIPLがTWRITEの通信内容に応じて{\tec}を操作するために使用している
+\footnote{IPLとTWRITEについては\ref{ipl}を参照すること．}．
+以下でポートに書き込むビット値は，
+`1'がスイッチを上に倒した状態，または，ボタンを押した状態を表す．
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    30h  &  00 & データランプ
+         &  -  & -              \\\hline
+    32h  &  00 & 00
+         &  -  & データスイッチ \\\hline
+    34h  &  00 & 00
+         &  -  & 機能スイッチ   \\\hline
+    36h  &  00 & スイッチ状態
+         &  -  & 制御           \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[データランプ]
+  {\tec}コンソールのデータランプの表示を読み取ることができる．
+  {\tec}のメモリを読み出す{\tac}プログラムを作成可能にする．
+\item[データスイッチ]
+  コンソールのデータスイッチの代わりに{\tec}に入力する値を設定する．
+\item[機能スイッチ]（\texttt{ABCD EFGH}）
+  {\tec}コンソールの一番下の八つのスイッチを操作する．
+  各ビットの意味は下の表の通りである．
+\item[スイッチ状態]（\texttt{0000 00RS}）
+  \texttt{R}はRESETボタンが押されているか，
+  \texttt{S}はSETAボタンが押されているかを表す．
+  {\tec}モードでRESETボタンだけが押されても{\tac}はリセットされない．
+  {\tec}モードで{\tac}をリセットするにはRESETとSETAボタンを同時に押す．
+\item[制御]（\texttt{I000 0JKL}）
+  \texttt{I}は\figref{TeC7Blk}のMUX1を操作し，
+  TeCアダプタの機能を有効にするビットである．
+  \texttt{J}，\texttt{K}，\texttt{L}には，
+  RESET等のボタンを操作するための値を設定する．
+  各ビットの意味は下の表の通りである．
+\end{description}
+
+\begin{center}
+  \small\begin{tabular}{c | l}\hline\hline
+  ビット     & \multicolumn{1}{|c}{スイッチ}\\\hline
+  \texttt{A} & BREAK \\
+  \texttt{B} & STEP  \\
+  \texttt{C} & RUN   \\
+  \texttt{D} & STOP  \\
+  \texttt{E} & SETA  \\
+  \texttt{F} & INCA  \\
+  \texttt{G} & DECA  \\
+  \texttt{H} & WRITE \\
+  \texttt{I} & 制御を有効化 \\
+  \texttt{J} & RESET \\
+  \texttt{K} & ←  \\
+  \texttt{L} & →  \\
+  \end{tabular}
+\end{center}
+
+\newpage
+%-----------------------------------------
+\section{MMU（Memroy Management Unit）}
+リロケーションレジスタ方式のMMUが使用できる．
+MMUが働くのはユーザモードで実行中だけである．
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    F0h  &  00 & 00
+         &  -  & IPL切離し \\\hline
+    F2h  &  00 & 00
+         &  -  & MMU有効化 \\\hline
+    F4h  &  00 & 00
+         &  \multicolumn{2}{| c|}{ベースレジスタ} \\\hline
+    F6h  &  00 & 00
+         &  \multicolumn{2}{| c|}{リミットレジスタ} \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[IPL切離し]（\texttt{0000 000I}）
+  \texttt{I}に`1'を書き込むと，
+  メモリ空間最後の8KiBに配置されたIPL（ROM）が切り離されRAMに置き換わる．
+  これによりメモリ空間64KiB全てがRAMになる．
+  なお，{\tac}がリセットされると\texttt{I}は`0'になる．
+\item[MMU有効化]（\texttt{0000 000E}）
+  \texttt{E}に`1'を書き込むとMMUが有効になる．
+  MMUが有効になるとリロケーションレジスタ方式のアドレス変換がされる．
+  また，「不正（奇数）アドレス」，「メモリ保護違反」を監視するようになり，
+  MMUが割込みを発生するようになる．
+  なお，{\tac}がリセットされると\texttt{E}は`0'になる．
+\item[ベースレジスタ]
+  リロケーションレジスタのベースレジスタである．
+  ユーザメモリが配置される物理メモリの開始アドレスを格納する．
+\item[リミットレジスタ]
+  リロケーションレジスタのベースレジスタである．
+  ユーザメモリ空間のサイズを格納する．
+\end{description}
+
+%-----------------------------------------
+\section{コンソール}
+{\tac}モードでプログラム実行中は，
+コンソールをプログラムの入出力装置として使用できる．
+
+\begin{center}
+  \small\begin{tabular}{| r | c | c || c | c |}\hline
+    \multirow{2}{*}{番地}
+    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c|}{OUT}
+    \\\cline{2-5}
+         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
+    \\\hline\hline
+    F8h  &  00 & データSW
+         &  \multicolumn{2}{| c |}{データレジスタ} \\\hline
+    FAh  &  \multicolumn{2}{| c||}{アドレスレジスタ}
+         &  - & - \\\hline
+    FCh  &  00 & ロータリーSW
+         &  - & - \\\hline
+    FEh  &  00 & 機能レジスタ
+         &  - & - \\\hline
+  \end{tabular}
+\end{center}
+
+\begin{description}
+\item[データSW]
+  データSW（8個のトグルスイッチ）の現在の状態を読むことができる．
+\item[データレジスタ]
+  アドレス・データランプ（合計16個のLED）のON/OFFを制御できる．
+\item[アドレスレジスタ]
+  \ref{rotarySW}で説明したMA（Memory Address register）の値を読むことができる．
+\item[ロータリーSW]
+  ロータリースイッチの位置（G0=0，G1=1 ... MA=17）を読むことができる．
+\item[機能レジスタ]
+  このポートからWRITEスイッチが押されたことを知ることができる．
+\end{description}
