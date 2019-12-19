@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2019.12.19 : CPU停止時（コンソール動作時）はアドレス変換禁止
 -- 2019.08.27 : PIO からの割込み機能追加
 -- 2019.08.26 : SPI機能の追加のため，PIOのアドレスを18h-1Fhから18h-27hに変更
 -- 2019.07.30 : 使用していない配線に関する警告を消す
@@ -94,7 +95,7 @@ entity TAC is
          P_EXT_OUT  : out  std_logic_vector (11 downto 0);
          P_EXT_MODE : out  std_logic;
          P_EXT_IN   : in  std_logic_vector (7 downto 0);
-         
+
          -- uSD
          P_SPI_SCLK  : out   std_logic;
          P_SPI_DIN   : in    std_logic;
@@ -102,7 +103,7 @@ entity TAC is
          P_SPI_CS    : out   std_logic;
          P_ACC_LED   : out   std_logic;                      -- access led
          P_SD_CD     : in    std_logic;                      -- card detection
-         
+
          -- TEC
          P_TEC_RXD  : out  std_logic;                        -- to TeC SIO RXD
          P_TEC_TXD  : in   std_logic;                        -- to TeC SIO TXD
@@ -328,13 +329,13 @@ component TAC_SPI
          P_ADDR : in  std_logic_vector (1 downto 0);
          P_DIN : in  std_logic_vector (15 downto 0);
          P_DOUT : out  std_logic_vector (15 downto 0);
-         
+
          P_ADDR_DMA : out  std_logic_vector (14 downto 0);
          P_DIN_DMA  : in  std_logic_vector (15 downto 0);
          P_DOUT_DMA : out std_logic_vector (15 downto 0);
          P_RW_DMA   : out std_logic;
          P_MR_DMA   : out std_logic;
-         
+
          P_SCLK     : out STD_LOGIC;
          P_DI       : in  STD_LOGIC;
          P_DO       : out STD_LOGIC;
@@ -354,7 +355,7 @@ component TAC_PIO
            P_ADDR    : in  STD_LOGIC_VECTOR (2 downto 0);
            P_DIN     : in  STD_LOGIC_VECTOR (7 downto 0);
            P_DOUT    : out  STD_LOGIC_VECTOR (7 downto 0);
-              
+
            P_ADC_REF : out  STD_LOGIC_VECTOR(7 downto 0);
            P_EXT_IN  : in   STD_LOGIC_VECTOR(7 downto 0);
            P_EXT_OUT : out  STD_LOGIC_VECTOR(11 downto 0);
@@ -401,7 +402,7 @@ component TAC_RN4020 is
        );
 end component;
 
-component TAC_MMU is 
+component TAC_MMU is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
          P_EN       : in  std_logic;
@@ -409,6 +410,7 @@ component TAC_MMU is
          P_MMU_MR   : in  std_logic;
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
+         P_STOP     : in  std_logic;                     -- Panel RUN F/F
          P_VIO_INT  : out std_logic;                     -- Segment Violation
          P_ADR_INT  : out std_logic;                     -- Bad Address
          P_MR       : out std_logic;
@@ -418,7 +420,7 @@ component TAC_MMU is
        );
 end component;
 
-component TAC_TEC is 
+component TAC_TEC is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
          P_EN       : in  std_logic;
@@ -441,7 +443,7 @@ end component;
 begin
   -- TaCモード以外では RESET+SETA でTaCをリセットできる
   i_reset_panel <= P_RESET_SW when (P_MODE=1) else P_TEC_RESET and P_TEC_SETA;
-   
+
   -- CNT16 (1kHz のパルスを発生する)
   i_1kHz <= '1' when (i_cnt16=49151) else '0';
 
@@ -457,7 +459,7 @@ begin
         end if;
       end if;
     end process;
-  
+
   -- Interrupt controller
   TAC_INTC1 : TAC_INTC
     port map (
@@ -492,7 +494,7 @@ begin
          P_INTR     => i_intr,
          P_STOP     => i_stop
   );
-  
+
   i_iow       <= i_ir and i_rw and (not i_li);
   i_ior       <= i_ir and (not i_rw) and (not i_li);
   i_en_tmr0   <= '1' when (i_addr(7 downto 2)="000000") else '0'; -- 00‾03
@@ -507,7 +509,7 @@ begin
   i_en_ram    <= '1' when (i_addr(7 downto 1)="1111000")else '0'; -- f0‾f1
   i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110" and
                       (i_addr(2)='1' or i_addr(1)='1')) else '0'; -- f2‾f7
- 
+
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
                i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
                i_dout_tmr0  when (i_ir='1' and i_en_tmr0='1') else
@@ -579,11 +581,12 @@ begin
          P_MMU_MR      => i_cpu_mr,
          P_BT          => i_bt,
          P_PR          => i_pr,
+         P_STOP        => i_stop,
          P_VIO_INT     => i_int_bit(11),
          P_ADR_INT     => i_int_bit(10),
          P_MR          => i_mr,
          P_ADDR        => i_addr,
-         P_MMU_ADDR    => i_cpu_addr, 
+         P_MMU_ADDR    => i_cpu_addr,
          P_DIN         => i_dout_cpu
   );
 
@@ -672,13 +675,13 @@ begin
          P_ADDR     => i_addr(2 downto 1),
          P_DIN      => i_dout_cpu(15 downto 0),
          P_DOUT     => i_dout_spi,
-         
+
          P_ADDR_DMA => i_addr_dma,
          P_DIN_DMA  => i_dout_ram_dma,
          P_DOUT_DMA => i_dout_dma,
          P_RW_DMA   => i_rw_dma,
          P_MR_DMA   => i_mr_dma,
-         
+
          P_SCLK     => P_SPI_SCLK,
          P_DI       => P_SPI_DIN,
          P_DO       => P_SPI_DOUT,
@@ -755,5 +758,5 @@ begin
       P_TEC_RESET   => P_TEC_RESET,
       P_TEC_SETA    => P_TEC_SETA
     );
-	 
+
 end Behavioral;
