@@ -21,6 +21,7 @@
 --
 -- TaC/tac_mmu.vhd : TaC Memory Management Unit Source Code
 --
+-- 2019.12.19           : CPU停止時（コンソール動作時）はアドレス変換禁止
 -- 2019.07.30           : アドレスエラー追加
 -- 2019.01.22           : 新しく追加
 --
@@ -37,6 +38,7 @@ entity TAC_MMU is
          P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
+         P_STOP     : in  std_logic;                     -- Panel RUN F/F
          P_VIO_INT  : out std_logic;                     -- Memory Vio inter
          P_ADR_INT  : out std_logic;                     -- Bad Address inter
          P_MR       : out std_logic;                     -- Memory Request
@@ -74,12 +76,12 @@ begin
     end if;
   end process;
 
-  i_act <= (not P_PR) and P_MMU_MR and i_en;
+  i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
   i_vio <= '1' when (P_MMU_ADDR>=i_l and i_act='1') else '0';
   i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;
   P_ADDR <= (P_MMU_ADDR + i_b) when (i_act='1') else P_MMU_ADDR;
   P_MR <= P_MMU_MR and (not i_vio);
   P_VIO_INT <= i_vio;
   P_ADR_INT <= i_adr;
-  
+
 end Behavioral;
