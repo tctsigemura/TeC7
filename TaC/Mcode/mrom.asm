@@ -1,8 +1,8 @@
-;;; 
+;;;
 ;;; TaC Micro Program Source Code
 ;;;    Tokuyama kousen Educational Computer 16bit Ver.
 ;;;
-;;; Copyright (C) 2002-2017 by
+;;; Copyright (C) 2002-2020 by
 ;;;                      Dept. of Computer Science and Electronic Engineering,
 ;;;                      Tokuyama College of Technology, JAPAN
 ;;;
@@ -18,18 +18,19 @@
 ;;;
 ;;;
 
-;;; 
+;;;
 ;;; mrom.asm : TaC
 ;;;
+;;; 2020.01.10        : RETI を非特権命令に変更
 ;;; 2017.01.10        : in,outの割込み判定を NPRV -> NIOPR に変更
 ;;; 2013.04.04        : DIV,MOD で TMP のクリア忘れ訂正
 ;;; 2012.09.29 v2.0.0 : コメント追加、無駄な命令削除、完成
 ;;; 2012.09.19        : LD Rd,FLAG 命令を追加
 ;;; 2012.09.17        : TaC-CPU V2 のコンソール対応
-;;; 2012.07.27        : 4bitのFP相対をワード単位に変更 
+;;; 2012.07.27        : 4bitのFP相対をワード単位に変更
 ;;; 2012.07.03        : TaC-CPU V2 対応
 ;;; 2011.09.07        : Console Panel のマイクロコードを追加
-;;; 2011.06.28        : TeC7 用に書き換える 
+;;; 2011.06.28        : TeC7 用に書き換える
 ;;; 2011.05.16        : PC と flag の退避順序を逆にする
 ;;; 2010.07.22        : 割り込み時に flag を自動退避、RETI が flag を復旧
 ;;; 2010.07.20        : Subversion による管理を開始
@@ -196,7 +197,7 @@ ret	alu(reg,SP),ld(AR)			; AR<=SP
 	alu(inc2,SP),ld(SP),bus(MEMR)		; SP+=2,DR<=MEM[AR]
 	alu(reg,DR),ld(PC),j(fetch)		; PC<=DR
 ####RETI####
-reti	alu(reg,SP),ld(AR),jcc(NPRV,pverr) 	; AR<=SP
+reti	alu(reg,SP),ld(AR) 			; AR<=SP
 	alu(inc2,SP),ld(SP,AR),bus(MEMR)	; AR<=(SP+=2),DR<=MEM[AR](flag)
 	alu(reg,DR),ld(TMP),bus(MEMR)		; TMP<=DR(flag),DR=MEM[AR](pc)
 	alu(inc2,SP),ld(SP)			; SP+2
