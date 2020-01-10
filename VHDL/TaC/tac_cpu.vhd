@@ -172,7 +172,7 @@ signal I_RRX : std_logic_vector(15 downto 0); -- IX 用の Read  Data
 
 -- レジスタ
 signal I_DR  : std_logic_vector(15 downto 0); -- DR
-signal I_OPR : std_logic_vector(15 downto 0); -- OPR 
+signal I_OPR : std_logic_vector(15 downto 0); -- OPR
 signal I_AR  : std_logic_vector(15 downto 0); -- AR
 signal I_MPC : std_logic_vector(7 downto 0);  -- MPC
 signal I_OP  : std_logic_vector(7 downto 0);  -- IR の OP
@@ -246,7 +246,7 @@ end component;
 begin
   -- decode ROM
   I_DECAD <= I_OP & M_JA(0);
-  drom1: TAC_DROM 
+  drom1: TAC_DROM
     port map (P_CLK=>P_CLK90, P_RESET=>P_RESET,
               P_AIN=>I_DECAD, P_DOUT=>I_DCODE);
 
@@ -392,7 +392,7 @@ begin
         else
           I_MPCLDAB <= "0X";
         end if;
-      when JMP_SPR  =>                                       -- Jcc(SPR) 
+      when JMP_SPR  =>                                       -- Jcc(SPR)
         if (I_RX="1101") then
           I_MPCLDAB <= "10";
         else
@@ -567,7 +567,7 @@ begin
         when "101010" => I_G10 <= I_ALU;
         when "101011" => I_G11 <= I_ALU;
         when "101100" => I_G12 <= I_ALU;
-        when "101101" => if(I_P='1')then 
+        when "101101" => if(I_P='1')then
                            I_SSP  <= I_ALU;
                          else
                            I_USP  <= I_ALU;
@@ -594,9 +594,11 @@ begin
       I_Z   <= '0';
     elsif (P_CLK0' event and P_CLK0='1') then
       if (I_WRA="110001") then
-        I_E   <= I_ALU(7);
-        I_P   <= I_ALU(6);
-        I_IOP <= I_ALU(5);
+        if (I_P='1') then                 -- 変化して良いのは特権モード時だけ
+          I_E   <= I_ALU(7);
+          I_P   <= I_ALU(6);
+          I_IOP <= I_ALU(5);
+	end if;
         I_V   <= I_ALU(3);
         I_C   <= I_ALU(2);
         I_S   <= I_ALU(1);
@@ -751,7 +753,7 @@ begin
       when ALU_SFT  =>
         if (I_OP(3)='1') then
           I_AV <= '0';                                   -- Logical
-        else             
+        else
           I_AV <=(I_RRD(15) xor I_ALUT(15)) or I_V;      -- Arithmetic
         end if;
       when others   => I_AV <= '0';
