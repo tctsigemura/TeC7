@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2019 by
+ * Copyright (C) 2009-2020 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,7 @@
 /*
  * ipl0.cmm : C-- 言語版の TaC IPL
  *
+ * 2020.03.05 v4.4.0    : Bluetoothからもtwriteができるようにする
  * 2019.09.09           : TaCモードでSETAとRESETの同時押しで"kernel0.bin"を起動
  * 2019.08.29 v4.3.0    : IPL0とIPL1を統合（バンクを8KiBに変更）
  * 2019.03.01           : IPL0とIPL1に分離(バンク切替えをする）
@@ -189,11 +190,11 @@ void tecMode() {
   // TacOSを起動できなかった場合は IPL が通信を中継する
   for (;;) {
     if ((in(0x0a) & 0x40)!=0) {               // FT232RLから受信したら
-      twWrite(chr(in(0x08)));                 //   TWRITEの通信をチェック
+      twWrite(chr(in(0x08)));                 //   TWRITEチェック
     }
     if ((in(0x2a) & 0x40)!=0) {               // RN4020から受信したら
       char c = chr(in(0x028));
-      if (mldpOn) putTeC(c);                  //   接続中ならTeCに送信
+      if (mldpOn) twWrite(c);                 //   接続中ならTWRITEチェック
       rn4Rcv(c);                              //   接続・切断の監視
     }
     if ((in(0x0e) & 0x40)!=0) {               // TeCから受信したら
@@ -309,7 +310,7 @@ public void main() {
   putstr("(build date : ");
   putstr( DATE );
   putstr(")\n");
-  putstr("Copyright(c) 2009-2019 Tokuyama College of Technology\n");
+  putstr("Copyright(c) 2009-2020 Tokuyama College of Technology\n");
   putstr("All rights reserved.\n\n");
 
   int mode = in(0x1e);
