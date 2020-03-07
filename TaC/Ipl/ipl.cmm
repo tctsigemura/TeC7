@@ -74,17 +74,15 @@ void runOS(char[] kernel) {
 // RN4020 との接続・切断を調べる
 FSM conFSM;                                   // 接続を判断するFSM
 FSM errFSM;                                   // 切断を判断するFSM
-boolean mldpOn;                               // 接続中を表すフラグ
+#define mldpOn ((in(0x2e)&1)==1)              // 接続中を表すフラグ
 
 void rn4Rcv(char c)  {                        // RN4020からの受信をチェックする
   if (mldpOn) {                               // 接続中なら
     if (msgFSM(errFSM, c)) {                  //   切断時によく出るメッセージ？
-        mldpOn = false;                       //     切断中に変更
         out(0x2e, in(0x2e)&~1);               //     RN4020-RAMに記録
     }
   } else {                                    // 未接続なら
     if (msgFSM(conFSM, c)) {                  //   接続時メッセージ？
-      mldpOn = true;                          //     接続中に変更
       out(0x2e, in(0x2e)|1);                  //     RN4020-RAMに記録
     }
   }
@@ -301,8 +299,6 @@ public void main() {
   twFSM.msg = "\033TWRITE\r\n";               // TWRITEの開始メッセージ
   twMode = 0;                                 // TWRITEの初期状態
   twMat  = 0;                                 // TWRITEの初期状態
-
-  mldpOn = (in(0x2e) & 1)!=0;                 // RN4020-RAMから初期値を決める
 
   putstr("\nTaC Initial Program Loader Ver.");
   putstr( VER );
