@@ -2,7 +2,7 @@
 # TaC IPL Source Code
 #    Tokuyama kousen Educational Computer 16 bit Version
 #
-# Copyright (C) 2009-2019 by
+# Copyright (C) 2009-2020 by
 #                      Dept. of Computer Science and Electronic Engineering,
 #                      Tokuyama College of Technology, JAPAN
 #
@@ -39,7 +39,7 @@
 #
 
 VER=\"`cat VERSION`\"
-DATE="\"`date`\""
+DATE="\"`env LC_TIME=C date`\""
 
 HEAP=0xc000           # 0xc000 - ...    : heap
 BSS=0xd000            # 0xd000 - ...    : bss
@@ -82,4 +82,3 @@ bin2hex16 : ${UTILDIR}/bin2hex16.c
 
 clean:
 	rm -f tac_ram.txt ipl *.lst *.bin *.o *.hex *.sym *.map *~
-
