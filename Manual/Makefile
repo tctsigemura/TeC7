@@ -7,7 +7,7 @@ PDFS = manual.pdf
 	lualatex $*.tex
 #	lualatex $*.tex
 #	dvipdfmx $*.dvi
-	open $*.pdf
+#	open $*.pdf
 
 all : ${PDFS}
 
