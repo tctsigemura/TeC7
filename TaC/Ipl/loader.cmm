@@ -263,7 +263,7 @@ int readKern() {
     badFile();
 
   len = ((len + 1) >> 1) & 0x7fff;       // 符号なしでワード単位に変換
-  for (int i=0; _uCmp(i,len)<0; i=i+1)   // カーネルサイズは 32kB 以下
+  for (int i=0; _uCmp(i,len)<0; i=i+1)   // ワード数は符号無しで比較
     mem[i] = readWord();
 
   return _AtoI(mem);                     // ロードアドレスを返す
