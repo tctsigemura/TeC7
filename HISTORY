@@ -1,8 +1,10 @@
 TeC7の歴史
 
+2020.12.21 : TeC7d v1.2.4 (IPL Ver.4.4.3) tec_panel の RUN 点滅機能実装忘れ
 2020.12.21 : TeC7d v1.2.3 (IPL Ver.4.4.3)
              TWRITEのバグ訂正，32KiB以上のkernel.binもブード可能に
 2020.03.05 : TeC7a v1.2.0 (IPL Ver.4.4.0)
+2019.07.30 : tec_panel を新しい設計に置き換え
 2019.07.25 : VHDL の文字コードを utf-8-unix に変更
 2019.05.06 : TeC7d から RN4020 関連を削除した TeC7a を作成
 2019.05.05 : ブランチを整理(master, tec7a, tec7bc, tec7d, tec7a_vga_ps2)
