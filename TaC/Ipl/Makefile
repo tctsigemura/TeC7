@@ -19,6 +19,7 @@
 #
 # Makefile : IPL の makefile
 #
+# 2020.12.21 v4.4.3    : バージョンの表示を改良
 # 2019.08.29           : IPL0とIPL1を統合
 # 2019.02.28           : IPLをIPL0とIPL1に分離
 # 2019.02.26           : HEAPを追加
@@ -38,7 +39,7 @@
 # $Id$
 #
 
-VER=\"`cat VERSION`\"
+VER="\"`cat VERSION`\(`cat ../../VERSION`\)\""
 DATE="\"`env LC_TIME=C date`\""
 
 HEAP=0xc000           # 0xc000 - ...    : heap
