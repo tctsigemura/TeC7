@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002 - 2019 by
+-- Copyright (C) 2002 - 2020 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -20,6 +20,7 @@
 --  TeC Panel
 --
 --
+-- 2020.12.21 : エラー時にRUNを点滅させる機能の実装漏れを訂正
 -- 2019.08.05 : パワーオン時に「ピ」音を鳴らすために，起動後にリセットし直す
 -- 2019.07.30 : 外部インタフェースを残して，新しい設計に置き換え
 --
@@ -87,6 +88,7 @@ architecture RTL of TEC_PANEL is
   signal G0     : std_logic;                      -- G0 選択中
   signal Mm     : std_logic;                      -- MM 選択中
   signal Run    : std_logic;                      -- CPU 実行/停止
+  signal Err    : std_logic;                      -- 命令コードエラー
   signal Rst    : std_logic;                      -- リセットの内部配線
   signal IntDly1: std_logic;                      -- 割込ボタンの Debounce 用
   signal IntDly2: std_logic;                      -- 割込ボタンの Debounce 用
@@ -214,25 +216,31 @@ begin
 
 -- CPU の RUN/STOP/ERROR
   P_STOP <= not Run;                              -- 外部端子に接続
-  P_R_LED <= Run or (P_2_3Hz and P_ER);           -- 外部端子に接続
+  P_R_LED <= Run or (P_2_3Hz and Err);            -- 外部端子に接続
   Fetch <= P_LI and P_MR;                         -- CPUが命令をフェッチする
 
-  process(P_CLK, Rst)                             -- Start/Stop の制御
+  process(P_CLK, Rst)                             -- Start/Stop/Error の制御
   begin
     if (Rst='1') then
       Run  <= '0';
+      Err  <= '0';
     elsif (P_CLK'event and P_CLK='1') then
-      if (BtnDbnc(5)='1') then                    -- Btn5(RUN)
-        Run  <= '1';
+      if (BtnDbnc(5)='1') then                    -- Btn5(RUN)が押された
+        Run  <= '1';                              --  Startする
       elsif (P_HL='1' or BtnDbnc(4)='1' or        -- Halt 命令または Btn4(STOP)
              (Fetch='1' and P_STEP_SW='1') or     -- STEP 実行時
              (Fetch='1' and P_BREAK_SW='1' and    -- BREAK 実行時
               P_DATA_SW=P_AIN)) then
-        Run  <= '0';
+        Run  <= '0';                              --  Stopする
+      end if;
+      if (BtnDbnc(5)='1') then                    -- Btn5(RUN)が押された
+        Err <= '0';                               --  Errはクリア
+      elsif (P_ER='1') then                       -- 命令コードエラー発生
+        Err <= '1';                               --  Errに記憶
       end if;
     end if;
   end process;
-  
+
 -- アドレス LED 関連
   P_A_LED <= Addr when Mm='1' else "00000000";    -- 外部端子に接続
   
