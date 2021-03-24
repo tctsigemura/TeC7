@@ -167,7 +167,19 @@ begin
             (others => '0')         when others;
 
   -- 信号の設定
+  I_SP <= I_REG_SSP when I_FLAG_P='1' else I_REG_USP;
 
+  I_RD <= I_REG_FP   when I_INST_RD="1100" else
+          I_REG_SP   when I_INST_RD="1101" else
+          I_REG_USP  when I_INST_RD="1110" else
+          I_REG_FLAG when I_INST_RD="1111" else
+          I_REG_GR(conv_integer(I_INST_RD));
+  
+  I_RX <= I_REG_FP   when I_INST_RX="1100" else
+          I_REG_SP   when I_INST_RX="1101" else
+          I_REG_USP  when I_INST_RX="1110" else
+          I_REG_FLAG when I_INST_RX="1111" else
+          I_REG_GR(conv_integer(I_INST_RX));
   
   -- レジスタの制御
 
@@ -183,7 +195,7 @@ begin
       I_USP  <= (others => '0');
       I_FLAG <= (others => '0');
       I_PC   <= (others => '0');
-    elsif (P_CLK0' event and P_CLK0='1') then
+    elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_GR='1') then
       case I_INST_RD is
         when "1100" => I_REG_FP   <= I_ALU_OUT;
         when "1101" =>
@@ -201,6 +213,15 @@ begin
           end if;
         when others => I_REG_GR(conv_integer(I_INST_RD)) <= I_ALU_OUT;
       end case;
+    end if;
+  end process;
+
+  --- DR の書き込み制御
+  process(P_CLK0, P_RESET) then
+    if (P_RESET='0') then
+      I_REG_DR <= (others => '0');
+    elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_DR='1') then
+      I_REG_DR <= I_DR_IN;
     end if;
   end process;
 
