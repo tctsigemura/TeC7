@@ -72,7 +72,7 @@ signal I_REG_GR  : RegGR;                          -- G0-G11
 signal I_REG_FP  : std_logic_vector(15 downto 0);  -- FP (G12)
 signal I_REG_SSP : std_logic_vector(15 downto 0);  -- SSP
 signal I_REG_USP : std_logic_vector(15 downto 0);  -- USP
-signal I_REG_FLAG: std_logic_vector(15 downto 0);  -- USP
+signal I_REG_FLAG: std_logic_vector(15 downto 0);  -- FLAG
 
 signal I_REG_PC  : std_logic_vector(15 downto 0);  -- PC
 
@@ -153,9 +153,10 @@ begin
                (others => '0')                          when others;
   
   --- MUX B
-  with I_ALU_B <= I_REG_DR        when "0",
-                  I_RX            when "1",
-                  (0thers => '0') when others;
+  with I_SELECT_B select
+    I_ALU_B <= I_REG_DR        when "0",
+               I_RX            when "1",
+               (others => '0') when others;
 
   --- EA
   with I_INST_OP2 select
@@ -224,5 +225,11 @@ begin
       I_REG_DR <= I_DR_IN;
     end if;
   end process;
+
+  --- FLAG の書き込み制御
+  process(P_CLK0, P_RESET) then
+    if (P_RESET='0') then
+      I_REG_FLAG <= "00000000";
+      --つづき
 
 end RTL;
