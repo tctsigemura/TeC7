@@ -79,7 +79,7 @@ signal I_REG_PC  : std_logic_vector(15 downto 0);  -- PC
 -- フラグ
 signal I_FLAG_E   : std_logic;                     -- Interrupt Enable
 signal I_FLAG_P   : std_logic;                     -- Privilege
-signal I_FLAG_IOP : std_logic;                     -- IO Privilege
+signal I_FLAG_I   : std_logic;                     -- IO Privilege
 signal I_FLAG_V   : std_logic;                     -- Over Flow
 signal I_FLAG_C   : std_logic;                     -- Carry
 signal I_FLAG_S   : std_logic;                     -- Sign
@@ -90,6 +90,8 @@ signal I_REG_DR  : std_logic_vector(15 downto 0);  -- DR
 signal I_REG_TMP : std_logic_vector(15 downto 0);  -- TMP
 
 -- 内部配線
+signal I_ADDR        : std_logic_vector(15 downto 0); -- アドレス出力
+signal I_DOUT        : std_logic_vector(15 downto 0); -- データ出力
 signal I_EA          : std_logic_vector(15 downto 0); -- 実効アドレス
 signal I_SP          : std_logic_vector(15 downto 0); -- スタックポインタ (カーネルモードとユーザーモードで切り替える)
 signal I_RD          : std_logic_vector(15 downto 0); -- GR[Rd]
@@ -121,11 +123,24 @@ signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
 
 begin
 
+  -- ポート
+  P_ADDR <= I_ADDR;
+  P_DOUT <= I_DOUT;
+  P_RW   <= '0'; -- TODO
+  P_IR   <= '0'; -- TODO
+  P_MR   <= '0'; -- TODO
+  P_LI   <= '0'; -- TODO
+  P_VR   <= '0'; -- TODO
+  P_HL   <= '0'; -- TODO
+  P_BT   <= '0'; -- TODO
+  P_PR   <= I_FLAG_P;
+  P_IOPR <= I_FLAG_I;
+
   -- マルチプレクサ
 
   --- MUX A
   with I_SELECT_A select
-    P_ADDR <= I_REG_PC          when "000",
+    I_ADDR <= I_REG_PC          when "000",
               I_REG_PC + 2      when "001",
               I_EA              when "010",
               I_SP              when "100",
@@ -135,7 +150,7 @@ begin
   
   --- MUX D
   with I_SELECT_D select
-    P_DOUT <= I_REG_PC                        when "000",
+    I_DOUT <= I_REG_PC                        when "000",
               I_REG_PC + 2                    when "001",
               I_REG_PC + 4                    when "010",
               I_RD                            when "100",
@@ -182,6 +197,14 @@ begin
           I_REG_FLAG when I_INST_RX="1111" else
           I_REG_GR(conv_integer(I_INST_RX));
   
+  I_FLAG_E <= I_REG_FLAG(7);
+  I_FLAG_P <= I_REG_FLAG(6);
+  I_FLAG_I <= I_REG_FLAG(5);
+  I_FLAG_V <= I_REG_FLAG(3);
+  I_FLAG_C <= I_REG_FLAG(2);
+  I_FLAG_S <= I_REG_FLAG(1);
+  I_FLAG_Z <= I_REG_FLAG(0);
+  
   -- レジスタの制御
 
   --- GR の書き込み制御
@@ -194,20 +217,20 @@ begin
       I_FP   <= (others => '0');
       I_SSP  <= (others => '0');
       I_USP  <= (others => '0');
-      I_FLAG <= (others => '0');
+      I_FLAG <= (6 => '1', others => '0');
       I_PC   <= (others => '0');
     elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_GR='1') then
       case I_INST_RD is
         when "1100" => I_REG_FP   <= I_ALU_OUT;
         when "1101" =>
-          if (FLAG_P='1') then
+          if (I_FLAG_P='1') then
             I_REG_SSP <= I_ALU_OUT;
           else
             I_REG_USP <= I_ALU_OUT;
           end if;
         when "1110" => I_REG_USP  <= I_ALU_OUT;
         when "1111" =>
-          if (FLAG_P='1') then
+          if (I_FLAG_P='1') then
             I_REG_FLAG <= I_ALU_OUT;
           else
             I_REG_FLAG <= I_REG_FLAG(15 downto 4) & I_ALU_OUT(3 downto 0);
@@ -225,11 +248,5 @@ begin
       I_REG_DR <= I_DR_IN;
     end if;
   end process;
-
-  --- FLAG の書き込み制御
-  process(P_CLK0, P_RESET) then
-    if (P_RESET='0') then
-      I_REG_FLAG <= "00000000";
-      --つづき
 
 end RTL;
