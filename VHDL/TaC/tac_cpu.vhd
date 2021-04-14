@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2019 by
+-- Copyright (C) 2002-2021 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -72,18 +72,18 @@ signal I_REG_GR  : RegGR;                          -- G0-G11
 signal I_REG_FP  : std_logic_vector(15 downto 0);  -- FP (G12)
 signal I_REG_SSP : std_logic_vector(15 downto 0);  -- SSP
 signal I_REG_USP : std_logic_vector(15 downto 0);  -- USP
-signal I_REG_FLAG: std_logic_vector(15 downto 0);  -- FLAG
 
 signal I_REG_PC  : std_logic_vector(15 downto 0);  -- PC
 
 -- フラグ
-signal I_FLAG_E   : std_logic;                     -- Interrupt Enable
-signal I_FLAG_P   : std_logic;                     -- Privilege
-signal I_FLAG_I   : std_logic;                     -- IO Privilege
-signal I_FLAG_V   : std_logic;                     -- Over Flow
-signal I_FLAG_C   : std_logic;                     -- Carry
-signal I_FLAG_S   : std_logic;                     -- Sign
-signal I_FLAG_Z   : std_logic;                     -- Zero
+signal I_FLAG: std_logic_vector(15 downto 0); -- FLAG
+signal I_FLAG_E   : std_logic;                -- Interrupt Enable
+signal I_FLAG_P   : std_logic;                -- Privilege
+signal I_FLAG_I   : std_logic;                -- IO Privilege
+signal I_FLAG_V   : std_logic;                -- Over Flow
+signal I_FLAG_C   : std_logic;                -- Carry
+signal I_FLAG_S   : std_logic;                -- Sign
+signal I_FLAG_Z   : std_logic;                -- Zero
 
 -- 内部レジスタ
 signal I_REG_DR  : std_logic_vector(15 downto 0);  -- DR
@@ -155,7 +155,7 @@ begin
               I_REG_PC + 4                    when "010",
               I_RD                            when "100",
               "00000000" & I_RD(15 downto 8)  when "101",
-              I_REG_FLAG                      when "110",
+              I_FLAG                          when "110",
               I_REG_TMP                       when "111",
               (others => '0')                 when others;
 
@@ -188,22 +188,16 @@ begin
   I_RD <= I_REG_FP   when I_INST_RD="1100" else
           I_REG_SP   when I_INST_RD="1101" else
           I_REG_USP  when I_INST_RD="1110" else
-          I_REG_FLAG when I_INST_RD="1111" else
+          I_FLAG     when I_INST_RD="1111" else
           I_REG_GR(conv_integer(I_INST_RD));
   
   I_RX <= I_REG_FP   when I_INST_RX="1100" else
           I_REG_SP   when I_INST_RX="1101" else
           I_REG_USP  when I_INST_RX="1110" else
-          I_REG_FLAG when I_INST_RX="1111" else
+          I_FLAG     when I_INST_RX="1111" else
           I_REG_GR(conv_integer(I_INST_RX));
   
-  I_FLAG_E <= I_REG_FLAG(7);
-  I_FLAG_P <= I_REG_FLAG(6);
-  I_FLAG_I <= I_REG_FLAG(5);
-  I_FLAG_V <= I_REG_FLAG(3);
-  I_FLAG_C <= I_REG_FLAG(2);
-  I_FLAG_S <= I_REG_FLAG(1);
-  I_FLAG_Z <= I_REG_FLAG(0);
+  I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
   
   -- レジスタの制御
 
@@ -231,10 +225,14 @@ begin
         when "1110" => I_REG_USP  <= I_ALU_OUT;
         when "1111" =>
           if (I_FLAG_P='1') then
-            I_REG_FLAG <= I_ALU_OUT;
-          else
-            I_REG_FLAG <= I_REG_FLAG(15 downto 4) & I_ALU_OUT(3 downto 0);
+            I_FLAG_E <= I_ALU_OUT(7);
+            I_FLAG_P <= I_ALU_OUT(6);
+            I_FLAG_I <= I_ALU_OUT(5);
           end if;
+          I_FLAG_V <= I_ALU_OUT(3);
+          I_FLAG_C <= I_ALU_OUT(2);
+          I_FLAG_S <= I_ALU_OUT(1);
+          I_FLAG_Z <= I_ALU_OUT(0);
         when others => I_REG_GR(conv_integer(I_INST_RD)) <= I_ALU_OUT;
       end case;
     end if;
