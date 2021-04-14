@@ -88,6 +88,10 @@ signal I_FLAG_Z   : std_logic;                -- Zero
 -- 内部レジスタ
 signal I_REG_DR  : std_logic_vector(15 downto 0);  -- DR
 signal I_REG_TMP : std_logic_vector(15 downto 0);  -- TMP
+signal I_INST_OP1    : std_logic_vector(4 downto 0);  -- 命令の OP1
+signal I_INST_OP2    : std_logic_vector(2 downto 0);  -- 命令の OP2
+signal I_INST_RD     : std_logic_vector(4 downto 0);  -- 命令の Rd
+signal I_INST_RX     : std_logic_vector(4 downto 0);  -- 命令の Rx
 
 -- 内部配線
 signal I_ADDR        : std_logic_vector(15 downto 0); -- アドレス出力
@@ -97,10 +101,6 @@ signal I_SP          : std_logic_vector(15 downto 0); -- スタックポイン�
 signal I_RD          : std_logic_vector(15 downto 0); -- GR[Rd]
 signal I_RX          : std_logic_vector(15 downto 0); -- GR[Rx]
 signal I_DR_IN       : std_logic_vector(15 downto 0); -- DR への入力
-signal I_INST_OP1    : std_logic_vector(4 downto 0);  -- 命令の OP1
-signal I_INST_OP2    : std_logic_vector(2 downto 0);  -- 命令の OP2
-signal I_INST_RD     : std_logic_vector(4 downto 0);  -- 命令の Rd
-signal I_INST_RX     : std_logic_vector(4 downto 0);  -- 命令の Rx
 signal I_UPDATE_PC   : std_logic_vector(1 downto 0);  -- PC の更新
 signal I_UPDATE_SP   : std_logic_vector(1 downto 0);  -- SP の更新
 signal I_LOAD_IR     : std_logic;                     -- IR のロード
@@ -110,8 +110,8 @@ signal I_LOAD_TMP    : std_logic;                     -- TMP のロード
 signal I_LOAD_GR     : std_logic;                     -- 汎用レジスタのロード
 signal I_SELECT_A    : std_logic_vector(2 downto 0);  -- MUX A の選択
 signal I_SELECT_D    : std_logic_vector(2 downto 0);  -- MUX D の選択
-signal I_SELECT_W    : std_logic_vector(2 downto 0);  -- MUX W の選択
-signal I_SELECT_B    : std_logic_vector(2 downto 0);  -- MUX B の選択
+signal I_SELECT_W    : std_logic_vector(1 downto 0);  -- MUX W の選択
+signal I_SELECT_B    : std_logic_vector(0 downto 0);  -- MUX B の選択
 signal I_ALU_B       : std_logic_vector(15 downto 0); -- ALU への B 信号
 signal I_ALU_START   : std_logic;                     -- ALU への START 信号
 signal I_ALU_BUSY    : std_logic;                     -- ALU からの BUSY 信号
@@ -145,8 +145,7 @@ begin
               I_EA              when "010",
               I_SP              when "100",
               I_SP + 2          when "101",
-              I_SP - 2          when "110",
-              (others => '0')   when others;
+              I_SP - 2          when others;
   
   --- MUX D
   with I_SELECT_D select
@@ -156,22 +155,19 @@ begin
               I_RD                            when "100",
               "00000000" & I_RD(15 downto 8)  when "101",
               I_FLAG                          when "110",
-              I_REG_TMP                       when "111",
-              (others => '0')                 when others;
+              I_REG_TMP                       when others;
 
   --- MUX W
   with I_SELECT_W select
     I_DR_IN <= P_DIN                                    when "00",
                (others => P_DIN(3)) & P_DIN(3 downto 0) when "01",
                "00000000" & P_DIN(7 downto 0)           when "10",
-               "00000000" & P_DIN(15 downto 8)          when "11"
-               (others => '0')                          when others;
+               "00000000" & P_DIN(15 downto 8)          when others;
   
   --- MUX B
   with I_SELECT_B select
     I_ALU_B <= I_REG_DR        when "0",
-               I_RX            when "1",
-               (others => '0') when others;
+               I_RX            when others;
 
   --- EA
   with I_INST_OP2 select
@@ -179,8 +175,7 @@ begin
             I_REG_DR + I_RX         when "001",
             I_REG_FP + I_REG_DR * 2 when "011",
             I_RX                    when "110",
-            I_RX                    when "111",
-            (others => '0')         when others;
+            I_RD                    when others;
 
   -- 信号の設定
   I_SP <= I_REG_SSP when I_FLAG_P='1' else I_REG_USP;

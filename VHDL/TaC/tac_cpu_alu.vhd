@@ -44,4 +44,7 @@ entity TAC_CPU_ALU is
 end TAC_CPU_ALU;
 
 architecture RTL of TAC_CPU_ALU is
+
+
+    
 end RTL;
