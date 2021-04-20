@@ -65,42 +65,44 @@ end TAC_CPU;
 
 
 architecture RTL of TAC_CPU is
+  
+subtype Word is std_logic_vector(15 downto 0);
 
 -- レジスタファイル
-type RegGR is array(0 to 11) of std_logic_vector(15 downto 0);
-signal I_REG_GR  : RegGR;                          -- G0-G11
-signal I_REG_FP  : std_logic_vector(15 downto 0);  -- FP (G12)
-signal I_REG_SSP : std_logic_vector(15 downto 0);  -- SSP
-signal I_REG_USP : std_logic_vector(15 downto 0);  -- USP
+type RegGR is array(0 to 11) of Word;
+signal I_REG_GR  : RegGR; -- G0-G11
+signal I_REG_FP  : Word;  -- FP (G12)
+signal I_REG_SSP : Word;  -- SSP
+signal I_REG_USP : Word;  -- USP
 
-signal I_REG_PC  : std_logic_vector(15 downto 0);  -- PC
+signal I_REG_PC  : Word;  -- PC
 
 -- フラグ
-signal I_FLAG: std_logic_vector(15 downto 0); -- FLAG
-signal I_FLAG_E   : std_logic;                -- Interrupt Enable
-signal I_FLAG_P   : std_logic;                -- Privilege
-signal I_FLAG_I   : std_logic;                -- IO Privilege
-signal I_FLAG_V   : std_logic;                -- Over Flow
-signal I_FLAG_C   : std_logic;                -- Carry
-signal I_FLAG_S   : std_logic;                -- Sign
-signal I_FLAG_Z   : std_logic;                -- Zero
+signal I_FLAG: Word;              -- FLAG
+signal I_FLAG_E   : std_logic;    -- Interrupt Enable
+signal I_FLAG_P   : std_logic;    -- Privilege
+signal I_FLAG_I   : std_logic;    -- IO Privilege
+signal I_FLAG_V   : std_logic;    -- Over Flow
+signal I_FLAG_C   : std_logic;    -- Carry
+signal I_FLAG_S   : std_logic;    -- Sign
+signal I_FLAG_Z   : std_logic;    -- Zero
 
 -- 内部レジスタ
-signal I_REG_DR  : std_logic_vector(15 downto 0);  -- DR
-signal I_REG_TMP : std_logic_vector(15 downto 0);  -- TMP
+signal I_REG_DR  : Word;                              -- DR
+signal I_REG_TMP : Word;                              -- TMP
 signal I_INST_OP1    : std_logic_vector(4 downto 0);  -- 命令の OP1
 signal I_INST_OP2    : std_logic_vector(2 downto 0);  -- 命令の OP2
 signal I_INST_RD     : std_logic_vector(4 downto 0);  -- 命令の Rd
 signal I_INST_RX     : std_logic_vector(4 downto 0);  -- 命令の Rx
 
 -- 内部配線
-signal I_ADDR        : std_logic_vector(15 downto 0); -- アドレス出力
-signal I_DOUT        : std_logic_vector(15 downto 0); -- データ出力
-signal I_EA          : std_logic_vector(15 downto 0); -- 実効アドレス
-signal I_SP          : std_logic_vector(15 downto 0); -- スタックポインタ (カーネルモードとユーザーモードで切り替える)
-signal I_RD          : std_logic_vector(15 downto 0); -- GR[Rd]
-signal I_RX          : std_logic_vector(15 downto 0); -- GR[Rx]
-signal I_DR_IN       : std_logic_vector(15 downto 0); -- DR への入力
+signal I_ADDR        : Word;                          -- アドレス出力
+signal I_DOUT        : Word;                          -- データ出力
+signal I_EA          : Word;                          -- 実効アドレス
+signal I_SP          : Word;                          -- スタックポインタ (カーネルモードとユーザーモードで切り替える)
+signal I_RD          : Word;                          -- GR[Rd]
+signal I_RX          : Word;                          -- GR[Rx]
+signal I_DR_IN       : Word;                          -- DR への入力
 signal I_UPDATE_PC   : std_logic_vector(1 downto 0);  -- PC の更新
 signal I_UPDATE_SP   : std_logic_vector(1 downto 0);  -- SP の更新
 signal I_LOAD_IR     : std_logic;                     -- IR のロード
@@ -112,10 +114,10 @@ signal I_SELECT_A    : std_logic_vector(2 downto 0);  -- MUX A の選択
 signal I_SELECT_D    : std_logic_vector(2 downto 0);  -- MUX D の選択
 signal I_SELECT_W    : std_logic_vector(1 downto 0);  -- MUX W の選択
 signal I_SELECT_B    : std_logic_vector(0 downto 0);  -- MUX B の選択
-signal I_ALU_B       : std_logic_vector(15 downto 0); -- ALU への B 信号
+signal I_ALU_B       : Word;                          -- ALU への B 信号
 signal I_ALU_START   : std_logic;                     -- ALU への START 信号
 signal I_ALU_BUSY    : std_logic;                     -- ALU からの BUSY 信号
-signal I_ALU_OUT     : std_logic_vector(15 downto 0); -- ALU の出力
+signal I_ALU_OUT     : Word;                          -- ALU の出力
 signal I_ALU_OVERFLOW: std_logic;                     -- ALU の Over flow 出力
 signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
