@@ -68,6 +68,22 @@ architecture RTL of TAC_CPU is
   
 subtype Word is std_logic_vector(15 downto 0);
 
+component TAC_CPU_ALU is
+  port (  P_CLK       : in std_logic;
+          P_START     : in std_logic;
+          P_OP1       : in std_logic_vector(4 downto 0);
+          P_A         : in std_logic_vector(15 downto 0);
+          P_B         : in std_logic_vector(15 downto 0);
+          P_BUSY      : out std_logic;
+          P_OUT       : out std_logic_vector(15 downto 0);
+          P_OVERFLOW  : out std_logic;
+          P_CARRY     : out std_logic;
+          P_ZERO      : out std_logic;
+          P_SIGN      : out std_logic;
+          P_FLAG      : out std_logic                     -- Update Flag
+          );
+end component;
+
 -- レジスタファイル
 type RegGR is array(0 to 11) of Word;
 signal I_REG_GR  : RegGR; -- G0-G11
@@ -124,6 +140,21 @@ signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
 
 begin
+  
+  ALU : TAC_CPU_ALU
+  port map (
+    P_CLK       => P_CLK0,
+    P_START     => I_ALU_START,
+    P_OP1       => I_INST_OP1,
+    P_A         => I_RD,
+    P_B         => I_ALU_B,
+    P_BUSY      => I_ALU_BUSY,
+    P_OUT       => I_ALU_OUT,
+    P_OVERFLOW  => I_ALU_OVERFLOW,
+    P_CARRY     => I_ALU_CARRY,
+    P_ZERO      => I_ALU_ZERO,
+    P_SIGN      => I_ALU_SIGN
+  );
 
   -- ポート
   P_ADDR <= I_ADDR;
