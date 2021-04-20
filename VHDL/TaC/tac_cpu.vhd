@@ -244,7 +244,6 @@ begin
       I_FP   <= (others => '0');
       I_SSP  <= (others => '0');
       I_USP  <= (others => '0');
-      I_PC   <= (others => '0');
     elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_GR='1') then
       case I_INST_RD is
         when "1100" => I_REG_FP   <= I_ALU_OUT;
@@ -270,9 +269,15 @@ begin
   end process;
       
   --- FLAG の書き込み制御
-  process(P_CLK0, P_RESET, I_UPDATE_FLAG) then
+  process(P_CLK0, P_RESET) then
     if (P_RESET='0') then
-      I_FLAG <= (6 => '1', others => '0');
+      I_FLAG_E <= '0';
+      I_FLAG_P <= '1';
+      I_FLAG_I <= '0';
+      I_FLAG_V <= '0';
+      I_FLAG_C <= '0';
+      I_FLAG_S <= '0';
+      I_FLAG_Z <= '0';
     elsif (P_CLK0'event and P_CLK0='1') then
       if I_LOAD_GR='1' and I_INST_RD="1111") then
         if (I_FLAG_P='1') then
@@ -290,6 +295,20 @@ begin
         I_FLAG_S <= I_ALU_SIGN;
         I_FLAG_Z <= I_ALU_ZERO;
       end if;
+    end if;
+  end process;
+  
+  -- PC の書き込み制御
+  process(P_CLK0, P_RESET) then
+    if (P_RESET='0') then
+      I_REG_PC <= (others => '0');
+    elsif (P_CLK0'event and P_CLK0='1') then
+      case I_UPDATE_PC is
+        when "01" => I_REG_PC <= I_REG_PC + 2;
+        when "10" => I_REG_PC <= I_REG_PC + 4;
+        when "11" => I_REG_PC <= P_DIN;
+        when others => NULL;
+      end case;
     end if;
   end process;
 end RTL;
