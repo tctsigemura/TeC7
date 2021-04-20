@@ -121,6 +121,7 @@ signal I_RX          : Word;                          -- GR[Rx]
 signal I_DR_IN       : Word;                          -- DR への入力
 signal I_UPDATE_PC   : std_logic_vector(1 downto 0);  -- PC の更新
 signal I_UPDATE_SP   : std_logic_vector(1 downto 0);  -- SP の更新
+signal I_UPDATE_FLAG : std_logic;                     -- FLAG の更新
 signal I_LOAD_IR     : std_logic;                     -- IR のロード
 signal I_LOAD_DR     : std_logic;                     -- DR のロード
 signal I_LOAD_FLAG   : std_logic;                     -- FLAG のロード
@@ -155,6 +156,8 @@ begin
     P_ZERO      => I_ALU_ZERO,
     P_SIGN      => I_ALU_SIGN
   );
+    
+  --TODO: ステートマシン
 
   -- ポート
   P_ADDR <= I_ADDR;
@@ -226,6 +229,8 @@ begin
           I_REG_GR(conv_integer(I_INST_RX));
   
   I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
+            
+  --TODO: I_UPDATE_FLAG <= フラグを更新するか（ステートやOP2によって決める）
   
   -- レジスタの制御
 
@@ -239,7 +244,6 @@ begin
       I_FP   <= (others => '0');
       I_SSP  <= (others => '0');
       I_USP  <= (others => '0');
-      I_FLAG <= (6 => '1', others => '0');
       I_PC   <= (others => '0');
     elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_GR='1') then
       case I_INST_RD is
@@ -251,16 +255,6 @@ begin
             I_REG_USP <= I_ALU_OUT;
           end if;
         when "1110" => I_REG_USP  <= I_ALU_OUT;
-        when "1111" =>
-          if (I_FLAG_P='1') then
-            I_FLAG_E <= I_ALU_OUT(7);
-            I_FLAG_P <= I_ALU_OUT(6);
-            I_FLAG_I <= I_ALU_OUT(5);
-          end if;
-          I_FLAG_V <= I_ALU_OUT(3);
-          I_FLAG_C <= I_ALU_OUT(2);
-          I_FLAG_S <= I_ALU_OUT(1);
-          I_FLAG_Z <= I_ALU_OUT(0);
         when others => I_REG_GR(conv_integer(I_INST_RD)) <= I_ALU_OUT;
       end case;
     end if;
@@ -274,5 +268,28 @@ begin
       I_REG_DR <= I_DR_IN;
     end if;
   end process;
-
+      
+  --- FLAG の書き込み制御
+  process(P_CLK0, P_RESET, I_UPDATE_FLAG) then
+    if (P_RESET='0') then
+      I_FLAG <= (6 => '1', others => '0');
+    elsif (P_CLK0'event and P_CLK0='1') then
+      if I_LOAD_GR='1' and I_INST_RD="1111") then
+        if (I_FLAG_P='1') then
+          I_FLAG_E <= I_ALU_OUT(7);
+          I_FLAG_P <= I_ALU_OUT(6);
+          I_FLAG_I <= I_ALU_OUT(5);
+        end if;
+        I_FLAG_V <= I_ALU_OUT(3);
+        I_FLAG_C <= I_ALU_OUT(2);
+        I_FLAG_S <= I_ALU_OUT(1);
+        I_FLAG_Z <= I_ALU_OUT(0);
+      elsif (I_UPDATE_FLAG='1') then
+        I_FLAG_V <= I_ALU_OVERFLOW;
+        I_FLAG_C <= I_ALU_CARRY;
+        I_FLAG_S <= I_ALU_SIGN;
+        I_FLAG_Z <= I_ALU_ZERO;
+      end if;
+    end if;
+  end process;
 end RTL;
