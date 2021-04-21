@@ -121,7 +121,6 @@ signal I_RX          : Word;                          -- GR[Rx]
 signal I_DR_IN       : Word;                          -- DR への入力
 signal I_UPDATE_PC   : std_logic_vector(1 downto 0);  -- PC の更新
 signal I_UPDATE_SP   : std_logic_vector(1 downto 0);  -- SP の更新
-signal I_UPDATE_FLAG : std_logic;                     -- FLAG の更新
 signal I_LOAD_IR     : std_logic;                     -- IR のロード
 signal I_LOAD_DR     : std_logic;                     -- DR のロード
 signal I_LOAD_FLAG   : std_logic;                     -- FLAG のロード
@@ -230,7 +229,6 @@ begin
   
   I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
             
-  --TODO: I_UPDATE_FLAG <= フラグを更新するか（ステートやOP2によって決める）
   
   -- レジスタの制御
 
@@ -289,7 +287,7 @@ begin
         I_FLAG_C <= I_ALU_OUT(2);
         I_FLAG_S <= I_ALU_OUT(1);
         I_FLAG_Z <= I_ALU_OUT(0);
-      elsif (I_UPDATE_FLAG='1') then
+      elsif (I_LOAD_FLAG='1') then
         I_FLAG_V <= I_ALU_OVERFLOW;
         I_FLAG_C <= I_ALU_CARRY;
         I_FLAG_S <= I_ALU_SIGN;
