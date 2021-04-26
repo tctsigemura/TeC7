@@ -30,6 +30,7 @@ use IEEE.std_logic_unsigned.all;
 
 entity TAC_CPU_SEQUENCER is
     port (  P_CLK         : in std_logic;
+            P_RESET       : in std_logic;
             P_UPDATE_PC   : out std_logic_vector(1 downto 0);  -- PC の更新
             P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
             P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -66,28 +67,48 @@ constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10011";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
 
+signal   I_STOP : std_logic;
+signal   I_INTR : std_logic;
+
 begin
     
-    case I_STATE is
-        when STATE_FETCH => null;
-        when STATE_WAIT  => null;
-        when STATE_INTR1 => null;
-        when STATE_INTR2 => null;
-        when STATE_INTR3 => null;
-        when STATE_INTR4 => null;
-        when STATE_DEC1  => null;
-        when STATE_DEC2  => null;
-        when STATE_ALU1  => null;
-        when STATE_ALU2  => null;
-        when STATE_ST1   => null;
-        when STATE_ST2   => null;
-        when STATE_PUSH  => null;
-        when STATE_POP   => null;
-        when STATE_RET   => null;
-        when STATE_RETI1 => null;
-        when STATE_RETI2 => null;
-        when STATE_RETI3 => null;
-        when others => null;
-    end case;
+    process (P_CLK, P_RESET)
+    begin
+        if (P_RESET='1') then
+            I_STATE <= STATE_FETCH;
+            I_STOP  <= '0';
+            I_INTR  <= '0';
+        elsif (P_CLK'event and P_CLK='1') then
+            case I_STATE is
+                when STATE_FETCH =>
+                    if (I_STOP='0' and I_INTR='1') then
+                        I_STATE <= STATE_INTR1;
+                        P_FLAG_P <= '1';
+                    elsif (I_STOP='0' and I_INTR='0') then
+                        P_LOAD_IR <= '1';
+                        P_LOAD_GR <= '1';
+                        P_SELECT_W <= W_S4;
+                    end if;
+                when STATE_WAIT  => null;
+                when STATE_INTR1 => null;
+                when STATE_INTR2 => null;
+                when STATE_INTR3 => null;
+                when STATE_INTR4 => null;
+                when STATE_DEC1  => null;
+                when STATE_DEC2  => null;
+                when STATE_ALU1  => null;
+                when STATE_ALU2  => null;
+                when STATE_ST1   => null;
+                when STATE_ST2   => null;
+                when STATE_PUSH  => null;
+                when STATE_POP   => null;
+                when STATE_RET   => null;
+                when STATE_RETI1 => null;
+                when STATE_RETI2 => null;
+                when STATE_RETI3 => null;
+                when others => null;
+            end case;
+        end if;
+    end process;
     
 end RTL;
