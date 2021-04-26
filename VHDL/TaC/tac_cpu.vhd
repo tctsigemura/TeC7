@@ -128,7 +128,7 @@ signal I_LOAD_GR     : std_logic;                     -- 汎用レジスタの�
 signal I_SELECT_A    : std_logic_vector(2 downto 0);  -- MUX A の選択
 signal I_SELECT_D    : std_logic_vector(2 downto 0);  -- MUX D の選択
 signal I_SELECT_W    : std_logic_vector(1 downto 0);  -- MUX W の選択
-signal I_SELECT_B    : std_logic_vector(0 downto 0);  -- MUX B の選択
+signal I_SELECT_B    : std_logic;                     -- MUX B の選択
 signal I_ALU_B       : Word;                          -- ALU への B 信号
 signal I_ALU_START   : std_logic;                     -- ALU への START 信号
 signal I_ALU_BUSY    : std_logic;                     -- ALU からの BUSY 信号
@@ -200,8 +200,8 @@ begin
   
   --- MUX B
   with I_SELECT_B select
-    I_ALU_B <= I_REG_DR        when "0",
-               I_RX            when others;
+    I_ALU_B <= I_REG_DR        when '0',
+               I_RX            when '1';
 
   --- EA
   with I_INST_OP2 select
