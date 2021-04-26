@@ -80,7 +80,6 @@ component TAC_CPU_ALU is
           P_CARRY     : out std_logic;
           P_ZERO      : out std_logic;
           P_SIGN      : out std_logic;
-          P_FLAG      : out std_logic                     -- Update Flag
           );
 end component;
 
