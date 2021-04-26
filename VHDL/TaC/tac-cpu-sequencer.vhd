@@ -58,7 +58,7 @@ constant STATE_ST1   : std_logic_vector(4 downto 0) := "01011";
 constant STATE_ST2   : std_logic_vector(4 downto 0) := "01100";
 constant STATE_PUSH  : std_logic_vector(4 downto 0) := "01101";
 constant STATE_POP   : std_logic_vector(4 downto 0) := "01110";
-constant STATE_cALL1 : std_logic_vector(4 downto 0) := "01111";
+constant STATE_CALL1 : std_logic_vector(4 downto 0) := "01111";
 constant STATE_RET   : std_logic_vector(4 downto 0) := "10000";
 constant STATE_RETI1 : std_logic_vector(4 downto 0) := "10001";
 constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10010";
@@ -69,6 +69,25 @@ signal   I_STATE     : std_logic_vector(4 downto 0);
 begin
     
     case I_STATE is
+        when STATE_FETCH => null;
+        when STATE_WAIT  => null;
+        when STATE_INTR1 => null;
+        when STATE_INTR2 => null;
+        when STATE_INTR3 => null;
+        when STATE_INTR4 => null;
+        when STATE_DEC1  => null;
+        when STATE_DEC2  => null;
+        when STATE_ALU1  => null;
+        when STATE_ALU2  => null;
+        when STATE_ST1   => null;
+        when STATE_ST2   => null;
+        when STATE_PUSH  => null;
+        when STATE_POP   => null;
+        when STATE_RET   => null;
+        when STATE_RETI1 => null;
+        when STATE_RETI2 => null;
+        when STATE_RETI3 => null;
+        when others => null;
     end case;
     
 end RTL;
