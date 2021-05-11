@@ -46,5 +46,9 @@ end TAC_CPU_ALU;
 architecture RTL of TAC_CPU_ALU is
 
 
+
+begin
+
+    
     
 end RTL;
