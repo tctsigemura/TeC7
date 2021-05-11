@@ -65,29 +65,46 @@ end TAC_CPU;
 
 
 architecture RTL of TAC_CPU is
+  
+subtype Word is std_logic_vector(15 downto 0);
+
+component TAC_CPU_ALU is
+  port (  P_CLK       : in std_logic;
+          P_START     : in std_logic;
+          P_OP1       : in std_logic_vector(4 downto 0);
+          P_A         : in std_logic_vector(15 downto 0);
+          P_B         : in std_logic_vector(15 downto 0);
+          P_BUSY      : out std_logic;
+          P_OUT       : out std_logic_vector(15 downto 0);
+          P_OVERFLOW  : out std_logic;
+          P_CARRY     : out std_logic;
+          P_ZERO      : out std_logic;
+          P_SIGN      : out std_logic;
+          );
+end component;
 
 -- レジスタファイル
-type RegGR is array(0 to 11) of std_logic_vector(15 downto 0);
-signal I_REG_GR  : RegGR;                          -- G0-G11
-signal I_REG_FP  : std_logic_vector(15 downto 0);  -- FP (G12)
-signal I_REG_SSP : std_logic_vector(15 downto 0);  -- SSP
-signal I_REG_USP : std_logic_vector(15 downto 0);  -- USP
+type RegGR is array(0 to 11) of Word;
+signal I_REG_GR  : RegGR; -- G0-G11
+signal I_REG_FP  : Word;  -- FP (G12)
+signal I_REG_SSP : Word;  -- SSP
+signal I_REG_USP : Word;  -- USP
 
-signal I_REG_PC  : std_logic_vector(15 downto 0);  -- PC
+signal I_REG_PC  : Word;  -- PC
 
 -- フラグ
-signal I_FLAG: std_logic_vector(15 downto 0); -- FLAG
-signal I_FLAG_E   : std_logic;                -- Interrupt Enable
-signal I_FLAG_P   : std_logic;                -- Privilege
-signal I_FLAG_I   : std_logic;                -- IO Privilege
-signal I_FLAG_V   : std_logic;                -- Over Flow
-signal I_FLAG_C   : std_logic;                -- Carry
-signal I_FLAG_S   : std_logic;                -- Sign
-signal I_FLAG_Z   : std_logic;                -- Zero
+signal I_FLAG: Word;              -- FLAG
+signal I_FLAG_E   : std_logic;    -- Interrupt Enable
+signal I_FLAG_P   : std_logic;    -- Privilege
+signal I_FLAG_I   : std_logic;    -- IO Privilege
+signal I_FLAG_V   : std_logic;    -- Over Flow
+signal I_FLAG_C   : std_logic;    -- Carry
+signal I_FLAG_S   : std_logic;    -- Sign
+signal I_FLAG_Z   : std_logic;    -- Zero
 
 -- 内部レジスタ
-signal I_REG_DR  : std_logic_vector(15 downto 0);  -- DR
-signal I_REG_TMP : std_logic_vector(15 downto 0);  -- TMP
+signal I_REG_DR  : Word;                              -- DR
+signal I_REG_TMP : Word;                              -- TMP
 signal I_INST_OP1    : std_logic_vector(4 downto 0);  -- 命令の OP1
 signal I_INST_OP2    : std_logic_vector(2 downto 0);  -- 命令の OP2
 signal I_INST_RD     : std_logic_vector(4 downto 0);  -- 命令の Rd
@@ -95,13 +112,13 @@ signal I_INST_RX     : std_logic_vector(4 downto 0);  -- 命令の Rx
 signal I_STATE       : std_logic_vector(15 downto 0); -- 現在のステート
 
 -- 内部配線
-signal I_ADDR        : std_logic_vector(15 downto 0); -- アドレス出力
-signal I_DOUT        : std_logic_vector(15 downto 0); -- データ出力
-signal I_EA          : std_logic_vector(15 downto 0); -- 実効アドレス
-signal I_SP          : std_logic_vector(15 downto 0); -- スタックポインタ (カーネルモードとユーザーモードで切り替える)
-signal I_RD          : std_logic_vector(15 downto 0); -- GR[Rd]
-signal I_RX          : std_logic_vector(15 downto 0); -- GR[Rx]
-signal I_DR_IN       : std_logic_vector(15 downto 0); -- DR への入力
+signal I_ADDR        : Word;                          -- アドレス出力
+signal I_DOUT        : Word;                          -- データ出力
+signal I_EA          : Word;                          -- 実効アドレス
+signal I_SP          : Word;                          -- スタックポインタ (カーネルモードとユーザーモードで切り替える)
+signal I_RD          : Word;                          -- GR[Rd]
+signal I_RX          : Word;                          -- GR[Rx]
+signal I_DR_IN       : Word;                          -- DR への入力
 signal I_UPDATE_PC   : std_logic_vector(1 downto 0);  -- PC の更新
 signal I_UPDATE_SP   : std_logic_vector(1 downto 0);  -- SP の更新
 signal I_LOAD_IR     : std_logic;                     -- IR のロード
@@ -112,11 +129,11 @@ signal I_LOAD_GR     : std_logic;                     -- 汎用レジスタの�
 signal I_SELECT_A    : std_logic_vector(2 downto 0);  -- MUX A の選択
 signal I_SELECT_D    : std_logic_vector(2 downto 0);  -- MUX D の選択
 signal I_SELECT_W    : std_logic_vector(1 downto 0);  -- MUX W の選択
-signal I_SELECT_B    : std_logic_vector(0 downto 0);  -- MUX B の選択
-signal I_ALU_B       : std_logic_vector(15 downto 0); -- ALU への B 信号
+signal I_SELECT_B    : std_logic;                     -- MUX B の選択
+signal I_ALU_B       : Word;                          -- ALU への B 信号
 signal I_ALU_START   : std_logic;                     -- ALU への START 信号
 signal I_ALU_BUSY    : std_logic;                     -- ALU からの BUSY 信号
-signal I_ALU_OUT     : std_logic_vector(15 downto 0); -- ALU の出力
+signal I_ALU_OUT     : Word;                          -- ALU の出力
 signal I_ALU_OVERFLOW: std_logic;                     -- ALU の Over flow 出力
 signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
@@ -145,6 +162,23 @@ constant STATE_RETI2    : std_logic_vector(4 downto 0) = "11001";
 constant STATE_RETI3    : std_logic_vector(4 downto 0) = "11010";
 
 begin
+  
+  ALU : TAC_CPU_ALU
+  port map (
+    P_CLK       => P_CLK0,
+    P_START     => I_ALU_START,
+    P_OP1       => I_INST_OP1,
+    P_A         => I_RD,
+    P_B         => I_ALU_B,
+    P_BUSY      => I_ALU_BUSY,
+    P_OUT       => I_ALU_OUT,
+    P_OVERFLOW  => I_ALU_OVERFLOW,
+    P_CARRY     => I_ALU_CARRY,
+    P_ZERO      => I_ALU_ZERO,
+    P_SIGN      => I_ALU_SIGN
+  );
+    
+  --TODO: ステートマシン
 
   -- ポート
   P_ADDR <= I_ADDR;
@@ -189,8 +223,8 @@ begin
   
   --- MUX B
   with I_SELECT_B select
-    I_ALU_B <= I_REG_DR        when "0",
-               I_RX            when others;
+    I_ALU_B <= I_REG_DR        when '0',
+               I_RX            when '1';
 
   --- EA
   with I_INST_OP2 select
@@ -216,6 +250,7 @@ begin
           I_REG_GR(conv_integer(I_INST_RX));
   
   I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
+            
   
   -- レジスタの制御
 
@@ -229,8 +264,6 @@ begin
       I_FP   <= (others => '0');
       I_SSP  <= (others => '0');
       I_USP  <= (others => '0');
-      I_FLAG <= (6 => '1', others => '0');
-      I_PC   <= (others => '0');
     elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_GR='1') then
       case I_INST_RD is
         when "1100" => I_REG_FP   <= I_ALU_OUT;
@@ -241,16 +274,6 @@ begin
             I_REG_USP <= I_ALU_OUT;
           end if;
         when "1110" => I_REG_USP  <= I_ALU_OUT;
-        when "1111" =>
-          if (I_FLAG_P='1') then
-            I_FLAG_E <= I_ALU_OUT(7);
-            I_FLAG_P <= I_ALU_OUT(6);
-            I_FLAG_I <= I_ALU_OUT(5);
-          end if;
-          I_FLAG_V <= I_ALU_OUT(3);
-          I_FLAG_C <= I_ALU_OUT(2);
-          I_FLAG_S <= I_ALU_OUT(1);
-          I_FLAG_Z <= I_ALU_OUT(0);
         when others => I_REG_GR(conv_integer(I_INST_RD)) <= I_ALU_OUT;
       end case;
     end if;
@@ -307,4 +330,48 @@ begin
     end if;
   end process;
 
+      
+  --- FLAG の書き込み制御
+  process(P_CLK0, P_RESET) then
+    if (P_RESET='0') then
+      I_FLAG_E <= '0';
+      I_FLAG_P <= '1';
+      I_FLAG_I <= '0';
+      I_FLAG_V <= '0';
+      I_FLAG_C <= '0';
+      I_FLAG_S <= '0';
+      I_FLAG_Z <= '0';
+    elsif (P_CLK0'event and P_CLK0='1') then
+      if I_LOAD_GR='1' and I_INST_RD="1111") then
+        if (I_FLAG_P='1') then
+          I_FLAG_E <= I_ALU_OUT(7);
+          I_FLAG_P <= I_ALU_OUT(6);
+          I_FLAG_I <= I_ALU_OUT(5);
+        end if;
+        I_FLAG_V <= I_ALU_OUT(3);
+        I_FLAG_C <= I_ALU_OUT(2);
+        I_FLAG_S <= I_ALU_OUT(1);
+        I_FLAG_Z <= I_ALU_OUT(0);
+      elsif (I_LOAD_FLAG='1') then
+        I_FLAG_V <= I_ALU_OVERFLOW;
+        I_FLAG_C <= I_ALU_CARRY;
+        I_FLAG_S <= I_ALU_SIGN;
+        I_FLAG_Z <= I_ALU_ZERO;
+      end if;
+    end if;
+  end process;
+  
+  -- PC の書き込み制御
+  process(P_CLK0, P_RESET) then
+    if (P_RESET='0') then
+      I_REG_PC <= (others => '0');
+    elsif (P_CLK0'event and P_CLK0='1') then
+      case I_UPDATE_PC is
+        when "01" => I_REG_PC <= I_REG_PC + 2;
+        when "10" => I_REG_PC <= I_REG_PC + 4;
+        when "11" => I_REG_PC <= P_DIN;
+        when others => NULL;
+      end case;
+    end if;
+  end process;
 end RTL;
