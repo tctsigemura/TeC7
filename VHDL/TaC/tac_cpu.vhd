@@ -272,7 +272,17 @@ begin
     elsif (P_CLK0' event and P_CLK0='1') then
       case I_STATE is
         --TODO
-        when STATE_FETCH => null;
+        when STATE_FETCH =>
+          if (P_STOP='1') then
+            --TODO: コンソール制御
+          elsif (P_INTR='1') then
+            --TODO: 割り込み処理
+            I_REG_TMP <= I_FLAG;
+            I_FLAG_P  <= '1';
+            I_STATE   <= STATE_INTR1;
+          else
+            --TODO: フェッチ
+          end if;
         when STATE_WAIT  => null;
         when STATE_INTR1 => null;
         when STATE_INTR2 => null;
