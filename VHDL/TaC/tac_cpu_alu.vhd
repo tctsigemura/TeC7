@@ -45,6 +45,14 @@ end TAC_CPU_ALU;
 
 architecture RTL of TAC_CPU_ALU is
 
-
+begin 
+    
+    process (P_CLK)
+    begin
+        
+        if (P_CLK'event and P_CLK='1') then
+        end if;
+        
+    end process;
     
 end RTL;
