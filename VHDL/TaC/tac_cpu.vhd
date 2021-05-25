@@ -166,6 +166,7 @@ begin
   ALU : TAC_CPU_ALU
   port map (
     P_CLK       => P_CLK0,
+    P_RESET     => P_RESET,
     P_START     => I_ALU_START,
     P_OP1       => I_INST_OP1,
     P_A         => I_RD,

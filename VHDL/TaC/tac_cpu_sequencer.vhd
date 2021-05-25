@@ -30,6 +30,7 @@ use IEEE.std_logic_unsigned.all;
 
 entity TAC_CPU_SEQUENCER is
     port (  P_CLK         : in std_logic;
+            P_RESET       : in std_logic;
             P_UPDATE_PC   : out std_logic_vector(1 downto 0);  -- PC の更新
             P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
             P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -43,6 +44,83 @@ end TAC_CPU_SEQUENCER;
 
 architecture RTL of TAC_CPU_SEQUENCER is
 
+-- ステート
+constant STATE_FETCH : std_logic_vector(4 downto 0) := "00001";
+constant STATE_WAIT  : std_logic_vector(4 downto 0) := "00010";
+constant STATE_INTR1 : std_logic_vector(4 downto 0) := "00011";
+constant STATE_INTR2 : std_logic_vector(4 downto 0) := "00100";
+constant STATE_INTR3 : std_logic_vector(4 downto 0) := "00101";
+constant STATE_INTR4 : std_logic_vector(4 downto 0) := "00110";
+constant STATE_DEC1  : std_logic_vector(4 downto 0) := "00111";
+constant STATE_DEC2  : std_logic_vector(4 downto 0) := "01000";
+constant STATE_ALU1  : std_logic_vector(4 downto 0) := "01001";
+constant STATE_ALU2  : std_logic_vector(4 downto 0) := "01010";
+constant STATE_ALU3  : std_logic_vector(4 downto 0) := "01011";
+constant STATE_ST1   : std_logic_vector(4 downto 0) := "01100";
+constant STATE_ST2   : std_logic_vector(4 downto 0) := "01101";
+constant STATE_PUSH  : std_logic_vector(4 downto 0) := "01110";
+constant STATE_POP   : std_logic_vector(4 downto 0) := "01111";
+constant STATE_CALL1 : std_logic_vector(4 downto 0) := "10000";
+constant STATE_RET   : std_logic_vector(4 downto 0) := "10001";
+constant STATE_RETI1 : std_logic_vector(4 downto 0) := "10010";
+constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10011";
+constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10100";
+
+signal   I_STATE     : std_logic_vector(4 downto 0);
+
+signal   I_STOP : std_logic;
+signal   I_INTR : std_logic;
+
+begin
+
+    -- ステートマシンはステートの遷移のみを書く
+    process (P_CLK, P_RESET)
+    begin
+        if (P_RESET='1') then
+            I_STATE <= STATE_FETCH;
+            I_STOP  <= '0';
+            I_INTR  <= '0';
+        elsif (P_CLK'event and P_CLK='1') then
+            if (I_STOP = '1') then
+                I_STATE <= STATE_FETCH;
+            else        
+                case I_STATE is
+                    when STATE_FETCH =>
+                        if (I_INTR = '1') then
+                            I_STATE <= STATE_INTR1;
+                        else
+                            I_STATE <= STATE_DEC1;
+                        end if;
+                    when STATE_WAIT  =>
+                        if (I_INTR = '1') then
+                            I_STATE <= STATE_FETCH;
+                        else
+                            I_STATE <= STATE_WAIT;
+                        end if;
+                    when STATE_INTR1 => STATE <= STATE_INTR2;
+                    when STATE_INTR2 => STATE <= STATE_INTR3;
+                    when STATE_INTR3 => STATE <= STATE_INTR4;
+                    when STATE_INTR4 => STATE <= STATE_FETCH;
+                    when STATE_DEC1  => null;
+                    when STATE_DEC2  => null;
+                    when STATE_ALU1  => null;
+                    when STATE_ALU2  => null;
+                    when STATE_ALU3  => null;
+                    when STATE_ST1   => STATE <= STATE_FETCH;
+                    when STATE_ST2   => STATE <= STATE_FETCH;
+                    when STATE_PUSH  => STATE <= STATE_FETCH;
+                    when STATE_POP   => STATE <= STATE_FETCH;
+                    when STATE_RET   => STATE <= STATE_FETCH;
+                    when STATE_RETI1 => null;
+                    when STATE_RETI2 => STATE <= STATE_RETI3;
+                    when STATE_RETI3 => STATE <= STATE_FETCH;
+                    when others => null;
+                end case;
+            end if;
+        end if;
+    end process;
+
+    -- 信号に出力する内容をステートによって決める
 
     
 end RTL;
