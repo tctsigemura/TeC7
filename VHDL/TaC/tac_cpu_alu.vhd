@@ -47,39 +47,91 @@ end TAC_CPU_ALU;
 architecture RTL of TAC_CPU_ALU is
 
 signal I_BUSY : std_logic;
+signal I_OUT  : std_logic_vector(16 downto 0);
+signal I_FLAG : std_logic;
 
 begin
 
     P_BUSY <= I_BUSY;
+    P_OUT  <= I_OUT(15 downto 0);
 
     process (P_CLK, P_RESET)
     begin
+        I_FLAG <= '0';
         if (P_RESET = '1') then
             I_BUSY <= '0';
         elsif (P_CLK 'event and P_CLK = '1') then
             if (P_START = '1') then
-                P_BUSY <= '1';
                 case P_OP1 is
-                    when "00000" => null; -- NO
-                    when "00001" => null; -- LD
-                    when "00010" => null; -- ST
-                    when "00011" => null; -- ADD
-                    when "00100" => null; -- SUB
-                    when "00101" => null; -- CMP
-                    when "00110" => null; -- AND
-                    when "00111" => null; -- OR
-                    when "01000" => null; -- XOR
-                    when "01001" => null; -- ADDS
-                    when "01010" => null; -- MUL
-                    when "01011" => null; -- DIV
-                    when "01100" => null; -- MOD
-                    when "01101" => null; -- MULL
-                    when "01110" => null; -- DIVL
+                    when "00000" => null;                               -- NO
+                    when "00001" => I_OUT <= '0' & P_A;                 -- LD
+                    when "00010" => null;                               -- ST
+                    when "00011" => I_OUT   <= ('0' & P_A) + P_B;       -- ADD
+                                    I_FLAG  <= '1';
+                    when "00100" => I_OUT   <= ('0' & P_A) - P_B;       -- SUB
+                                    I_FLAG  <= '1';
+                    when "00101" => null;                               -- CMP
+                    when "00110" => I_OUT   <= '0' & (P_A and P_B);     -- AND
+                    when "00111" => I_OUT   <= '0' & (P_A or P_B);      -- OR
+                    when "01000" => I_OUT   <= '0' & (P_A xor P_B);     -- XOR
+                    when "01001" => null;                               -- ADDS
+                    when "01010" => I_BUSY <= '1';                      -- MUL
+                    when "01011" => I_BUSY <= '1';                      -- DIV
+                    when "01100" => I_BUSY <= '1';                      -- MOD
+                    when "01101" => I_BUSY <= '1';                      -- MULL
+                    when "01110" => I_BUSY <= '1';                      -- DIVL
                     when "01111" => null;
-                    when "10000" => null; -- SHLA
-                    when "10001" => null; -- SHLL
-                    when "10010" => null; -- SHRA
-                    when "10011" => null; -- SHRL
+                    when "10000" | "10001" =>                           -- SHLA, SHLL
+                                    process
+                                    begin
+                                        I_OUT = '0' & P_A;
+                                        if P_B(0) = '1' then
+                                            I_OUT = I_OUT(15 downto 0) & '0';
+                                        end if;
+                                        if P_B(1) = '1' then
+                                            I_OUT = I_OUT(14 downto 0) & "00";
+                                        end if;
+                                        if P_B(2) = '1' then
+                                            I_OUT = I_OUT(12 downto 0) & "0000";
+                                        end if;
+                                        if P_B(3) = '1' then
+                                            I_OUT = I_OUT(8 downto 0) & "00000000";
+                                        end if;
+                                    end;
+                    when "10010" =>                                     -- SHRA
+                                    process
+                                    begin
+                                        I_OUT = '0' & P_A;
+                                        if P_B(0) = '1' then
+                                            I_OUT = I_OUT(0) & (others => I_OUT(15)) & I_OUT(15 downto 1);
+                                        end if;
+                                        if P_B(1) = '1' then
+                                            I_OUT = I_OUT(1) & (others => I_OUT(15)) & I_OUT(15 downto 2);
+                                        end if;
+                                        if P_B(2) = '1' then
+                                            I_OUT = I_OUT(3) & (others => I_OUT(15)) & I_OUT(15 downto 4);
+                                        end if;
+                                        if P_B(3) = '1' then
+                                            I_OUT = I_OUT(7 & (others => I_OUT(15)) & I_OUT(15 downto 8)
+                                        end if;
+                                    end;
+                    when "10011" =>                                     -- SHRL
+                                    process
+                                    begin
+                                        I_OUT = '0' & P_A;
+                                        if P_B(0) = '1' then
+                                            I_OUT = I_OUT(0) & (others => '0') & I_OUT(15 downto 1);
+                                        end if;
+                                        if P_B(1) = '1' then
+                                            I_OUT = I_OUT(1) & (others => '0') & I_OUT(15 downto 2);
+                                        end if;
+                                        if P_B(2) = '1' then
+                                            I_OUT = I_OUT(3) & (others => '0') & I_OUT(15 downto 4);
+                                        end if;
+                                        if P_B(3) = '1' then
+                                            I_OUT = I_OUT(7 & (others => '0') & I_OUT(15 downto 8)
+                                        end if;
+                                    end;
                     when "10100" => null; -- JMP
                     when "10101" => null; -- CALL
                     when "10110" => null; -- IN
