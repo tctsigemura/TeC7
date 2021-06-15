@@ -31,6 +31,7 @@ use IEEE.std_logic_unsigned.all;
 entity TAC_CPU_SEQUENCER is
     port (  P_CLK         : in std_logic;
             P_RESET       : in std_logic;
+            P_ALU_BUSY    : in std_logic;
             P_UPDATE_PC   : out std_logic_vector(1 downto 0);  -- PC の更新
             P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
             P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -73,6 +74,9 @@ signal   I_INTR : std_logic;
 
 begin
 
+    -- TODO
+    -- - MMU待ちをどうやって処理するか
+
     -- ステートマシンはステートの遷移のみを書く
     process (P_CLK, P_RESET)
     begin
@@ -103,9 +107,18 @@ begin
                     when STATE_INTR4 => STATE <= STATE_FETCH;
                     when STATE_DEC1  => null;
                     when STATE_DEC2  => null;
-                    when STATE_ALU1  => null;
-                    when STATE_ALU2  => null;
-                    when STATE_ALU3  => null;
+                    when STATE_ALU1  =>
+                        if P_ALU_BUSY = '0' then
+                            STATE <= STATE_FETCH;
+                        end if;
+                    when STATE_ALU2  =>
+                        if P_ALU_BUSY = '0' then
+                            STATE <= STATE_FETCH;
+                        end if;
+                    when STATE_ALU3  =>
+                        if P_ALU_BUSY = '0' then
+                            STATE <= STATE_FETCH;
+                        end if;
                     when STATE_ST1   => STATE <= STATE_FETCH;
                     when STATE_ST2   => STATE <= STATE_FETCH;
                     when STATE_PUSH  => STATE <= STATE_FETCH;
@@ -121,6 +134,7 @@ begin
     end process;
 
     -- 信号に出力する内容をステートによって決める
-
+    P_UPDATE_PC <= "01" when STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111")
+    P_UPDATE_SP <= 
     
 end RTL;
