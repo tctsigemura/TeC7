@@ -63,6 +63,8 @@ signal I_S14  : std_logic_vector(15 downto 0);
 signal I_E15  : std_logic_vector(15 downto 0);
 signal I_SHR  : std_logic_vector(15 downto 0);
 
+signal I_DIV  : std_logic_vector(4 downto 0);
+
 begin
 
     P_BUSY <= I_BUSY;
@@ -86,7 +88,7 @@ begin
     -- 左シフト
     I_S1    <= P_A(14 downto 0) & "0" when P_B(0) = '1' else P_A;
     I_S3    <= I_S1(13 downto 0) & "00" when P_B(1) = '1' else I_S1;
-    I_S7    <= I_S3(11 downto 0) & "0000" when P_B(2) = '1' else I_S3;q
+    I_S7    <= I_S3(11 downto 0) & "0000" when P_B(2) = '1' else I_S3;
     I_SHL   <= I_S7(7 downto 0) & "00000000" when P_B(3) = '1' else I_S3;
 
     -- 右シフト
@@ -106,7 +108,13 @@ begin
             I_BUSY <= '0';
         elsif (P_CLK 'event and P_CLK = '1') then
             if (P_START = '1' and (P_OP1 = "01011" or P_OP1 = "01100")) then
-                P_BUSY <= '1';
+                case I_DIV is
+                    when 0 =>
+                        P_BUSY <= '1';
+                        I_DIV <= I_DIV + '1';
+                    when 1 =>
+                        
+                end case;
             end if;
         end if;
     end process;

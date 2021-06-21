@@ -66,6 +66,8 @@ constant STATE_RET   : std_logic_vector(4 downto 0) := "10001";
 constant STATE_RETI1 : std_logic_vector(4 downto 0) := "10010";
 constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10011";
 constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10100";
+constant STATE_IN1   : std_logic_vector(4 downto 0) := "11000";
+constant STATE_IN2   : std_logic_vector(4 downto 0) := "11001";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
 
@@ -105,7 +107,11 @@ begin
                     when STATE_INTR2 => STATE <= STATE_INTR3;
                     when STATE_INTR3 => STATE <= STATE_INTR4;
                     when STATE_INTR4 => STATE <= STATE_FETCH;
-                    when STATE_DEC1  => null;
+                    when STATE_DEC1  =>
+                        if (P_OP1 = "00000" or P_OP2 = "11111") then
+                            STATE <= STATE_FETCH;
+                            -- TODO
+                        end if;
                     when STATE_DEC2  => null;
                     when STATE_ALU1  =>
                         if P_ALU_BUSY = '0' then
@@ -127,6 +133,8 @@ begin
                     when STATE_RETI1 => null;
                     when STATE_RETI2 => STATE <= STATE_RETI3;
                     when STATE_RETI3 => STATE <= STATE_FETCH;
+                    when STATE_IN1   => STATE <= STATE_FETCH;
+                    when STATE_IN2   => STATE <= STATE_FETCH;
                     when others => null;
                 end case;
             end if;
