@@ -108,9 +108,16 @@ begin
                     when STATE_INTR3 => STATE <= STATE_INTR4;
                     when STATE_INTR4 => STATE <= STATE_FETCH;
                     when STATE_DEC1  =>
+                        -- NO, HALT
                         if (P_OP1 = "00000" or P_OP2 = "11111") then
                             STATE <= STATE_FETCH;
-                            -- TODO
+                        -- Imm
+                        elsif (P_OP2 = "010") then
+                            STATE <= STATE_ALU1;
+                        -- Drct, Idx
+                        elsif (P_OP2(2 downto 1) = "00") then
+                            STATE <= STATE_DEC2
+                        -- TODO
                         end if;
                     when STATE_DEC2  => null;
                     when STATE_ALU1  =>
