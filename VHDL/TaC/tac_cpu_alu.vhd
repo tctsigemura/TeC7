@@ -63,10 +63,9 @@ signal I_S14  : std_logic_vector(15 downto 0);
 signal I_E15  : std_logic_vector(15 downto 0);
 signal I_SHR  : std_logic_vector(15 downto 0);
 
-signal I_DIV  : std_logic_vector(4 downto 0);
+signal I_CNT  : std_logic_vector(4 downto 0);
 signal I_YX   : std_logic_vector(31 downto 0);
-signal I_Y    : std_logic_vector(15 downto 0);
-signal I_X    : std_logic_vector(15 downto 0);
+signal I_AmB  : std_logic_vector(16 downto 0);
 
 begin
 
@@ -106,136 +105,27 @@ begin
     I_SHR   <= I_E15 when P_B(0) = '0' else I_S14;
 
     -- 割り算
-    I_Y <= I_YX(30 downto 16);
-    I_X <= I_YX(15 downto 0);
-
+    I_AmB <= ('0' & I_YX(30 downto 15)) - I_B;
     process (P_CLK, P_RESET)
     begin
         if (P_RESET = '1') then
             I_BUSY <= '0';
         elsif (P_CLK 'event and P_CLK = '1') then
-            if (P_START = '1' and (P_OP1 = "01011" or P_OP1 = "01100")) then
-                case I_DIV is
-                    when 0 =>
-                        P_BUSY <= '1';
-                        I_DIV <= 1;
-                        I_YX <= "0000000000000000" & P_A;
-                    when 1 =>
-                        if I_YX(30 downto 15) >= I_B then
-                            I_YX <= '1' & (I_YX(30 downto 15) - I_B) & I_YX(14 downto 0);
-                        else
-                            I_YX <= '0' & I_YX(30 downto 0);
-                        end if;
-                        I_DIV <= 2;
-                    when 2 =>
-                        if I_YX(29 downto 14) >= I_B then
-                            I_YX <= I_YX(31 downto 31) & '1' & (I_YX(29 downto 14) - I_B) & I_YX(13 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 31) & '0' & I_YX(29 downto 0);
-                        end if;
-                        I_DIV <= 3;
-                    when 3 =>
-                        if I_YX(28 downto 13) >= I_B then
-                            I_YX <= I_YX(31 downto 30) & '1' & (I_YX(28 downto 13) - I_B) & I_YX(12 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 30) & '0' & I_YX(28 downto 0);
-                        end if;
-                        I_DIV <= 4;
-                    when 4 =>
-                        if I_YX(27 downto 12) >= I_B then
-                            I_YX <= I_YX(31 downto 29) & '1' & (I_YX(27 downto 12) - I_B) & I_YX(11 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 29) & '0' & I_YX(27 downto 0);
-                        end if;
-                        I_DIV <= 5;
-                    when 5 =>
-                        if I_YX(26 downto 11) >= I_B then
-                            I_YX <= I_YX(31 downto 28) & '1' & (I_YX(26 downto 11) - I_B) & I_YX(10 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 28) & '0' & I_YX(26 downto 0);
-                        end if;
-                        I_DIV <= 6;
-                    when 6 =>
-                        if I_YX(25 downto 10) >= I_B then
-                            I_YX <= I_YX(31 downto 27) & '1' & (I_YX(25 downto 10) - I_B) & I_YX(9 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 27) & '0' & I_YX(25 downto 0);
-                        end if;
-                        I_DIV <= 7;
-                    when 7 =>
-                        if I_YX(24 downto 9) >= I_B then
-                            I_YX <= I_YX(31 downto 26) & '1' & (I_YX(24 downto 9) - I_B) & I_YX(8 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 26) & '0' & I_YX(24 downto 0);
-                        end if;
-                        I_DIV <= 8;
-                    when 8 =>
-                        if I_YX(23 downto 8) >= I_B then
-                            I_YX <= I_YX(31 downto 25) & '1' & (I_YX(23 downto 8) - I_B) & I_YX(7 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 25) & '0' & I_YX(23 downto 0);
-                        end if;
-                        I_DIV <= 9;
-                    when 9 =>
-                        if I_YX(22 downto 7) >= I_B then
-                            I_YX <= I_YX(31 downto 24) & '1' & (I_YX(22 downto 7) - I_B) & I_YX(6 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 24) & '0' & I_YX(22 downto 0);
-                        end if;
-                        I_DIV <= 10;
-                    when 10 =>
-                        if I_YX(21 downto 6) >= I_B then
-                            I_YX <= I_YX(31 downto 23) & '1' & (I_YX(21 downto 6) - I_B) & I_YX(5 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 23) & '0' & I_YX(21 downto 0);
-                        end if;
-                        I_DIV <= 11;
-                    when 11 =>
-                        if I_YX(20 downto 5) >= I_B then
-                            I_YX <= I_YX(31 downto 22) & '1' & (I_YX(20 downto 5) - I_B) & I_YX(4 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 22) & '0' & I_YX(20 downto 0);
-                        end if;
-                        I_DIV <= 12;
-                    when 12 =>
-                        if I_YX(19 downto 4) >= I_B then
-                            I_YX <= I_YX(31 downto 21) & '1' & (I_YX(19 downto 4) - I_B) & I_YX(3 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 21) & '0' & I_YX(19 downto 0);
-                        end if;
-                        I_DIV <= 13;
-                    when 13 =>
-                        if I_YX(18 downto 3) >= I_B then
-                            I_YX <= I_YX(31 downto 20) & '1' & (I_YX(18 downto 3) - I_B) & I_YX(2 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 20) & '0' & I_YX(18 downto 0);
-                        end if;
-                        I_DIV <= 14;
-                    when 14 =>
-                        if I_YX(17 downto 2) >= I_B then
-                            I_YX <= I_YX(31 downto 19) & '1' & (I_YX(17 downto 2) - I_B) & I_YX(1 downto 0);
-                        else
-                            I_YX <= I_YX(31 downto 19) & '0' & I_YX(17 downto 0);
-                        end if;
-                        I_DIV <= 15;
-                    when 15 =>
-                        if I_YX(16 downto 1) >= I_B then
-                            I_YX <= I_YX(31 downto 18) & '1' & (I_YX(16 downto 1) - I_B) & I_YX(0);
-                        else
-                            I_YX <= I_YX(31 downto 18) & '0' & I_YX(16 downto 0);
-                        end if;
-                        I_DIV <= 16;
-                        ;
-                    when 16 =>
-                        if I_YX(15 downto 0) >= I_B then
-                            I_YX <= I_YX(31 downto 17) & '1' & (I_YX(15 downto 0) - I_B);
-                        else
-                            I_YX <= I_YX(31 downto 17) & '0' & I_YX(15 downto 0);
-                        end if;
-                        I_DIV <= 17;
-                    when 17 =>
-                        P_BUSY <= '0';
-                end case;
+            if (I_BUSY = '1') then
+                if (I_AmB(16) = '0') then
+                    I_YX(31 downto 16) <= I_AmB(15 downto 0);
+                else
+                    I_YX(31 downto 16) <= I_YX(30 downto 15);
+                end if;
+                I_YX(15 downto 0) <= I_YX(14 downto 0) & not I_AmB(15);
+                I_CNT <= I_CNT + 1;
+                if (I_CNT = 15) then
+                    I_BUSY <= '0';
+                end if;
+            elsif (P_START = '1' and (P_OP1 = "01011" or P_OP1 = "01100")) then
+                I_BUSY <= '1';
+                I_CNT <= 0;
+                I_YX <= "0000000000000000" & P_A;
             end if;
         end if;
     end process;
