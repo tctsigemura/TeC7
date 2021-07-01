@@ -31,7 +31,11 @@ use IEEE.std_logic_unsigned.all;
 entity TAC_CPU_SEQUENCER is
     port (  P_CLK         : in std_logic;
             P_RESET       : in std_logic;
+            P_STOP        : in std_logic;
+            P_INTR        : in std_logic;
             P_ALU_BUSY    : in std_logic;
+            P_OP1         : in std_logic_vector(4 downto 0);
+            P_OP2         : in std_logic_vector(2 downto 0);
             P_UPDATE_PC   : out std_logic_vector(1 downto 0);  -- PC の更新
             P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
             P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -71,13 +75,15 @@ constant STATE_IN2   : std_logic_vector(4 downto 0) := "11001";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
 
-signal   I_STOP : std_logic;
-signal   I_INTR : std_logic;
+signal   I_IS_ALU    : std_logic;
 
 begin
 
     -- TODO
     -- - MMU待ちをどうやって処理するか
+
+    -- LD, ADD, SUB, CMP, AND, OR, XOR, ADDS, MUL, DIV, MOD, MULL, DIVL, SHLA, SHLL, SHRA, SHRL
+    I_IS_ALU <= '1' when (P_OP1 = "00001") or ("00011" <= P_OP1 and P_OP1 <= "01110") or (P_OP1(4 downto 2) = "100") else '0';
 
     -- ステートマシンはステートの遷移のみを書く
     process (P_CLK, P_RESET)
@@ -116,7 +122,22 @@ begin
                             STATE <= STATE_ALU1;
                         -- Drct, Idx
                         elsif (P_OP2(2 downto 1) = "00") then
-                            STATE <= STATE_DEC2
+                            STATE <= STATE_DEC2;
+                        -- {FP Rlt, Indr} && {LD, ADD, ..., SHRL}
+                        elsif ((P_OP2 = "011" or P_OP2(2 downto 1) = "11") and I_IS_ALU) then
+                            STATE <= STATE_ALU2;
+                        -- {FP Rlt, Indr} && ST
+                        elsif ((P_OP2 = "011" or P_OP2(2 downto 1) = "11") and P_OP1 = "00010") then
+                            STATE <= STATE_ST2;
+                        -- {Reg, Imm4} && {LD, ..., SHRL}-{DIV, MOD}
+                        elsif (P_OP2(2 downto 1) = "10" and (I_IS_ALU and P_OP1(4 downto 1) /= "0101")) then
+                            STATE <= STATE_ALU3;
+                        -- Indr && IN
+                        elsif (P_OP2(2 downto 1) = "11" and P_OP1 = "10110") then
+                            STATE <= STATE_IN2;
+                        -- Indr && OUT
+                        elsif (P_OP2(2 downto 1) = "11" and P_OP1 = "10111") then
+                            STATE <= STATE_FETCH;
                         -- TODO
                         end if;
                     when STATE_DEC2  => null;
