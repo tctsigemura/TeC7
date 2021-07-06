@@ -54,6 +54,7 @@ signal I_S3   : std_logic_vector(15 downto 0);
 signal I_S7   : std_logic_vector(15 downto 0);
 signal I_SHL  : std_logic_vector(15 downto 0);
 
+signal I_SIGN : std_logic_vector(15 downto 0);
 signal I_E8   : std_logic_vector(15 downto 0);
 signal I_S8   : std_logic_vector(15 downto 0);
 signal I_E12  : std_logic_vector(15 downto 0);
@@ -79,10 +80,11 @@ begin
               '0' & (P_A or P_B)        when P_OP1 = "00111" else   -- OR
               '0' & (P_A xor P_B)       when P_OP1 = "01000" else   -- XOR
               ('0' & P_A) + (P_B & '0') when P_OP1 = "01001" else   -- ADDS
-              (P_A * P_B)(16 downto 0)  when P_OP1 = "01010" else   -- MUL
+              -- MUL では CARRY は常に 0
+              '0' & (P_A * P_B)(15 downto 0) when P_OP1 = "01010" else   -- MUL
+              -- シフト命令では CARRY （端からあふれた値）は 1 ビットシフトの時だけ正しい値になる
               P_A(15) & I_SHL           when P_OP1(4 downto 1) = "1000"-- SHLA, SHLL
               P_A(0) & I_SHR            when P_OP1(4 downto 1) = "1001"-- SHRA, SHRL
-              -- XXX: 本当にINのときにP_Bか確認する（OUT？）
               '0' & P_B                 when P_OP1 = "10110" or     -- IN
                                              P_OP1 = "11000" else   -- PUSH
               (others => '0');
@@ -94,7 +96,7 @@ begin
     I_SHL   <= I_S7(7 downto 0) & "00000000" when P_B(3) = '1' else I_S3;
 
     -- 右シフト
-    I_SIGN  <= P_A(15) when P_OP1 = "10010" else '0';
+    I_SIGN  <= P_A(15) when P_OP1(0) = '0' else '0';
     I_E8    <= (15 downto 8 => I_SIGN) & P_A(15 downto 8);
     I_S8    <= I_E8 when P_B(3) = '1' else P_A;
     I_E12   <= (15 downto 12 => I_SIGN) & I_S8(15 downto 4);
@@ -105,13 +107,15 @@ begin
     I_SHR   <= I_E15 when P_B(0) = '0' else I_S14;
 
     -- 割り算
-    I_AmB <= ('0' & I_YX(30 downto 15)) - I_B;
+    I_AmB <= ('0' & I_YX(30 downto 15)) - P_B;
     process (P_CLK, P_RESET)
     begin
         if (P_RESET = '1') then
             I_BUSY <= '0';
         elsif (P_CLK 'event and P_CLK = '1') then
             if (I_BUSY = '1') then
+                -- I_YX(31 downto 16) = あまり
+                -- I_YX(15 downto 0) = 商
                 if (I_AmB(16) = '0') then
                     I_YX(31 downto 16) <= I_AmB(15 downto 0);
                 else
@@ -120,6 +124,11 @@ begin
                 I_YX(15 downto 0) <= I_YX(14 downto 0) & not I_AmB(15);
                 I_CNT <= I_CNT + 1;
                 if (I_CNT = 15) then
+                    if (P_OP1 = "01011") then -- DIV 命令
+                        I_OUT <= '0' & I_YX(15 downto 0);
+                    elsif (P_OP1 = "01100") then
+                        I_OUT <= '0' & I_YX(31 downto 16);
+                    end if;
                     I_BUSY <= '0';
                 end if;
             elsif (P_START = '1' and (P_OP1 = "01011" or P_OP1 = "01100")) then
@@ -129,5 +138,11 @@ begin
             end if;
         end if;
     end process;
+
+    -- フラグ
+    P_OVERFLOW <= '1' when ((P_OP1 = "00011" and (P_A(15) xor P_B(15)) = '0') or (P_OP1 = "00100" and (P_A(15) xor P_B(15)) = '1') and (I_OUT(15) xor P_A(15) = '1');
+    P_CARRY <= I_OUT(16);
+    P_ZERO <= '1' when I_OUT(15 downto 0) = (others => '0') else '0';
+    P_SIGN <= I_OUT(15);
     
 end RTL;
