@@ -162,7 +162,26 @@ begin
                                 I_STATE <= STATE_RETI1;
                             end if;
                         end if;
-                    when STATE_DEC2  => null;
+                    when STATE_DEC2  =>
+                        -- {LD, ADD, ..., SHRL}
+                        if (I_IS_ALU) then
+                            I_STATE <= STATE_ALU1;
+                        -- ST
+                        elsif (P_OP1 = "00010") then
+                            I_STATE <= STATE_ST1;
+                        -- JMP
+                        elsif (P_OP1 = "10100") then
+                            I_STATE <= STATE_FETCH;
+                        -- CALL
+                        elsif (P_OP1 = "10101") then
+                            I_STATE <= STATE_CALL1;
+                        -- IN
+                        elsif (P_OP1 = "10110") then
+                            I_STATE <= STATE_IN1;
+                        -- OUT
+                        elsif (P_OP1 = "10111") then
+                            I_STATE <= STATE_FETCH;
+                        end if;
                     when STATE_ALU1  =>
                         if P_ALU_BUSY = '0' then
                             I_STATE <= STATE_FETCH;
