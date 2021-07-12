@@ -114,60 +114,77 @@ begin
                         if (P_INTR = '1') then
                             I_STATE <= STATE_FETCH;
                         end if;
-                    when STATE_INTR1 => STATE <= STATE_INTR2;
-                    when STATE_INTR2 => STATE <= STATE_INTR3;
-                    when STATE_INTR3 => STATE <= STATE_INTR4;
-                    when STATE_INTR4 => STATE <= STATE_FETCH;
+                    when STATE_INTR1 => I_STATE <= STATE_INTR2;
+                    when STATE_INTR2 => I_STATE <= STATE_INTR3;
+                    when STATE_INTR3 => I_STATE <= STATE_INTR4;
+                    when STATE_INTR4 => I_STATE <= STATE_FETCH;
                     when STATE_DEC1  =>
                         -- NO, HALT
                         if (P_OP1 = "00000" or P_OP2 = "11111") then
-                            STATE <= STATE_FETCH;
+                            I_STATE <= STATE_FETCH;
                         -- Imm
                         elsif (P_OP2 = "010") then
-                            STATE <= STATE_ALU1;
+                            I_STATE <= STATE_ALU1;
                         -- Drct, Idx
                         elsif (P_OP2(2 downto 1) = "00") then
-                            STATE <= STATE_DEC2;
+                            I_STATE <= STATE_DEC2;
                         -- {FP Rlt, Indr} && {LD, ADD, ..., SHRL}
                         elsif ((P_OP2 = "011" or P_OP2(2 downto 1) = "11") and I_IS_ALU) then
-                            STATE <= STATE_ALU2;
+                            I_STATE <= STATE_ALU2;
                         -- {FP Rlt, Indr} && ST
                         elsif ((P_OP2 = "011" or P_OP2(2 downto 1) = "11") and P_OP1 = "00010") then
-                            STATE <= STATE_ST2;
+                            I_STATE <= STATE_ST2;
                         -- {Reg, Imm4} && {LD, ..., SHRL}-{DIV, MOD}
                         elsif (P_OP2(2 downto 1) = "10" and (I_IS_ALU and P_OP1(4 downto 1) /= "0101")) then
-                            STATE <= STATE_ALU3;
+                            I_STATE <= STATE_ALU3;
                         -- Indr && IN
                         elsif (P_OP2(2 downto 1) = "11" and P_OP1 = "10110") then
-                            STATE <= STATE_IN2;
+                            I_STATE <= STATE_IN2;
                         -- Indr && OUT
                         elsif (P_OP2(2 downto 1) = "11" and P_OP1 = "10111") then
-                            STATE <= STATE_FETCH;
-                        -- TODO
+                            I_STATE <= STATE_FETCH;
+                        -- PUSH, POP
+                        elsif (P_OP1 = "11000") then
+                            -- PUSH
+                            if (P_OP2(2) = '0') then
+                                I_STATE <= STATE_PUSH;
+                            -- POP
+                            else
+                                I_STATE <= STATE_POP;
+                            end if;
+                        -- RET, RETI
+                        elsif (P_OP1 = "1010") then
+                            -- RET
+                            if (P_OP2(2) = '0') then
+                                I_STATE <= STATE_RET;
+                            -- RETI
+                            else
+                                I_STATE <= STATE_RETI1;
+                            end if;
                         end if;
                     when STATE_DEC2  => null;
                     when STATE_ALU1  =>
                         if P_ALU_BUSY = '0' then
-                            STATE <= STATE_FETCH;
+                            I_STATE <= STATE_FETCH;
                         end if;
                     when STATE_ALU2  =>
                         if P_ALU_BUSY = '0' then
-                            STATE <= STATE_FETCH;
+                            I_STATE <= STATE_FETCH;
                         end if;
                     when STATE_ALU3  =>
                         if P_ALU_BUSY = '0' then
-                            STATE <= STATE_FETCH;
+                            I_STATE <= STATE_FETCH;
                         end if;
-                    when STATE_ST1   => STATE <= STATE_FETCH;
-                    when STATE_ST2   => STATE <= STATE_FETCH;
-                    when STATE_PUSH  => STATE <= STATE_FETCH;
-                    when STATE_POP   => STATE <= STATE_FETCH;
-                    when STATE_RET   => STATE <= STATE_FETCH;
+                    when STATE_ST1   => I_STATE <= STATE_FETCH;
+                    when STATE_ST2   => I_STATE <= STATE_FETCH;
+                    when STATE_PUSH  => I_STATE <= STATE_FETCH;
+                    when STATE_POP   => I_STATE <= STATE_FETCH;
+                    when STATE_RET   => I_STATE <= STATE_FETCH;
                     when STATE_RETI1 => null;
-                    when STATE_RETI2 => STATE <= STATE_RETI3;
-                    when STATE_RETI3 => STATE <= STATE_FETCH;
-                    when STATE_IN1   => STATE <= STATE_FETCH;
-                    when STATE_IN2   => STATE <= STATE_FETCH;
+                    when STATE_RETI2 => I_STATE <= STATE_RETI3;
+                    when STATE_RETI3 => I_STATE <= STATE_FETCH;
+                    when STATE_IN1   => I_STATE <= STATE_FETCH;
+                    when STATE_IN2   => I_STATE <= STATE_FETCH;
                     when others => null;
                 end case;
             end if;
@@ -175,7 +192,7 @@ begin
     end process;
 
     -- 信号に出力する内容をステートによって決める
-    P_UPDATE_PC <=  "01" when STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111") else
+    P_UPDATE_PC <=  "01" when I_STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111") else
                     "00";
     P_UPDATE_SP <= "00";--TODO
     
