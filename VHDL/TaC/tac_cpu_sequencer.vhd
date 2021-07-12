@@ -72,6 +72,7 @@ constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10011";
 constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10100";
 constant STATE_IN1   : std_logic_vector(4 downto 0) := "11000";
 constant STATE_IN2   : std_logic_vector(4 downto 0) := "11001";
+constant STATE_CON   : std_logic_vector(4 downto 0) := "11111";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
 
@@ -90,24 +91,28 @@ begin
     begin
         if (P_RESET='1') then
             I_STATE <= STATE_FETCH;
-            I_STOP  <= '0';
-            I_INTR  <= '0';
+            P_STOP  <= '0';
+            P_INTR  <= '0';
         elsif (P_CLK'event and P_CLK='1') then
-            if (I_STOP = '1') then
-                I_STATE <= STATE_FETCH;
+            if (P_STOP = '1') then
+                if (I_STATE = STATE_CON) then
+                    I_STATE <= STATE_FETCH;
+                else
+                    I_STATE <= STATE_CON;
+                end if;
             else        
                 case I_STATE is
+                    when STATE_CON =>
+                        I_STATE <= STATE_FETCH;
                     when STATE_FETCH =>
-                        if (I_INTR = '1') then
+                        if (P_INTR = '1') then
                             I_STATE <= STATE_INTR1;
                         else
                             I_STATE <= STATE_DEC1;
                         end if;
                     when STATE_WAIT  =>
-                        if (I_INTR = '1') then
+                        if (P_INTR = '1') then
                             I_STATE <= STATE_FETCH;
-                        else
-                            I_STATE <= STATE_WAIT;
                         end if;
                     when STATE_INTR1 => STATE <= STATE_INTR2;
                     when STATE_INTR2 => STATE <= STATE_INTR3;
