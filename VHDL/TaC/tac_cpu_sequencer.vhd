@@ -170,7 +170,8 @@ begin
     end process;
 
     -- 信号に出力する内容をステートによって決める
-    P_UPDATE_PC <= "01" when STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111")
-    P_UPDATE_SP <= 
+    P_UPDATE_PC <=  "01" when STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111") else
+                    "00";
+    P_UPDATE_SP <= "00";--TODO
     
 end RTL;

@@ -82,6 +82,8 @@ begin
               ('0' & P_A) + (P_B & '0') when P_OP1 = "01001" else   -- ADDS
               -- MUL では CARRY は常に 0
               '0' & (P_A * P_B)(15 downto 0) when P_OP1 = "01010" else   -- MUL
+              '0' & I_YX(15 downto 0)   when P_OP1 = "01011"        -- DIV
+              '0' & I_YX(31 downto 16)  when P_OP1 = "01100"        -- MOD
               -- シフト命令では CARRY （端からあふれた値）は 1 ビットシフトの時だけ正しい値になる
               P_A(15) & I_SHL           when P_OP1(4 downto 1) = "1000"-- SHLA, SHLL
               P_A(0) & I_SHR            when P_OP1(4 downto 1) = "1001"-- SHRA, SHRL
@@ -104,7 +106,7 @@ begin
     I_E14   <= (15 downto 14 => I_SIGN) & I_S12(15 downto 2);
     I_S14   <= I_E14 when P_B(1) = '1' else I_S12;
     I_E15   <= I_SIGN & I_S14(15 downto 1);
-    I_SHR   <= I_E15 when P_B(0) = '0' else I_S14;
+    I_SHR   <= I_E15 when P_B(0) = '1' else I_S14;
 
     -- 割り算
     I_AmB <= ('0' & I_YX(30 downto 15)) - P_B;
@@ -124,11 +126,6 @@ begin
                 I_YX(15 downto 0) <= I_YX(14 downto 0) & not I_AmB(15);
                 I_CNT <= I_CNT + 1;
                 if (I_CNT = 15) then
-                    if (P_OP1 = "01011") then -- DIV 命令
-                        I_OUT <= '0' & I_YX(15 downto 0);
-                    elsif (P_OP1 = "01100") then
-                        I_OUT <= '0' & I_YX(31 downto 16);
-                    end if;
                     I_BUSY <= '0';
                 end if;
             elsif (P_START = '1' and (P_OP1 = "01011" or P_OP1 = "01100")) then
