@@ -43,6 +43,11 @@ entity TAC_CPU_SEQUENCER is
             P_LOAD_FLAG   : out std_logic;                     -- FLAG のロード
             P_LOAD_TMP    : out std_logic;                     -- TMP のロード
             P_LOAD_GR     : out std_logic;                     -- 汎用レジスタのロード
+            P_SELECT_A    : out std_logic_vector(2 downto 0);  -- アドレス出力の選択
+            P_SELECT_D    : out std_logic_vector(2 downto 0);  -- データ出力の選択
+            P_SELECT_W    : out std_logic_vector(1 downto 0);  -- DR への入力の選択
+            P_SELECT_B    : out std_logic;                     -- ALU B への入力の選択
+            P_ALU_START   : out std_logic;
           --TODO
             );
 end TAC_CPU_SEQUENCER;
@@ -214,5 +219,6 @@ begin
     P_UPDATE_PC <=  "01" when I_STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111") else
                     "00";
     P_UPDATE_SP <= "00";--TODO
+    --P_UPDATE_
     
 end RTL;
