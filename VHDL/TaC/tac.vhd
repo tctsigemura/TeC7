@@ -416,7 +416,9 @@ component TAC_MMU is
          P_MR       : out std_logic;
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
-         P_DIN      : in  std_logic_vector(15 downto 0)
+         P_DIN      : in  std_logic_vector(15 downto 0);
+         P_RW       : in  std_logic;                     -- Read/Write
+         P_LI       : in  std_logic                      -- Fetch
        );
 end component;
 
@@ -587,7 +589,9 @@ begin
          P_MR          => i_mr,
          P_ADDR        => i_addr,
          P_MMU_ADDR    => i_cpu_addr,
-         P_DIN         => i_dout_cpu
+         P_DIN         => i_dout_cpu,
+         P_RW          => i_rw,
+         P_LI          => i_li
   );
 
   -- RAM
