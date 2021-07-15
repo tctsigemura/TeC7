@@ -81,6 +81,50 @@ constant STATE_CON   : std_logic_vector(4 downto 0) := "11111";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
 
+signal   I_TRANS     : std_logic_vector(6 downto 0);
+
+constant TR_FETCH_CON       : std_logic_vector(6 downto 0) := "0000000";
+constant TR_FETCH_INTR1     : std_logic_vector(6 downto 0) := "0000001";
+constant TR_FETCH_DEC1      : std_logic_vector(6 downto 0) := "0000010";
+constant TR_CON_FETCH       : std_logic_vector(6 downto 0) := "0000011";
+constant TR_INTR1_INTR2     : std_logic_vector(6 downto 0) := "0000100";
+constant TR_INTR2_INTR3     : std_logic_vector(6 downto 0) := "0000101";
+constant TR_INTR3_INTR4     : std_logic_vector(6 downto 0) := "0000110";
+constant TR_INTR4_FETCH     : std_logic_vector(6 downto 0) := "0000111";
+constant TR_DEC1_NO_HALT    : std_logic_vector(6 downto 0) := "0001000";
+constant TR_DEC1_IMM        : std_logic_vector(6 downto 0) := "0001001";
+constant TR_DEC1_DRCT       : std_logic_vector(6 downto 0) := "0001010";
+constant TR_DEC1_INDR_ALU   : std_logic_vector(6 downto 0) := "0001011";
+constant TR_DEC1_INDR_ST    : std_logic_vector(6 downto 0) := "0001100";
+constant TR_DEC1_SHORT_ALU  : std_logic_vector(6 downto 0) := "0001101";
+constant TR_DEC1_SHORT_DIV  : std_logic_vector(6 downto 0) := "0001110";
+constant TR_DEC1_INDR_IN    : std_logic_vector(6 downto 0) := "0001111";
+constant TR_DEC1_INDR_OUT   : std_logic_vector(6 downto 0) := "0010000";
+constant TR_DEC1_PUSH       : std_logic_vector(6 downto 0) := "0010001";
+constant TR_DEC1_POP        : std_logic_vector(6 downto 0) := "0010010";
+constant TR_DEC1_RET        : std_logic_vector(6 downto 0) := "0010011";
+constant TR_DEC1_RETI       : std_logic_vector(6 downto 0) := "0010100";
+constant TR_DEC2_ALU        : std_logic_vector(6 downto 0) := "0010101";
+constant TR_DEC2_ST         : std_logic_vector(6 downto 0) := "0010110";
+constant TR_DEC2_JMP        : std_logic_vector(6 downto 0) := "0010111";
+constant TR_DEC2_CALL       : std_logic_vector(6 downto 0) := "0011000";
+constant TR_DEC2_IN         : std_logic_vector(6 downto 0) := "0011001";
+constant TR_DEC2_OUT        : std_logic_vector(6 downto 0) := "0011010";
+constant TR_ALU1_FETCH      : std_logic_vector(6 downto 0) := "0011011";
+constant TR_ST1_FETCH       : std_logic_vector(6 downto 0) := "0011100";
+constant TR_CALL1_FETCH     : std_logic_vector(6 downto 0) := "0011101";
+constant TR_IN1_FETCH       : std_logic_vector(6 downto 0) := "0011110";
+constant TR_ALU2_FETCH      : std_logic_vector(6 downto 0) := "0011111";
+constant TR_ST2_FETCH       : std_logic_vector(6 downto 0) := "0100000";
+constant TR_ALU3_FETCH      : std_logic_vector(6 downto 0) := "0100001";
+constant TR_IN2_FETCH       : std_logic_vector(6 downto 0) := "0100010";
+constant TR_PUSH_FETCH      : std_logic_vector(6 downto 0) := "0100011";
+constant TR_POP_FETCH       : std_logic_vector(6 downto 0) := "0100100";
+constant TR_RET_FETCH       : std_logic_vector(6 downto 0) := "0100101";
+constant TR_RETI1_RETI2     : std_logic_vector(6 downto 0) := "0100110";
+constant TR_RETI2_RETI3     : std_logic_vector(6 downto 0) := "0100111";
+constant TR_RETI3_FETCH     : std_logic_vector(6 downto 0) := "0101000";
+
 signal   I_IS_ALU    : std_logic;
 
 begin
@@ -91,6 +135,77 @@ begin
     -- LD, ADD, SUB, CMP, AND, OR, XOR, ADDS, MUL, DIV, MOD, MULL, DIVL, SHLA, SHLL, SHRA, SHRL
     I_IS_ALU <= '1' when (P_OP1 = "00001") or ("00011" <= P_OP1 and P_OP1 <= "01110") or (P_OP1(4 downto 2) = "100") else '0';
 
+    -- 遷移の決定
+    case I_STATE is
+        when STATE_FETCH =>
+            I_TRANS <=
+                TR_FETCH_DEC1       when P_STOP = '0' and P_INTR = '0' else
+                TR_FETCH_INTR1      when P_STOP = '0' and P_INTR = '1' else
+                TR_FETCH_CON;
+        when STATE_CON =>
+            I_TRANS <= TR_CON_FETCH;
+        when STATE_INTR1 =>
+            I_TRANS <= TR_INTR1_INTR2;
+        when STATE_INTR2 =>
+            I_TRANS <= TR_INTR2_INTR3;
+        when STATE_INTR3 =>
+            I_TRANS <= TR_INTR3_INTR4;
+        when STATE_INTR4 =>
+            I_TRANS <= TR_INTR4_FETCH;
+        when STATE_DEC1 =>
+            I_TRANS <=
+                TR_DEC1_NO_HALT     when P_OP1 = "00000" or P_OP1 = "11111" else
+                TR_DEC1_IMM         when P_OP2 = "010" else
+                TR_DEC1_DRCT        when P_OP2(2 downto 1) = "00" else
+                TR_DEC1_INDR_ALU    when (P_OP2 = "011" or P_OP2(2 downto 1) = "11") and I_IS_ALU else
+                TR_DEC1_INDR_ST     when ((P_OP2 = "011" or P_OP2(2 downto 1) = "11") and P_OP1 = "00010") else
+                TR_DEC1_SHORT_ALU   when P_OP2(2 downto 1) = "10" and (I_IS_ALU and P_OP1(4 downto 1) /= "0101") else
+                TR_DEC1_SHORT_DIV   when P_OP2(2 downto 1) = "10" and P_OP1(4 downto 1) = "0101" else
+                TR_DEC1_INDR_IN     when P_OP2(2 downto 1) = "11" and P_OP1 = "10110" else
+                TR_DEC1_INDR_OUT    when P_OP2(2 downto 1) = "11" and P_OP1 = "10111" else
+                TR_DEC1_PUSH        when P_OP1 = "11000" and P_OP2(2) = '0' else
+                TR_DEC1_POP         when P_OP1 = "11000" and P_OP2(2) = '1' else
+                TR_DEC1_RET         when P_OP1 = "11010" and P_OP2(2) = '0' else
+                TR_DEC1_RETI;
+        when STATE_DEC2 =>
+            I_TRANS <=
+                TR_DEC2_ALU         when I_IS_ALU = '1' else
+                TR_DEC2_ST          when P_OP1 = "00010" else
+                TR_DEC2_JMP         when P_OP1 = "10100" else
+                TR_DEC2_CALL        when P_OP1 = "10101" else
+                TR_DEC2_IN          when P_OP1 = "10110" else
+                TR_DEC2_OUT;
+        when STATE_ALU1 =>
+            I_TRANS <= TR_ALU1_FETCH;
+        when STATE_ST1 =>
+            I_TRANS <= TR_ST1_FETCH;
+        when STATE_CALL1 =>
+            I_TRANS <= TR_CALL1_FETCH;
+        when STATE_IN1 =>
+            I_TRANS <= TR_IN1_FETCH;
+        when STATE_ALU2 =>
+            I_TRANS <= TR_ALU2_FETCH;
+        when STATE_ST2 =>
+            I_TRANS <= TR_ST2_FETCH;
+        when STATE_ALU3 =>
+            I_TRANS <= TR_ALU3_FETCH;
+        when STATE_IN2 =>
+            I_TRANS <= TR_IN2_FETCH;
+        when STATE_PUSH =>
+            I_TRANS <= TR_PUSH_FETCH;
+        when STATE_POP =>
+            I_TRANS <= TR_POP_FETCH;
+        when STATE_RET =>
+            I_TRANS <= TR_RET_FETCH;
+        when STATE_RETI1 =>
+            I_TRANS <= TR_RETI1_RETI2;
+        when STATE_RETI2 =>
+            I_TRANS <= TR_RETI2_RETI3;
+        when STATE_RETI3 =>
+            I_TRANS <= TR_RETI3_FETCH;
+        when others => null;
+    end case;
+
     -- ステートマシンはステートの遷移のみを書く
     process (P_CLK, P_RESET)
     begin
@@ -99,119 +214,7 @@ begin
             P_STOP  <= '0';
             P_INTR  <= '0';
         elsif (P_CLK'event and P_CLK='1') then
-            if (P_STOP = '1') then
-                if (I_STATE = STATE_CON) then
-                    I_STATE <= STATE_FETCH;
-                else
-                    I_STATE <= STATE_CON;
-                end if;
-            else        
-                case I_STATE is
-                    when STATE_CON =>
-                        I_STATE <= STATE_FETCH;
-                    when STATE_FETCH =>
-                        if (P_INTR = '1') then
-                            I_STATE <= STATE_INTR1;
-                        else
-                            I_STATE <= STATE_DEC1;
-                        end if;
-                    when STATE_WAIT  =>
-                        if (P_INTR = '1') then
-                            I_STATE <= STATE_FETCH;
-                        end if;
-                    when STATE_INTR1 => I_STATE <= STATE_INTR2;
-                    when STATE_INTR2 => I_STATE <= STATE_INTR3;
-                    when STATE_INTR3 => I_STATE <= STATE_INTR4;
-                    when STATE_INTR4 => I_STATE <= STATE_FETCH;
-                    when STATE_DEC1  =>
-                        -- NO, HALT
-                        if (P_OP1 = "00000" or P_OP2 = "11111") then
-                            I_STATE <= STATE_FETCH;
-                        -- Imm
-                        elsif (P_OP2 = "010") then
-                            I_STATE <= STATE_ALU1;
-                        -- Drct, Idx
-                        elsif (P_OP2(2 downto 1) = "00") then
-                            I_STATE <= STATE_DEC2;
-                        -- {FP Rlt, Indr} && {LD, ADD, ..., SHRL}
-                        elsif ((P_OP2 = "011" or P_OP2(2 downto 1) = "11") and I_IS_ALU) then
-                            I_STATE <= STATE_ALU2;
-                        -- {FP Rlt, Indr} && ST
-                        elsif ((P_OP2 = "011" or P_OP2(2 downto 1) = "11") and P_OP1 = "00010") then
-                            I_STATE <= STATE_ST2;
-                        -- {Reg, Imm4} && {LD, ..., SHRL}-{DIV, MOD}
-                        elsif (P_OP2(2 downto 1) = "10" and (I_IS_ALU and P_OP1(4 downto 1) /= "0101")) then
-                            I_STATE <= STATE_ALU3;
-                        -- Indr && IN
-                        elsif (P_OP2(2 downto 1) = "11" and P_OP1 = "10110") then
-                            I_STATE <= STATE_IN2;
-                        -- Indr && OUT
-                        elsif (P_OP2(2 downto 1) = "11" and P_OP1 = "10111") then
-                            I_STATE <= STATE_FETCH;
-                        -- PUSH, POP
-                        elsif (P_OP1 = "11000") then
-                            -- PUSH
-                            if (P_OP2(2) = '0') then
-                                I_STATE <= STATE_PUSH;
-                            -- POP
-                            else
-                                I_STATE <= STATE_POP;
-                            end if;
-                        -- RET, RETI
-                        elsif (P_OP1 = "1010") then
-                            -- RET
-                            if (P_OP2(2) = '0') then
-                                I_STATE <= STATE_RET;
-                            -- RETI
-                            else
-                                I_STATE <= STATE_RETI1;
-                            end if;
-                        end if;
-                    when STATE_DEC2  =>
-                        -- {LD, ADD, ..., SHRL}
-                        if (I_IS_ALU) then
-                            I_STATE <= STATE_ALU1;
-                        -- ST
-                        elsif (P_OP1 = "00010") then
-                            I_STATE <= STATE_ST1;
-                        -- JMP
-                        elsif (P_OP1 = "10100") then
-                            I_STATE <= STATE_FETCH;
-                        -- CALL
-                        elsif (P_OP1 = "10101") then
-                            I_STATE <= STATE_CALL1;
-                        -- IN
-                        elsif (P_OP1 = "10110") then
-                            I_STATE <= STATE_IN1;
-                        -- OUT
-                        elsif (P_OP1 = "10111") then
-                            I_STATE <= STATE_FETCH;
-                        end if;
-                    when STATE_ALU1  =>
-                        if P_ALU_BUSY = '0' then
-                            I_STATE <= STATE_FETCH;
-                        end if;
-                    when STATE_ALU2  =>
-                        if P_ALU_BUSY = '0' then
-                            I_STATE <= STATE_FETCH;
-                        end if;
-                    when STATE_ALU3  =>
-                        if P_ALU_BUSY = '0' then
-                            I_STATE <= STATE_FETCH;
-                        end if;
-                    when STATE_ST1   => I_STATE <= STATE_FETCH;
-                    when STATE_ST2   => I_STATE <= STATE_FETCH;
-                    when STATE_PUSH  => I_STATE <= STATE_FETCH;
-                    when STATE_POP   => I_STATE <= STATE_FETCH;
-                    when STATE_RET   => I_STATE <= STATE_FETCH;
-                    when STATE_RETI1 => null;
-                    when STATE_RETI2 => I_STATE <= STATE_RETI3;
-                    when STATE_RETI3 => I_STATE <= STATE_FETCH;
-                    when STATE_IN1   => I_STATE <= STATE_FETCH;
-                    when STATE_IN2   => I_STATE <= STATE_FETCH;
-                    when others => null;
-                end case;
-            end if;
+
         end if;
     end process;
 
