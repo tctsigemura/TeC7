@@ -44,75 +44,118 @@ entity TAC_MMU is
          P_MR       : out std_logic;                     -- Memory Request
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
-         P_DIN      : in  std_logic_vector(15 downto 0)  --TLBのエントリがOUTで
-                                                         --はいる
-         P_DOUT     : out std_logic_vector(15 downto 0);                                       
-         --mmu kara cpu data bus : out warikomigenin to sono pe-ji
+         P_DIN      : in  std_logic_vector(15 downto 0); --TLBのエントリ
+         P_DOUT     : out std_logic_vector(15 downto 0);         
+         P_IOR      : out std_logic;                     --どのページでミスしたか知らせる  
        );
 end TAC_MMU;
 
 --プロセス切替時、ページテーブルを読み込めるようにする
 
 architecture Behavioral of TAC_MMU is
---signal i_en  : std_logic;                                -- Enable resister
+signal i_en  : std_logic;                                -- Enable resister
 --signal i_b   : std_logic_vector(15 downto 0);            -- Base  register
 --signal i_l   : std_logic_vector(15 downto 0);            -- Limit register
---signal i_act : std_logic;                                -- Activate
---signal i_vio : std_logic;                                -- Memory Violation
+signal i_act : std_logic;                                -- Activate MMUが動くか
+signal i_vio : std_logic;                                -- Memory Violation
 --signal i_adr : std_logic;                                -- Bad Address
 
---TLB page index
-signal p0 : std_logic_vector(7 downto 0);
-signal p1 : std_logic_vector(7 downto 0);
-signal p2 : std_logic_vector(7 downto 0);
-signal p3 : std_logic_vector(7 downto 0);
-signal p4 : std_logic_vector(7 downto 0);
-signal p5 : std_logic_vector(7 downto 0);
-signal p6 : std_logic_vector(7 downto 0);
-signal p7 : std_logic_vector(7 downto 0);
+subtype TLB_field is std_logic_vector(23 downto 0);     --page + ctrl + frame
+type TLB_array is array (7 downto 0) of TLB_field;      --24bit * 8 array
 
---TLB page tabele entry
-signal pte0 : std_logic_vector(15 downto 0);
-signal pte1 : std_logic_vector(15 downto 0);
-signal pte2 : std_logic_vector(15 downto 0);
-signal pte3 : std_logic_vector(15 downto 0);
-signal pte4 : std_logic_vector(15 downto 0);
-signal pte5 : std_logic_vector(15 downto 0);
-signal pte6 : std_logic_vector(15 downto 0);
-signal pte7 : std_logic_vector(15 downto 0);
-
-signal pte_out : std_logic_vector(15 downto 0);
-signal p_in : std_logic_vector(7 downto 0);     --page number
-signal offset : std_logic_vector(7 downto 0);
-signal f_out : std_logic_vector(7 downto 0);    --frame number
-
-p_in <= P_ADDR(15 downto 8);
-offset <= P_ADDR(7 downto 0);
-f_out <= pte_out(7 downto 0);
+signal TLB : TLB_array;                                 --TLB
+signal tar_field : TLB_field;                           --検索したtlb field
+signal key_page : std_logic_vector(7 downto 0);         --キーとなるページ番号  
+signal tar_frame : std_logic_vector(7 downto 0);        --frame number
+signal entry : std_logic_vector(15 downto 0);           --c + frame
+signal index : std_logic_vector(10 downto o);           --n + page
+signal flag : std_logic;
 
 begin 
 
-  --CAM
+  key_page <= P_ADDR(15 downto 8);                        
+  offset <= P_ADDR(7 downto 0);
+  tar_frame <= tar_field(7 downto 0);
+
+  --CAM for loopが使える？
   process(P_CLK)
   begin 
     if (P_CLK'event and P_CLK='1') then
-      if (p_in=p0)
-        pte_out <= pte0;
-      elsif (p_in=p1)
-        pte_out <= pte1;
-      elsif (p_in=p2)
-        pte_out <= pte2;
-      elsif (p_in=p3)
-        pte_out <= pte3;
-      elsif (p_in=p4)
-        pte_out <= pte4;
-      elsif (p_in=p5)
-        pte_out <= pte5;
-      elsif (p_in=p6)
-        pte_out <= pte6;
-      elsif (p_in=p7)
-        pte_out <= pte7;
+    --if(なにかしらの条件)
+        if (key_page=TLB[0])
+          tar_field <= TLB[0];
+        elsif (key_page=TLB[1])
+          tar_field <= TLB[1];
+        elsif (key_page=TLB[2])
+          tar_field <= TLB[2];
+        elsif (key_page=TLB[3])
+          tar_field <= TLB[3];
+        elsif (key_page=TLB[4])
+          tar_field <= TLB[4];
+        elsif (key_page=TLB[5])
+          tar_field <= TLB[5];
+        elsif (key_page=TLB[6])
+          tar_field <= TLB[6];
+        elsif (key_page=TLB[7])
+          tar_field <= TLB[7];
+        end if;
+    --else page miss
+    --end if;
+    end if
+  end process
+  
+  --エントリの入れ替え
+  process(P_CLK)
+  begin 
+    if(P_RESET]=0) then
+      --TLB clear?
+      i_en <= 0;
+    elsif (P_CLK'event and P_CLK='1') then
+      if(P_EN='1' and P_IOW='1') then //書き込みモード時はP_MMU_ADDRとP_DIN
+        if(P_MMU_ADDR(2)='0') then
+          i_en <= '1';
+        elsif(P_MMU_ADDR(1)='0') then    
+          entry <= P_DIN;
+        else
+          index <= P_DIN;
+          flag <= '1';
+        end if;
       end if;
+    end if;
+  end process;
+
+  --for loopかcaseが使える？
+  process(P_CLK)
+  begin
+    if(P_CLK'event and P_CLK='1') then
+      if(f='1') then
+        if(index(10 downto 8)="000") then
+          TLB[0](23 downto 16) <= index(7 downto 0);
+          TLB[0](15 downto 0) <= entry;
+        elsif (index(10 downto 8)="001")
+          TLB[1](23 downto 16) <= index(7 downto 0);
+          TLB[1](15 downto 0) <= entry;
+        elsif (index(10 downto 8)="010")
+          TLB[2](23 downto 16) <= index(7 downto 0);
+          TLB[2](15 downto 0) <= entry;
+        elsif (index(10 downto 8)="011")
+          TLB[3](23 downto 16) <= index(7 downto 0);
+          TLB[3](15 downto 0) <= entry;
+        elsif (index(10 downto 8)="100")
+          TLB[4](23 downto 16) <= index(7 downto 0);
+          TLB[4](15 downto 0) <= entry;
+        elsif (index(10 downto 8)="101")
+          TLB[5](23 downto 16) <= index(7 downto 0);
+          TLB[5](15 downto 0) <= entry;
+        elsif (index(10 downto 8)="110")
+          TLB[6](23 downto 16) <= index(7 downto 0);
+          TLB[6](15 downto 0) <= entry;
+        elsif (index(10 downto 8)="111")
+          TLB[7](23 downto 16) <= index(7 downto 0);
+          TLB[7](15 downto 0) <= entry;
+        end if;
+      end if;
+      f <= '0';
     end if;
   end process;
 
