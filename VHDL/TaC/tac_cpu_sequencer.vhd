@@ -83,47 +83,49 @@ signal   I_STATE     : std_logic_vector(4 downto 0);
 
 signal   I_TRANS     : std_logic_vector(6 downto 0);
 
-constant TR_FETCH_CON       : std_logic_vector(6 downto 0) := "0000000";
-constant TR_FETCH_INTR1     : std_logic_vector(6 downto 0) := "0000001";
-constant TR_FETCH_DEC1      : std_logic_vector(6 downto 0) := "0000010";
-constant TR_CON_FETCH       : std_logic_vector(6 downto 0) := "0000011";
-constant TR_INTR1_INTR2     : std_logic_vector(6 downto 0) := "0000100";
-constant TR_INTR2_INTR3     : std_logic_vector(6 downto 0) := "0000101";
-constant TR_INTR3_INTR4     : std_logic_vector(6 downto 0) := "0000110";
-constant TR_INTR4_FETCH     : std_logic_vector(6 downto 0) := "0000111";
-constant TR_DEC1_NO_HALT    : std_logic_vector(6 downto 0) := "0001000";
-constant TR_DEC1_IMM        : std_logic_vector(6 downto 0) := "0001001";
-constant TR_DEC1_DRCT       : std_logic_vector(6 downto 0) := "0001010";
-constant TR_DEC1_INDR_ALU   : std_logic_vector(6 downto 0) := "0001011";
-constant TR_DEC1_INDR_ST    : std_logic_vector(6 downto 0) := "0001100";
-constant TR_DEC1_SHORT_ALU  : std_logic_vector(6 downto 0) := "0001101";
-constant TR_DEC1_SHORT_DIV  : std_logic_vector(6 downto 0) := "0001110";
-constant TR_DEC1_INDR_IN    : std_logic_vector(6 downto 0) := "0001111";
-constant TR_DEC1_INDR_OUT   : std_logic_vector(6 downto 0) := "0010000";
-constant TR_DEC1_PUSH       : std_logic_vector(6 downto 0) := "0010001";
-constant TR_DEC1_POP        : std_logic_vector(6 downto 0) := "0010010";
-constant TR_DEC1_RET        : std_logic_vector(6 downto 0) := "0010011";
-constant TR_DEC1_RETI       : std_logic_vector(6 downto 0) := "0010100";
-constant TR_DEC2_ALU        : std_logic_vector(6 downto 0) := "0010101";
-constant TR_DEC2_ST         : std_logic_vector(6 downto 0) := "0010110";
-constant TR_DEC2_JMP        : std_logic_vector(6 downto 0) := "0010111";
-constant TR_DEC2_CALL       : std_logic_vector(6 downto 0) := "0011000";
-constant TR_DEC2_IN         : std_logic_vector(6 downto 0) := "0011001";
-constant TR_DEC2_OUT        : std_logic_vector(6 downto 0) := "0011010";
-constant TR_ALU1_FETCH      : std_logic_vector(6 downto 0) := "0011011";
-constant TR_ST1_FETCH       : std_logic_vector(6 downto 0) := "0011100";
-constant TR_CALL1_FETCH     : std_logic_vector(6 downto 0) := "0011101";
-constant TR_IN1_FETCH       : std_logic_vector(6 downto 0) := "0011110";
-constant TR_ALU2_FETCH      : std_logic_vector(6 downto 0) := "0011111";
-constant TR_ST2_FETCH       : std_logic_vector(6 downto 0) := "0100000";
-constant TR_ALU3_FETCH      : std_logic_vector(6 downto 0) := "0100001";
-constant TR_IN2_FETCH       : std_logic_vector(6 downto 0) := "0100010";
-constant TR_PUSH_FETCH      : std_logic_vector(6 downto 0) := "0100011";
-constant TR_POP_FETCH       : std_logic_vector(6 downto 0) := "0100100";
-constant TR_RET_FETCH       : std_logic_vector(6 downto 0) := "0100101";
-constant TR_RETI1_RETI2     : std_logic_vector(6 downto 0) := "0100110";
-constant TR_RETI2_RETI3     : std_logic_vector(6 downto 0) := "0100111";
-constant TR_RETI3_FETCH     : std_logic_vector(6 downto 0) := "0101000";
+constant TR_KEEP            : std_logic_vector(6 downto 0) := "0000000";
+constant TR_FETCH_CON       : std_logic_vector(6 downto 0) := "0000001";
+constant TR_FETCH_INTR1     : std_logic_vector(6 downto 0) := "0000010";
+constant TR_FETCH_DEC1      : std_logic_vector(6 downto 0) := "0000011";
+constant TR_WAIT_FETCH      : std_logic_vector(6 downto 0) := "0000100";
+constant TR_CON_FETCH       : std_logic_vector(6 downto 0) := "0000101";
+constant TR_INTR1_INTR2     : std_logic_vector(6 downto 0) := "0000110";
+constant TR_INTR2_INTR3     : std_logic_vector(6 downto 0) := "0000111";
+constant TR_INTR3_INTR4     : std_logic_vector(6 downto 0) := "0001000";
+constant TR_INTR4_FETCH     : std_logic_vector(6 downto 0) := "0001001";
+constant TR_DEC1_NO_HALT    : std_logic_vector(6 downto 0) := "0001010";
+constant TR_DEC1_IMM        : std_logic_vector(6 downto 0) := "0001011";
+constant TR_DEC1_DRCT       : std_logic_vector(6 downto 0) := "0001100";
+constant TR_DEC1_INDR_ALU   : std_logic_vector(6 downto 0) := "0001101";
+constant TR_DEC1_INDR_ST    : std_logic_vector(6 downto 0) := "0001110";
+constant TR_DEC1_SHORT_ALU  : std_logic_vector(6 downto 0) := "0001111";
+constant TR_DEC1_SHORT_DIV  : std_logic_vector(6 downto 0) := "0010000";
+constant TR_DEC1_INDR_IN    : std_logic_vector(6 downto 0) := "0010001";
+constant TR_DEC1_INDR_OUT   : std_logic_vector(6 downto 0) := "0010010";
+constant TR_DEC1_PUSH       : std_logic_vector(6 downto 0) := "0010011";
+constant TR_DEC1_POP        : std_logic_vector(6 downto 0) := "0010100";
+constant TR_DEC1_RET        : std_logic_vector(6 downto 0) := "0010101";
+constant TR_DEC1_RETI       : std_logic_vector(6 downto 0) := "0010110";
+constant TR_DEC2_ALU        : std_logic_vector(6 downto 0) := "0010111";
+constant TR_DEC2_ST         : std_logic_vector(6 downto 0) := "0011000";
+constant TR_DEC2_JMP        : std_logic_vector(6 downto 0) := "0011001";
+constant TR_DEC2_CALL       : std_logic_vector(6 downto 0) := "0011010";
+constant TR_DEC2_IN         : std_logic_vector(6 downto 0) := "0011011";
+constant TR_DEC2_OUT        : std_logic_vector(6 downto 0) := "0011100";
+constant TR_ALU1_FETCH      : std_logic_vector(6 downto 0) := "0011101";
+constant TR_ST1_FETCH       : std_logic_vector(6 downto 0) := "0011110";
+constant TR_CALL1_FETCH     : std_logic_vector(6 downto 0) := "0011111";
+constant TR_IN1_FETCH       : std_logic_vector(6 downto 0) := "0100000";
+constant TR_ALU2_FETCH      : std_logic_vector(6 downto 0) := "0100001";
+constant TR_ST2_FETCH       : std_logic_vector(6 downto 0) := "0100010";
+constant TR_ALU3_FETCH      : std_logic_vector(6 downto 0) := "0100011";
+constant TR_IN2_FETCH       : std_logic_vector(6 downto 0) := "0100100";
+constant TR_PUSH_FETCH      : std_logic_vector(6 downto 0) := "0100101";
+constant TR_POP_FETCH       : std_logic_vector(6 downto 0) := "0100110";
+constant TR_RET_FETCH       : std_logic_vector(6 downto 0) := "0100111";
+constant TR_RETI1_RETI2     : std_logic_vector(6 downto 0) := "0101000";
+constant TR_RETI2_RETI3     : std_logic_vector(6 downto 0) := "0101001";
+constant TR_RETI3_FETCH     : std_logic_vector(6 downto 0) := "0101010";
 
 signal   I_IS_ALU    : std_logic;
 
@@ -142,6 +144,12 @@ begin
                 TR_FETCH_DEC1       when P_STOP = '0' and P_INTR = '0' else
                 TR_FETCH_INTR1      when P_STOP = '0' and P_INTR = '1' else
                 TR_FETCH_CON;
+        when STATE_WAIT =>
+            if (P_INTR = '0') then
+                I_TRANS <= TR_KEEP;
+            else
+                I_TRANS <= TR_WAIT_FETCH;
+            end if;
         when STATE_CON =>
             I_TRANS <= TR_CON_FETCH;
         when STATE_INTR1 =>
@@ -214,7 +222,34 @@ begin
             P_STOP  <= '0';
             P_INTR  <= '0';
         elsif (P_CLK'event and P_CLK='1') then
-
+            case I_TRANS is
+                when TR_WAIT_FETCH | TR_CON_FETCH | TR_INTR4_FETCH
+                    | TR_ALU1_FETCH | TR_ALU2_FETCH | TR_ALU3_FETCH
+                    | TR_ST1_FETCH | TR_ST2_FETCH
+                    | TR_IN1_FETCH | TR_IN2_FETCH
+                    | TR_PUSH_FETCH | TR_POP_FETCH
+                    | TR_CALL1_FETCH | TR_RET_FETCH | TR_RETI3_FETCH
+                    | TR_DEC1_NO_HALT | TR_DEC1_SHORT_ALU | TR_DEC1_INDR_OUT =>
+                    I_STATE <= STATE_FETCH;
+                when TR_FETCH_CON =>
+                    I_STATE <= STATE_CON;
+                when TR_FETCH_INTR1 =>
+                    I_STATE <= STATE_INTR1;
+                when TR_INTR1_INTR2 =>
+                    I_STATE <= STATE_INTR2;
+                when TR_INTR2_INTR3 =>
+                    I_STATE <= STATE_INTR3;
+                when TR_INTR3_INTR4 =>
+                    I_STATE <= STATE_INTR4;
+                when TR_FETCH_DEC1 =>
+                    I_STATE <= STATE_DEC1;
+                when TR_DEC1_IMM =>
+                    I_STATE <= STATE_ALU1;
+                when TR_DEC1_DRCT | TR_DEC2_ALU =>
+                    I_STATE <= STATE_DEC2;
+                -- TODO
+                when others => null;
+            end case;
         end if;
     end process;
 
