@@ -46,7 +46,7 @@ entity TAC_MMU is
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
          P_DIN      : in  std_logic_vector(15 downto 0); 
          P_DOUT     : out std_logic_vector(15 downto 0); 
-         P_IOR      : out std_logic;                      
+         P_IOR      : out std_logic                     
        );
 end TAC_MMU;
 
@@ -58,11 +58,12 @@ signal i_act : std_logic;                                -- Activate MMU
 signal i_vio : std_logic;                                -- Memory Violation
 --signal i_adr : std_logic;                                -- Bad Address
  
-//error not supported
-type TLB_array is array(7 downto 0) of std_logic_vector(23 downto 0);   --array of 24bit * 8 
+subtype TLB_field is std_logic_vector(23 downto 0);
+type TLB_array is array(0 to 7) of TLB_field;           --array of 24bit * 8 
 
 signal TLB : TLB_array;                                 --TLB
 signal key_page : std_logic_vector(7 downto 0);         --page num of key
+signal offset : std_logic_vector(7 downto 0);
 signal tar_field : std_logic_vector(23 downto 0);       --TLB field gotten with key
 signal tar_frame : std_logic_vector(7 downto 0);        --frame num gotten with key
 signal entry : std_logic_vector(15 downto 0);           --ctrl + frame num
@@ -71,44 +72,27 @@ signal flag : std_logic;                                --update flag
 
 begin 
 
-  key_page <= P_ADDR(15 downto 8);                        
-  offset <= P_ADDR(7 downto 0);
+  key_page <= P_MMU_ADDR(15 downto 8);                        
+  offset <= P_MMU_ADDR(7 downto 0);
   tar_frame <= tar_field(7 downto 0);
 
-  --CAM  
-  --can use for loop?
-  process(P_CLK)
-  begin 
-    if (P_CLK'event and P_CLK='1') then
-    --if()
-        if (key_page=TLB[0])
-          tar_field <= TLB[0];
-        elsif (key_page=TLB[1])
-          tar_field <= TLB[1];
-        elsif (key_page=TLB[2])
-          tar_field <= TLB[2];
-        elsif (key_page=TLB[3])
-          tar_field <= TLB[3];
-        elsif (key_page=TLB[4])
-          tar_field <= TLB[4];
-        elsif (key_page=TLB[5])
-          tar_field <= TLB[5];
-        elsif (key_page=TLB[6])
-          tar_field <= TLB[6];
-        elsif (key_page=TLB[7])
-          tar_field <= TLB[7];
-        end if;
-    --else page miss
-    --end if;
-    end if
-  end process
+--pick up TLB_field
+  tar_field <= TLB(0) when key_page=TLB(0)(23 downto 16) else
+            TLB(1) when key_page=TLB(1)(23 downto 16) else
+            TLB(2) when key_page=TLB(2)(23 downto 16) else
+            TLB(3) when key_page=TLB(3)(23 downto 16) else
+            TLB(4) when key_page=TLB(4)(23 downto 16) else
+            TLB(5) when key_page=TLB(5)(23 downto 16) else
+            TLB(6) when key_page=TLB(6)(23 downto 16) else
+            TLB(7) when key_page=TLB(7)(23 downto 16) else
+				"XXXXXXXXXXXXXXXXXXXXXXXX";
   
   --ready to update entry
   process(P_CLK)
   begin 
-    if(P_RESET]=0) then
+    if(P_RESET='0') then
       --TLB clear?
-      i_en <= 0;
+      i_en <= '0';
     elsif (P_CLK'event and P_CLK='1') then
       if(P_EN='1' and P_IOW='1') then 
         if(P_MMU_ADDR(2)='0') then
@@ -130,29 +114,29 @@ begin
     if(P_CLK'event and P_CLK='1') then
       if(flag='1') then
         if(index(10 downto 8)="000") then
-          TLB[0](23 downto 16) <= index(7 downto 0);
-          TLB[0](15 downto 0) <= entry;
-        elsif (index(10 downto 8)="001")
-          TLB[1](23 downto 16) <= index(7 downto 0);
-          TLB[1](15 downto 0) <= entry;
-        elsif (index(10 downto 8)="010")
-          TLB[2](23 downto 16) <= index(7 downto 0);
-          TLB[2](15 downto 0) <= entry;
-        elsif (index(10 downto 8)="011")
-          TLB[3](23 downto 16) <= index(7 downto 0);
-          TLB[3](15 downto 0) <= entry;
-        elsif (index(10 downto 8)="100")
-          TLB[4](23 downto 16) <= index(7 downto 0);
-          TLB[4](15 downto 0) <= entry;
-        elsif (index(10 downto 8)="101")
-          TLB[5](23 downto 16) <= index(7 downto 0);
-          TLB[5](15 downto 0) <= entry;
-        elsif (index(10 downto 8)="110")
-          TLB[6](23 downto 16) <= index(7 downto 0);
-          TLB[6](15 downto 0) <= entry;
-        elsif (index(10 downto 8)="111")
-          TLB[7](23 downto 16) <= index(7 downto 0);
-          TLB[7](15 downto 0) <= entry;
+          TLB(0)(23 downto 16) <= index(7 downto 0);
+          TLB(0)(15 downto 0) <= entry;
+        elsif (index(10 downto 8)="001") then
+          TLB(1)(23 downto 16) <= index(7 downto 0);
+          TLB(1)(15 downto 0) <= entry;
+        elsif (index(10 downto 8)="010") then
+          TLB(2)(23 downto 16) <= index(7 downto 0);
+          TLB(2)(15 downto 0) <= entry;
+        elsif (index(10 downto 8)="011") then
+          TLB(3)(23 downto 16) <= index(7 downto 0);
+          TLB(3)(15 downto 0) <= entry;
+        elsif (index(10 downto 8)="100") then
+          TLB(4)(23 downto 16) <= index(7 downto 0);
+          TLB(4)(15 downto 0) <= entry;
+        elsif (index(10 downto 8)="101") then
+          TLB(5)(23 downto 16) <= index(7 downto 0);
+          TLB(5)(15 downto 0) <= entry;
+        elsif (index(10 downto 8)="110") then
+          TLB(6)(23 downto 16) <= index(7 downto 0);
+          TLB(6)(15 downto 0) <= entry;
+        elsif (index(10 downto 8)="111") then
+          TLB(7)(23 downto 16) <= index(7 downto 0);
+          TLB(7)(15 downto 0) <= entry;
         end if;
       end if;
       flag <= '0';
