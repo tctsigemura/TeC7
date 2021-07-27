@@ -1,0 +1,79 @@
+KEEP => null;
+
+FETCH_CON => null;
+
+FETCH_INTR1 =>
+  TMP <= FLAG;
+  FLAG_P <= '1';
+
+FETCH_DEC1 =>
+  LOAD_IR <= '1';
+  LOAD_DR <= '1';
+  SELECT_W <= "01";
+
+WAIT_FETCH => null;
+
+CON_FETCH => null;
+
+INTR1_INTR2 =>
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "110";
+  SELECT_D <= "000";
+  UPDATE_SP <= "10";
+
+TR_INTR2_INTR3 =>
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "110";
+  SELECT_D <= "111";
+  UPDATE_SP <= "10";
+
+TR_INTR3_INTR4 =>
+  PC <= ベクタアドレス;
+
+TR_INTR4_FETCH =>
+  MR <= '1';
+  SELECT_A <= "000";
+  UPDATE_PC <= "11";
+
+TR_DEC1_NO_HALT =>
+  UPDATE_PC <= "01";
+
+TR_DEC1_IMM =>
+  MR <= '1';
+  SELECT_A <= "001";
+  LOAD_DR <= '1';
+  ALU_START <= '1';
+
+TR_DEC1_DRCT     
+TR_DEC1_INDR_ALU 
+TR_DEC1_INDR_ST  
+TR_DEC1_SHORT_ALU
+TR_DEC1_SHORT_DIV
+TR_DEC1_INDR_IN  
+TR_DEC1_INDR_OUT 
+TR_DEC1_PUSH     
+TR_DEC1_POP      
+TR_DEC1_RET      
+TR_DEC1_RETI     
+TR_DEC2_ALU      
+TR_DEC2_ST       
+TR_DEC2_JMP      
+TR_DEC2_CALL     
+TR_DEC2_IN       
+TR_DEC2_OUT      
+TR_ALU1_FETCH    
+TR_ST1_FETCH     
+TR_CALL1_FETCH   
+TR_IN1_FETCH     
+TR_ALU2_FETCH    
+TR_ST2_FETCH     
+TR_ALU3_FETCH    
+TR_IN2_FETCH     
+TR_PUSH_FETCH    
+TR_POP_FETCH     
+TR_RET_FETCH     
+TR_RETI1_RETI2   
+TR_RETI2_RETI3   
+TR_RETI3_FETCH   
