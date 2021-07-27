@@ -229,7 +229,8 @@ begin
                     | TR_IN1_FETCH | TR_IN2_FETCH
                     | TR_PUSH_FETCH | TR_POP_FETCH
                     | TR_CALL1_FETCH | TR_RET_FETCH | TR_RETI3_FETCH
-                    | TR_DEC1_NO_HALT | TR_DEC1_SHORT_ALU | TR_DEC1_INDR_OUT =>
+                    | TR_DEC1_NO_HALT | TR_DEC1_SHORT_ALU | TR_DEC1_INDR_OUT
+                    | TR_DEC2_JMP | TR_DEC2_IN | TR_DEC2_OUT =>
                     I_STATE <= STATE_FETCH;
                 when TR_FETCH_CON =>
                     I_STATE <= STATE_CON;
@@ -247,7 +248,28 @@ begin
                     I_STATE <= STATE_ALU1;
                 when TR_DEC1_DRCT | TR_DEC2_ALU =>
                     I_STATE <= STATE_DEC2;
-                -- TODO
+                when TR_DEC1_INDR_ALU =>
+                    I_STATE <= STATE_ALU2;
+                when TR_DEC1_INDR_ST =>
+                    I_STATE <= STATE_ST2;
+                when TR_DEC1_SHORT_DIV =>
+                    I_STATE <= STATE_ALU3;
+                when TR_DEC1_PUSH =>
+                    I_STATE <= STATE_PUSH;
+                when TR_DEC1_POP =>
+                    I_STATE <= STATE_POP;
+                when TR_DEC1_RET =>
+                    I_STATE <= STATE_RET;
+                when TR_DEC1_RETI =>
+                    I_STATE <= STATE_RETI1;
+                when TR_DEC2_ST =>
+                    I_STATE <= STATE_ST1;
+                when TR_DEC2_CALL =>
+                    I_STATE <= STATE_CALL1;
+                when TR_RETI1_RETI2 =>
+                    I_STATE <= STATE_RETI2;
+                when TR_RETI2_RETI3 =>
+                    I_STATE <= STATE_RETI3;
                 when others => null;
             end case;
         end if;
