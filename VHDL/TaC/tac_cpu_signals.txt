@@ -22,58 +22,110 @@ INTR1_INTR2 =>
   SELECT_D <= "000";
   UPDATE_SP <= "10";
 
-TR_INTR2_INTR3 =>
+INTR2_INTR3 =>
   MR <= '1';
   RW <= '1';
   SELECT_A <= "110";
   SELECT_D <= "111";
   UPDATE_SP <= "10";
 
-TR_INTR3_INTR4 =>
+INTR3_INTR4 =>
   PC <= ベクタアドレス;
 
-TR_INTR4_FETCH =>
+INTR4_FETCH =>
   MR <= '1';
   SELECT_A <= "000";
   UPDATE_PC <= "11";
 
-TR_DEC1_NO_HALT =>
+DEC1_NO_HALT =>
   UPDATE_PC <= "01";
 
-TR_DEC1_IMM =>
+DEC1_IMM =>
   MR <= '1';
   SELECT_A <= "001";
   LOAD_DR <= '1';
   ALU_START <= '1';
 
-TR_DEC1_DRCT     
-TR_DEC1_INDR_ALU 
-TR_DEC1_INDR_ST  
-TR_DEC1_SHORT_ALU
-TR_DEC1_SHORT_DIV
-TR_DEC1_INDR_IN  
-TR_DEC1_INDR_OUT 
-TR_DEC1_PUSH     
-TR_DEC1_POP      
-TR_DEC1_RET      
-TR_DEC1_RETI     
-TR_DEC2_ALU      
-TR_DEC2_ST       
-TR_DEC2_JMP      
-TR_DEC2_CALL     
-TR_DEC2_IN       
-TR_DEC2_OUT      
-TR_ALU1_FETCH    
-TR_ST1_FETCH     
-TR_CALL1_FETCH   
-TR_IN1_FETCH     
-TR_ALU2_FETCH    
-TR_ST2_FETCH     
-TR_ALU3_FETCH    
-TR_IN2_FETCH     
-TR_PUSH_FETCH    
-TR_POP_FETCH     
-TR_RET_FETCH     
-TR_RETI1_RETI2   
-TR_RETI2_RETI3   
-TR_RETI3_FETCH   
+DEC1_DRCT =>
+  MR <= '1';
+  SELECT_A <= "001";
+  LOAD_DR <= '1';
+
+DEC1_INDR_ALU =>
+  MR <= '1';
+  SELECT_A <= "010";
+  ALU_START <= '1';
+
+DEC1_INDR_ST =>
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "010";
+  SELECT_D <= "100";
+
+DEC1_SHORT_ALU =>
+  LOAD_GR <= '1';
+  UPDATE_PC <= "01";
+
+DEC1_SHORT_DIV =>
+  ALU_START <= '1';
+
+DEC1_INDR_IN =>
+  -- R(Rd) <= IO(EA); -- Din (DR)?
+  --SELECT_B <= '0';
+  --LOAD_GR <= '1';
+  UPDATE_PC <= "01";
+
+DEC1_INDR_OUT =>
+  -- IO(EA) <= R(Rd); -- ?
+  UPDATE_PC <= "01";
+
+DEC1_PUSH =>
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "110";
+  SELECT_D <= "100";
+
+DEC1_POP =>
+  MR <= '1';
+  SELECT_A <= "100";
+  LOAD_DR <= '1';
+
+DEC1_RET =>
+  MR <= '1';
+  SELECT_A <= "100";
+  LOAD_DR <= '1';
+
+DEC1_RETI =>
+  MR <= '1';
+  SELECT_A <= "100";
+
+DEC2_ALU =>
+  MR <= '1';
+  SELECT_A <= "010";
+  LOAD_DR <= '1';
+  ALU_START <= '1';
+
+DEC2_ST =>
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "010";
+  SELECT_D <= "100";
+
+DEC2_JMP
+DEC2_CALL
+DEC2_IN
+DEC2_OUT
+ALU1_FETCH
+ST1_FETCH
+CALL1_FETCH
+IN1_FETCH
+ALU2_FETCH
+ST2_FETCH
+ALU3_FETCH
+IN2_FETCH
+PUSH_FETCH
+POP_FETCH
+RET_FETCH
+RETI1_RETI2
+RETI2_RETI3
+RETI3_FETCH
