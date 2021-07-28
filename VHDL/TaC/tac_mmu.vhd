@@ -44,9 +44,9 @@ entity TAC_MMU is
          P_MR       : out std_logic;                     -- Memory Request
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
-         P_DIN      : in  std_logic_vector(15 downto 0); 
-         P_DOUT     : out std_logic_vector(15 downto 0); 
-         P_IOR      : out std_logic                     
+         P_DIN      : in  std_logic_vector(15 downto 0); -- New TLB field
+         P_DOUT     : out std_logic_vector(15 downto 0); -- Entry 
+         P_IOR      : out std_logic                      -- Interrupt
        );
 end TAC_MMU;
 
@@ -55,16 +55,17 @@ signal i_en  : std_logic;                                -- Enable resister
 --signal i_b   : std_logic_vector(15 downto 0);            -- Base  register
 --signal i_l   : std_logic_vector(15 downto 0);            -- Limit register
 signal i_act : std_logic;                                -- Activate MMU
-signal i_vio : std_logic;                                -- Memory Violation
---signal i_adr : std_logic;                                -- Bad Address
+signal i_mis : std_logic;                                -- TLB miss
+signal i_adr : std_logic;                                -- Bad Address
  
-subtype TLB_field is std_logic_vector(23 downto 0);
+subtype TLB_field is std_logic_vector(23 downto 0);     
+--page [xxxx xxxx] ctrl [x '0' V R D R W X] frame [xxxx xxxx] total 24bit 
 type TLB_array is array(0 to 7) of TLB_field;           --array of 24bit * 8 
 
 signal TLB : TLB_array;                                 --TLB
 signal key_page : std_logic_vector(7 downto 0);         --page num of key
 signal offset : std_logic_vector(7 downto 0);
-signal tar_field : std_logic_vector(23 downto 0);       --TLB field gotten with key
+signal tar_field : TLB_field;                           --TLB field gotten with key
 signal tar_frame : std_logic_vector(7 downto 0);        --frame num gotten with key
 signal entry : std_logic_vector(15 downto 0);           --ctrl + frame num
 signal index : std_logic_vector(10 downto 0);           --page num index + page num
@@ -75,7 +76,7 @@ begin
   key_page <= P_MMU_ADDR(15 downto 8);                        
   offset <= P_MMU_ADDR(7 downto 0);
   tar_frame <= tar_field(7 downto 0);
-
+        
 --pick up TLB_field
   tar_field <= TLB(0) when key_page=TLB(0)(23 downto 16) else
             TLB(1) when key_page=TLB(1)(23 downto 16) else
@@ -85,17 +86,17 @@ begin
             TLB(5) when key_page=TLB(5)(23 downto 16) else
             TLB(6) when key_page=TLB(6)(23 downto 16) else
             TLB(7) when key_page=TLB(7)(23 downto 16) else
-				"XXXXXXXXXXXXXXXXXXXXXXXX";
+				"XXXXXXXXX1XXXXXXXXXXXXXX"; -- pagemiss
   
   --ready to update entry
   process(P_CLK)
   begin 
     if(P_RESET='0') then
-      --TLB clear?
       i_en <= '0';
+      flag <= '0';
     elsif (P_CLK'event and P_CLK='1') then
       if(P_EN='1' and P_IOW='1') then 
-        if(P_MMU_ADDR(2)='0') then
+        if(P_MMU_ADDR(2)='1') then    --when MMU mode is paging
           i_en <= '1';
         elsif(P_MMU_ADDR(1)='0') then    
           entry <= P_DIN;
@@ -103,12 +104,14 @@ begin
           index <= P_DIN;
           flag <= '1';
         end if;
+      else  
+        flag <= '0';
       end if;
     end if;
   end process;
 
   --update entry 
-  --can use for loop or case?
+  --need to change R, D bit on memory before replacing old entry
   process(P_CLK)
   begin
     if(P_CLK'event and P_CLK='1') then
@@ -139,10 +142,16 @@ begin
           TLB(7)(15 downto 0) <= entry;
         end if;
       end if;
-      flag <= '0';
     end if;
   end process;
 
+  i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
+  i_mis <= tar_field(14);   --ato nanika
+  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;
+  P_ADDR <= tar_field & offset;
+  P_MR <= P_MMU_MR and (not i_mis);
+  P_VIO_INT <= i_mis;
+  P_ADR_INT <= i_adr;
 --begin
   --process(P_RESET, P_CLK)
   --begin
