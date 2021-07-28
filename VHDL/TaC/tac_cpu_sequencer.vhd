@@ -288,22 +288,66 @@ begin
 
     P_UPDATE_PC <=
         "01" when I_TR = TR_DEC1_NO_HALT or I_TR = TR_DEC1_SHORT_ALU
-                or I_TR = TR_DEC1_INDR_IN or I_TR = TR_DEC1_INDR_OUT
-                or I_TR = TR_ALU2_FETCH or I_TR = TR_ST2_FETCH
-                or I_TR = TR_ALU3_FETCH or I_TR = TR_PUSH_FETCH
-                or I_TR = TR_POP_FETCH else
+            or I_TR = TR_DEC1_INDR_IN or I_TR = TR_DEC1_INDR_OUT
+            or I_TR = TR_ALU2_FETCH or I_TR = TR_ST2_FETCH
+            or I_TR = TR_ALU3_FETCH or I_TR = TR_PUSH_FETCH
+            or I_TR = TR_POP_FETCH else
         "10" when (I_TR = DEC2_JMP and I_JMP_GO = '0') or I_TR = TR_DEC2_IN
-                or I_TR = TR_DEC2_OUT or I_TR = TR_ALU1_FETCH
-                or I_TR = TR_ST1_FETCH else
+            or I_TR = TR_DEC2_OUT or I_TR = TR_ALU1_FETCH
+            or I_TR = TR_ST1_FETCH else
         "11" when I_TR = TR_INTR4_FETCH or I_TR = TR_RET_FETCH
-                or I_TR = TR_RETI2_RETI3 else
+            or I_TR = TR_RETI2_RETI3 else
         "00";
     
     P_UPDATE_SP <=
         "01" when I_TR = TR_POP_FETCH or I_TR = TR_RET_FETCH
-                or I_TR = TR_RETI2_RETI3 or I_TR = TR_RETI3_FETCH else
+            or I_TR = TR_RETI2_RETI3 or I_TR = TR_RETI3_FETCH else
         "10" when I_TR = TR_INTR1_INTR2 or I_TR = TR_INTR2_INTR3
-                or I_TR = TR_CALL1_FETCH or I_TR = TR_PUSH_FETCH else
+            or I_TR = TR_CALL1_FETCH or I_TR = TR_PUSH_FETCH else
         "00";
+
+    P_LOAD_IR <= '1' when I_TR = TR_FETCH_DEC1 else '0';
+
+    P_LOAD_DR <=
+        '1' when I_TR = TR_LOAD_DR or I_TR = TR_DEC1_IMM
+            or I_TR = TR_DEC1_DRCT or I_TR = TR_DEC1_INDR_IN
+            or I_TR = TR_DEC1_POP or I_TR = TR_DEC1_RET
+            or I_TR = TR_DEC2_ALU or I_TR = TR_DEC2_IN
+            or I_TR = TR_RETI1_RETI2 else
+        '0';
+
+    -- 命令によって決める
+    P_LOAD_FLAG <= '0'; --TODO
+
+    P_LOAD_TMP <= '1' when I_TR = TR_FETCH_INTR1 else '0';
+
+    P_LOAD_GR <=
+        '1' when I_TR = TR_DEC1_SHORT_ALU or I_TR = TR_ALU1_FETCH
+            or I_TR = TR_ALU2_FETCH or I_TR = TR_ALU3_FETCH
+            or I_TR = TR_IN1_FETCH or I_TR = TR_IN2_FETCH
+            or I_TR = TR_RETI3_FETCH else
+        '0';
+
+    P_SELECT_A <=
+        "001" when I_TR = TR_DEC1_IMM or I_TR = TR_DEC1_DRCT else
+        "010" when I_TR = TR_DEC1_INDR_ALU or I_TR = TR_DEC1_INDR_ST
+            or I_TR = TR_DEC1_INDR_IN or I_TR = TR_DEC1_INDR_OUT
+            or I_TR = TR_DEC2_ALU or I_TR = TR_DEC2_ST
+            or I_TR = TR_DEC2_IN or I_TR = TR_DEC2_OUT else
+        "100" when I_TR = TR_DEC1_POP or I_TR = TR_DEC1_RET
+            or I_TR = TR_DEC1_RETI or I_TR = TR_RET_FETCH
+            or I_TR = TR_RETI2_RETI3 else
+        "101" when I_TR = TR_RETI1_RETI2 else
+        "110" when I_TR = TR_INTR1_INTR2 or I_TR = TR_INTR2_INTR3
+            or I_TR = TR_DEC1_PUSH or I_TR = TR_DEC2_CALL else
+        "000";
+
+    -- P_SELECT_D
+    -- P_SELECT_W
+    -- P_SELECT_B
+    -- P_ALU_START
+    -- P_MR
+    -- P_IR
+    -- P_RW
     
 end RTL;
