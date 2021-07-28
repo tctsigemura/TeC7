@@ -342,10 +342,28 @@ begin
             or I_TR = TR_DEC1_PUSH or I_TR = TR_DEC2_CALL else
         "000";
 
-    -- P_SELECT_D
-    -- P_SELECT_W
-    -- P_SELECT_B
-    -- P_ALU_START
+    P_SELECT_D <=
+        "010" when I_TR = TR_DEC2_CALL else
+        "100" when I_TR = TR_DEC1_INDR_ST or I_TR = TR_DEC1_INDR_OUT
+        or I_TR = TR_DEC1_PUSH or I_TR = TR_DEC2_ST
+        or I_TR = TR_DEC2_OUT else
+        "111" when I_TR = TR_INTR2_INTR3 else
+        "000";
+    
+    P_SELECT_W <=
+        "01" when I_TR = TR_FETCH_DEC1 else
+        "00";
+
+    P_SELECT_B <=
+        '1' when I_TR = TR_IN1_FETCH or I_TR = TR_IN2_FETCH
+            or I_TR = TR_POP_FETCH or I_TR = TR_RETI3_FETCH else
+        '0';
+
+    P_ALU_START <=
+        '1' when I_TR = TR_DEC1_IMM or I_TR = TR_DEC1_INDR_ALU
+            or I_TR = TR_DEC1_SHORT_DIV or I_TR = TR_DEC2_ALU else
+        '0';
+
     -- P_MR
     -- P_IR
     -- P_RW
