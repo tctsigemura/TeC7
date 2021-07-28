@@ -255,6 +255,7 @@ RETI2_RETI3 =>
   -- PC <- M(SP)
   MR <= '1';
   SELECT_A <= "100";
+  UPDATE_PC <= "11";
   -- SP += 2
   UPDATE_SP <= "01";
 

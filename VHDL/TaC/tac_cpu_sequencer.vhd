@@ -48,6 +48,14 @@ entity TAC_CPU_SEQUENCER is
             P_SELECT_W    : out std_logic_vector(1 downto 0);  -- DR への入力の選択
             P_SELECT_B    : out std_logic;                     -- ALU B への入力の選択
             P_ALU_START   : out std_logic;
+            P_ALU_BUSY    : in std_logic;
+            P_ALU_OVERFLOW: in std_logic;
+            P_ALU_CARRY   : in std_logic;
+            P_ALU_ZERO    : in std_logic;
+            P_ALU_SIGN    : in std_logic;
+            P_MR          : out std_logic;                     -- Memory Request
+            P_IR          : out std_logic;                     -- I/O Request
+            P_RW          : out std_logic                      -- Read/Write
           --TODO
             );
 end TAC_CPU_SEQUENCER;
@@ -81,7 +89,7 @@ constant STATE_CON   : std_logic_vector(4 downto 0) := "11111";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
 
-signal   I_TRANS     : std_logic_vector(6 downto 0);
+signal   I_TR     : std_logic_vector(6 downto 0);
 
 constant TR_KEEP            : std_logic_vector(6 downto 0) := "0000000";
 constant TR_FETCH_CON       : std_logic_vector(6 downto 0) := "0000001";
@@ -128,6 +136,7 @@ constant TR_RETI2_RETI3     : std_logic_vector(6 downto 0) := "0101001";
 constant TR_RETI3_FETCH     : std_logic_vector(6 downto 0) := "0101010";
 
 signal   I_IS_ALU    : std_logic;
+signal   I_JMP_GO    : std_logic;
 
 begin
 
@@ -140,28 +149,28 @@ begin
     -- 遷移の決定
     case I_STATE is
         when STATE_FETCH =>
-            I_TRANS <=
+            I_TR <=
                 TR_FETCH_DEC1       when P_STOP = '0' and P_INTR = '0' else
                 TR_FETCH_INTR1      when P_STOP = '0' and P_INTR = '1' else
                 TR_FETCH_CON;
         when STATE_WAIT =>
             if (P_INTR = '0') then
-                I_TRANS <= TR_KEEP;
+                I_TR <= TR_KEEP;
             else
-                I_TRANS <= TR_WAIT_FETCH;
+                I_TR <= TR_WAIT_FETCH;
             end if;
         when STATE_CON =>
-            I_TRANS <= TR_CON_FETCH;
+            I_TR <= TR_CON_FETCH;
         when STATE_INTR1 =>
-            I_TRANS <= TR_INTR1_INTR2;
+            I_TR <= TR_INTR1_INTR2;
         when STATE_INTR2 =>
-            I_TRANS <= TR_INTR2_INTR3;
+            I_TR <= TR_INTR2_INTR3;
         when STATE_INTR3 =>
-            I_TRANS <= TR_INTR3_INTR4;
+            I_TR <= TR_INTR3_INTR4;
         when STATE_INTR4 =>
-            I_TRANS <= TR_INTR4_FETCH;
+            I_TR <= TR_INTR4_FETCH;
         when STATE_DEC1 =>
-            I_TRANS <=
+            I_TR <=
                 TR_DEC1_NO_HALT     when P_OP1 = "00000" or P_OP1 = "11111" else
                 TR_DEC1_IMM         when P_OP2 = "010" else
                 TR_DEC1_DRCT        when P_OP2(2 downto 1) = "00" else
@@ -176,7 +185,7 @@ begin
                 TR_DEC1_RET         when P_OP1 = "11010" and P_OP2(2) = '0' else
                 TR_DEC1_RETI;
         when STATE_DEC2 =>
-            I_TRANS <=
+            I_TR <=
                 TR_DEC2_ALU         when I_IS_ALU = '1' else
                 TR_DEC2_ST          when P_OP1 = "00010" else
                 TR_DEC2_JMP         when P_OP1 = "10100" else
@@ -184,33 +193,33 @@ begin
                 TR_DEC2_IN          when P_OP1 = "10110" else
                 TR_DEC2_OUT;
         when STATE_ALU1 =>
-            I_TRANS <= TR_ALU1_FETCH;
+            I_TR <= TR_ALU1_FETCH;
         when STATE_ST1 =>
-            I_TRANS <= TR_ST1_FETCH;
+            I_TR <= TR_ST1_FETCH;
         when STATE_CALL1 =>
-            I_TRANS <= TR_CALL1_FETCH;
+            I_TR <= TR_CALL1_FETCH;
         when STATE_IN1 =>
-            I_TRANS <= TR_IN1_FETCH;
+            I_TR <= TR_IN1_FETCH;
         when STATE_ALU2 =>
-            I_TRANS <= TR_ALU2_FETCH;
+            I_TR <= TR_ALU2_FETCH;
         when STATE_ST2 =>
-            I_TRANS <= TR_ST2_FETCH;
+            I_TR <= TR_ST2_FETCH;
         when STATE_ALU3 =>
-            I_TRANS <= TR_ALU3_FETCH;
+            I_TR <= TR_ALU3_FETCH;
         when STATE_IN2 =>
-            I_TRANS <= TR_IN2_FETCH;
+            I_TR <= TR_IN2_FETCH;
         when STATE_PUSH =>
-            I_TRANS <= TR_PUSH_FETCH;
+            I_TR <= TR_PUSH_FETCH;
         when STATE_POP =>
-            I_TRANS <= TR_POP_FETCH;
+            I_TR <= TR_POP_FETCH;
         when STATE_RET =>
-            I_TRANS <= TR_RET_FETCH;
+            I_TR <= TR_RET_FETCH;
         when STATE_RETI1 =>
-            I_TRANS <= TR_RETI1_RETI2;
+            I_TR <= TR_RETI1_RETI2;
         when STATE_RETI2 =>
-            I_TRANS <= TR_RETI2_RETI3;
+            I_TR <= TR_RETI2_RETI3;
         when STATE_RETI3 =>
-            I_TRANS <= TR_RETI3_FETCH;
+            I_TR <= TR_RETI3_FETCH;
         when others => null;
     end case;
 
@@ -222,7 +231,7 @@ begin
             P_STOP  <= '0';
             P_INTR  <= '0';
         elsif (P_CLK'event and P_CLK='1') then
-            case I_TRANS is
+            case I_TR is
                 when TR_WAIT_FETCH | TR_CON_FETCH | TR_INTR4_FETCH
                     | TR_ALU1_FETCH | TR_ALU2_FETCH | TR_ALU3_FETCH
                     | TR_ST1_FETCH | TR_ST2_FETCH
@@ -276,9 +285,18 @@ begin
     end process;
 
     -- 信号に出力する内容をステートによって決める
-    P_UPDATE_PC <=  "01" when I_STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111") else
-                    "00";
-    P_UPDATE_SP <= "00";--TODO
-    --P_UPDATE_
+
+    P_UPDATE_PC <=
+        "01" when I_TR = TR_DEC1_NO_HALT or I_TR = TR_DEC1_SHORT_ALU
+                or I_TR = TR_DEC1_INDR_IN or I_TR = TR_DEC1_INDR_OUT
+                or I_TR = TR_ALU2_FETCH or I_TR = TR_ST2_FETCH
+                or I_TR = TR_ALU3_FETCH or I_TR = TR_PUSH_FETCH
+                or I_TR = TR_POP_FETCH else
+        "10" when (I_TR = DEC2_JMP and I_JMP_GO = '0') or I_TR = TR_DEC2_IN
+                or I_TR = TR_DEC2_OUT or I_TR = TR_ALU1_FETCH
+                or I_TR = TR_ST1_FETCH else
+        "11" when I_TR = TR_INTR4_FETCH or I_TR = TR_RET_FETCH
+                or I_TR = TR_RETI2_RETI3 else
+        "00";
     
 end RTL;
