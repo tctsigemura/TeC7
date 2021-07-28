@@ -299,4 +299,11 @@ begin
                 or I_TR = TR_RETI2_RETI3 else
         "00";
     
+    P_UPDATE_SP <=
+        "01" when I_TR = TR_POP_FETCH or I_TR = TR_RET_FETCH
+                or I_TR = TR_RETI2_RETI3 or I_TR = TR_RETI3_FETCH else
+        "10" when I_TR = TR_INTR1_INTR2 or I_TR = TR_INTR2_INTR3
+                or I_TR = TR_CALL1_FETCH or I_TR = TR_PUSH_FETCH else
+        "00";
+    
 end RTL;
