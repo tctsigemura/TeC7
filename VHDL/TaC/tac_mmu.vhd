@@ -6,24 +6,24 @@
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
---   Free Software Foundation  GNU 
--- 
--- ()
--- 
+--   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+-- 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+-- コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+-- 布することを無償で許諾する．
 --
---   
--- 
--- 
--- 
+--   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+-- 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+-- も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+-- る損害に関しても，その責任を負わない．
 --
 --
 
 --
 -- TaC/tac_mmu.vhd : TaC Memory Management Unit Source Code
 --
--- 2019.12.19           : CPU
--- 2019.07.30           : 
--- 2019.01.22           : 
+-- 2019.12.19           : CPU停止時（コンソール動作時）はアドレス変換禁止
+-- 2019.07.30           : アドレスエラー追加
+-- 2019.01.22           : 新しく追加
 --
 
 library IEEE;
@@ -58,35 +58,44 @@ signal i_act : std_logic;                                -- Activate MMU
 signal i_mis : std_logic;                                -- TLB miss
 signal i_adr : std_logic;                                -- Bad Address
  
-subtype TLB_field is std_logic_vector(23 downto 0);     
---page [xxxx xxxx] ctrl [x '0' V R D R W X] frame [xxxx xxxx] total 24bit 
+TLBエントリのビット構成
+|<------ 8 ---->|<-- 5 -->|<-3->|<------ 8 ---->|
++---------------+-+-+-+-+-+-----+---------------+
+|       PAGE    |V|*|*|R|D|R/W/X|      FRAME    |
++---------------+-+-+-+-+-+-----+---------------+
+ 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 
+PAGE:ページ番号, V:Valid, *:未定義, R:Reference, D:Dirty,
+R/W/X:Read/Write/eXecute, FRAME:フレーム番号
+
+
+subtype TLB_field is std_logic_vector(23 downto 0); 
 type TLB_array is array(0 to 7) of TLB_field;           --array of 24bit * 8 
 
 signal TLB : TLB_array;                                 --TLB
-signal key_page : std_logic_vector(7 downto 0);         --page num of key
+signal page : std_logic_vector(7 downto 0);             --page number of key
 signal offset : std_logic_vector(7 downto 0);
-signal tar_field : TLB_field;                           --TLB field gotten with key
-signal tar_frame : std_logic_vector(7 downto 0);        --frame num gotten with key
+signal field : TLB_field;                               --TLB field gotten with key
+signal frame : std_logic_vector(7 downto 0);             --frame num gotten with key
 signal entry : std_logic_vector(15 downto 0);           --ctrl + frame num
 signal index : std_logic_vector(10 downto 0);           --page num index + page num
 signal flag : std_logic;                                --update flag
 
 begin 
 
-  key_page <= P_MMU_ADDR(15 downto 8);                        
+  page <= P_MMU_ADDR(15 downto 8);                        
   offset <= P_MMU_ADDR(7 downto 0);
-  tar_frame <= tar_field(7 downto 0);
+  frame <= field(7 downto 0);
         
 --pick up TLB_field
-  tar_field <= TLB(0) when key_page=TLB(0)(23 downto 16) else
-            TLB(1) when key_page=TLB(1)(23 downto 16) else
-            TLB(2) when key_page=TLB(2)(23 downto 16) else
-            TLB(3) when key_page=TLB(3)(23 downto 16) else
-            TLB(4) when key_page=TLB(4)(23 downto 16) else
-            TLB(5) when key_page=TLB(5)(23 downto 16) else
-            TLB(6) when key_page=TLB(6)(23 downto 16) else
-            TLB(7) when key_page=TLB(7)(23 downto 16) else
-				"XXXXXXXXX1XXXXXXXXXXXXXX"; -- pagemiss
+  field <= TLB(0) when page=TLB(0)(23 downto 16) else
+          TLB(1) when page=TLB(1)(23 downto 16) else
+          TLB(2) when page=TLB(2)(23 downto 16) else
+          TLB(3) when page=TLB(3)(23 downto 16) else
+          TLB(4) when page=TLB(4)(23 downto 16) else
+          TLB(5) when page=TLB(5)(23 downto 16) else
+          TLB(6) when page=TLB(6)(23 downto 16) else
+          TLB(7) when page=TLB(7)(23 downto 16) else
+				"XXXXXXXXX0XXXXXXXXXXXXXX"; -- TLBmiss
   
   --ready to update entry
   process(P_CLK)
@@ -146,12 +155,14 @@ begin
   end process;
 
   i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
-  i_mis <= tar_field(14);   --ato nanika
+  i_mis <= not field(15);   --ato nanika
   i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;
-  P_ADDR <= tar_field & offset;
+  P_ADDR <= field & offset;
   P_MR <= P_MMU_MR and (not i_mis);
   P_VIO_INT <= i_mis;
   P_ADR_INT <= i_adr;
+
+
 --begin
   --process(P_RESET, P_CLK)
   --begin
