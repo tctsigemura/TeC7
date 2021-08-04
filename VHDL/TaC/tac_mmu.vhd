@@ -58,14 +58,14 @@ signal i_act : std_logic;                                -- Activate MMU
 signal i_mis : std_logic;                                -- TLB miss
 signal i_adr : std_logic;                                -- Bad Address
  
-TLBエントリのビット構成
-|<------ 8 ---->|<-- 5 -->|<-3->|<------ 8 ---->|
-+---------------+-+-+-+-+-+-----+---------------+
-|       PAGE    |V|*|*|R|D|R/W/X|      FRAME    |
-+---------------+-+-+-+-+-+-----+---------------+
- 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 
-PAGE:ページ番号, V:Valid, *:未定義, R:Reference, D:Dirty,
-R/W/X:Read/Write/eXecute, FRAME:フレーム番号
+--TLBエントリのビット構成
+--|<------ 8 ---->|<-- 5 -->|<-3->|<------ 8 ---->|
+--+---------------+-+-+-+-+-+-----+---------------+
+--|       PAGE    |V|*|*|R|D|R/W/X|      FRAME    |
+--+---------------+-+-+-+-+-+-----+---------------+
+-- 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 
+--PAGE:ページ番号, V:Valid, *:未定義, R:Reference, D:Dirty,
+--R/W/X:Read/Write/eXecute, FRAME:フレーム番号
 
 
 subtype TLB_field is std_logic_vector(23 downto 0); 
@@ -95,7 +95,7 @@ begin
           TLB(5) when page=TLB(5)(23 downto 16) else
           TLB(6) when page=TLB(6)(23 downto 16) else
           TLB(7) when page=TLB(7)(23 downto 16) else
-				"XXXXXXXXX0XXXXXXXXXXXXXX"; -- TLBmiss
+				"XXXXXXXX0XXXXXXXXXXXXXXX"; -- TLBmiss
   
   --ready to update entry
   process(P_CLK)
@@ -106,11 +106,11 @@ begin
     elsif (P_CLK'event and P_CLK='1') then
       if(P_EN='1' and P_IOW='1') then 
         if(P_MMU_ADDR(2)='1') then    --when MMU mode is paging
-          i_en <= '1';
+          i_en <= P_DIN(0);
         elsif(P_MMU_ADDR(1)='0') then    
           entry <= P_DIN;
         else
-          index <= P_DIN;
+          index <= P_DIN(10 downto 0);
           flag <= '1';
         end if;
       else  
@@ -125,31 +125,7 @@ begin
   begin
     if(P_CLK'event and P_CLK='1') then
       if(flag='1') then
-        if(index(10 downto 8)="000") then
-          TLB(0)(23 downto 16) <= index(7 downto 0);
-          TLB(0)(15 downto 0) <= entry;
-        elsif (index(10 downto 8)="001") then
-          TLB(1)(23 downto 16) <= index(7 downto 0);
-          TLB(1)(15 downto 0) <= entry;
-        elsif (index(10 downto 8)="010") then
-          TLB(2)(23 downto 16) <= index(7 downto 0);
-          TLB(2)(15 downto 0) <= entry;
-        elsif (index(10 downto 8)="011") then
-          TLB(3)(23 downto 16) <= index(7 downto 0);
-          TLB(3)(15 downto 0) <= entry;
-        elsif (index(10 downto 8)="100") then
-          TLB(4)(23 downto 16) <= index(7 downto 0);
-          TLB(4)(15 downto 0) <= entry;
-        elsif (index(10 downto 8)="101") then
-          TLB(5)(23 downto 16) <= index(7 downto 0);
-          TLB(5)(15 downto 0) <= entry;
-        elsif (index(10 downto 8)="110") then
-          TLB(6)(23 downto 16) <= index(7 downto 0);
-          TLB(6)(15 downto 0) <= entry;
-        elsif (index(10 downto 8)="111") then
-          TLB(7)(23 downto 16) <= index(7 downto 0);
-          TLB(7)(15 downto 0) <= entry;
-        end if;
+       TLB(CONV_INTEGER(index(10 downto 8))) <= index(7 downto 0) & entry;
       end if;
     end if;
   end process;
@@ -157,7 +133,7 @@ begin
   i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
   i_mis <= not field(15);   --ato nanika
   i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;
-  P_ADDR <= field & offset;
+  P_ADDR <= frame & offset;
   P_MR <= P_MMU_MR and (not i_mis);
   P_VIO_INT <= i_mis;
   P_ADR_INT <= i_adr;
