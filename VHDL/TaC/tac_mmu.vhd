@@ -34,6 +34,7 @@ entity TAC_MMU is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
          P_EN       : in  std_logic;
+         P_IOR      : in  std_logic;                     -- Interrupt 
          P_IOW      : in  std_logic;
          P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
          P_BT       : in  std_logic;                     -- Byte access
@@ -45,8 +46,7 @@ entity TAC_MMU is
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
          P_DIN      : in  std_logic_vector(15 downto 0); -- New TLB field
-         P_DOUT     : out std_logic_vector(15 downto 0); -- Entry 
-         P_IOR      : out std_logic                      -- Interrupt
+         P_DOUT     : out std_logic_vector(15 downto 0)  -- Entry fault happend 
        );
 end TAC_MMU;
 
@@ -98,7 +98,7 @@ begin
 				"XXXXXXXX0XXXXXXXXXXXXXXX"; -- TLBmiss
   
   --ready to update entry
-  process(P_CLK)
+  process(P_CLK,P_RESET)
   begin 
     if(P_RESET='0') then
       i_en <= '0';
@@ -120,7 +120,7 @@ begin
   end process;
 
   --update entry 
-  --need to change R, D bit on memory before replacing old entry
+  --to do next: need to change R, D bit on memory before replacing old entry
   process(P_CLK)
   begin
     if(P_CLK'event and P_CLK='1') then
@@ -131,7 +131,7 @@ begin
   end process;
 
   i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
-  i_mis <= not field(15);   --ato nanika
+  i_mis <= not field(15) and i_act;
   i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;
   P_ADDR <= frame & offset;
   P_MR <= P_MMU_MR and (not i_mis);
@@ -139,6 +139,7 @@ begin
   P_ADR_INT <= i_adr;
 
 
+--relocation register
 --begin
   --process(P_RESET, P_CLK)
   --begin
