@@ -248,7 +248,6 @@ begin
           or I_STATE = STATE_RETI1 or I_STATE = STATE_RETI2 else
     '0';
   
-  -- P_MR
   -- P_IR
   -- P_RW
             
