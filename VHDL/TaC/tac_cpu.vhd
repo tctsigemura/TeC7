@@ -83,6 +83,41 @@ component TAC_CPU_ALU is
           );
 end component;
 
+component TAC_CPU_SEQUENCER is
+  port (
+  P_CLK         : in std_logic;
+  P_RESET       : in std_logic;
+  P_STOP        : in std_logic;
+  P_INTR        : in std_logic;
+  P_ALU_BUSY    : in std_logic;
+  P_OP1         : in std_logic_vector(4 downto 0);
+  P_OP2         : in std_logic_vector(2 downto 0);
+  P_FLAG_C      : in std_logic;
+  P_FLAG_S      : in std_logic;
+  P_FLAG_Z      : in std_logic;
+  P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
+  P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
+  P_LOAD_IR     : out std_logic;                     -- IR のロード
+  P_LOAD_DR     : out std_logic;                     -- DR のロード
+  P_LOAD_FLAG   : out std_logic;                     -- FLAG のロード
+  P_LOAD_TMP    : out std_logic;                     -- TMP のロード
+  P_LOAD_GR     : out std_logic;                     -- 汎用レジスタのロード
+  P_SELECT_A    : out std_logic_vector(2 downto 0);  -- アドレス出力の選択
+  P_SELECT_D    : out std_logic_vector(2 downto 0);  -- データ出力の選択
+  P_SELECT_W    : out std_logic_vector(1 downto 0);  -- DR への入力の選択
+  P_SELECT_B    : out std_logic;                     -- ALU B への入力の選択
+  P_ALU_START   : out std_logic;
+  P_ALU_BUSY    : in std_logic;
+  P_ALU_OVERFLOW: in std_logic;
+  P_ALU_CARRY   : in std_logic;
+  P_ALU_ZERO    : in std_logic;
+  P_ALU_SIGN    : in std_logic;
+  P_MR          : out std_logic;                     -- Memory Request
+  P_IR          : out std_logic;                     -- I/O Request
+  P_RW          : out std_logic                      -- Read/Write
+  );
+end component;
+
 -- レジスタファイル
 type RegGR is array(0 to 11) of Word;
 signal I_REG_GR  : RegGR; -- G0-G11
@@ -177,6 +212,37 @@ begin
     P_CARRY     => I_ALU_CARRY,
     P_ZERO      => I_ALU_ZERO,
     P_SIGN      => I_ALU_SIGN
+  );
+
+  SEQUENCER : TAC_CPU_SEQUENCER
+  port map (
+    P_CLK         => P_CLK0,
+    P_RESET       => P_RESET,
+    P_STOP        => P_STOP,
+    P_INTR        => P_INTR,
+    P_ALU_BUSY    => I_ALU_BUSY,
+    P_OP1         => I_INST_OP1,
+    P_OP2         => I_INST_OP2,
+    P_UPDATE_PC   => I_UPDATE_PC,
+    P_UPDATE_SP   => I_UPDATE_SP,
+    P_LOAD_IR     => I_LOAD_IR,
+    P_LOAD_DR     => I_LOAD_RR,
+    P_LOAD_FLAG   => I_LOAD_FLAG,
+    P_LOAD_TMP    => I_LOAD_TMP,
+    P_LOAD_GR     => I_LOAD_GR,
+    P_SELECT_A    => I_SELECT_A,
+    P_SELECT_D    => I_SELECT_D,
+    P_SELECT_W    => I_SELECT_W,
+    P_SELECT_B    => I_SELECT_B,
+    P_ALU_START   => I_ALU_START,
+    P_ALU_BUSY    => I_ALU_BUSY,
+    P_ALU_OVERFLOW=> I_ALU_OVERFLOW,
+    P_ALU_CARRY   => I_ALU_CARRY,
+    P_ALU_ZERO    => I_ALU_ZERO,
+    P_ALU_SIGN    => I_ALU_SIGN,
+    P_MR          => P_MR,
+    P_IR          => P_IR,
+    P_RW          => P_RW
   );
     
   --TODO: ステートマシン
