@@ -91,6 +91,7 @@ constant STATE_CON   : std_logic_vector(4 downto 0) := "11111";
 signal   I_STATE     : std_logic_vector(4 downto 0);
 
 signal   I_IS_INDR   : std_logic;
+signal   I_IS_SHORT  : std_logic;
 signal   I_IS_ALU    : std_logic;
 signal   I_JMP_GO    : std_logic;
 signal   I_IS_DIV    : std_logic;
@@ -154,34 +155,41 @@ begin
   
   -- 信号に出力する内容をステートによって決める
   
+  --TODO: PC <- EAの意味の信号を作る（P_UPDATE_PCを3ビットに増やす）
   P_UPDATE_PC <=
-    "01"  when I_TR = TR_DEC1_NO_HALT or I_TR = TR_DEC1_SHORT_ALU
-            or I_TR = TR_DEC1_INDR_IN or I_TR = TR_DEC1_INDR_OUT
-            or I_TR = TR_ALU2_FETCH or I_TR = TR_ST2_FETCH
-            or I_TR = TR_ALU3_FETCH or I_TR = TR_PUSH_FETCH
-            or I_TR = TR_POP_FETCH else
-    "10"  when (I_TR = DEC2_JMP and I_JMP_GO = '0') or I_TR = TR_DEC2_IN
-            or I_TR = TR_DEC2_OUT or I_TR = TR_ALU1_FETCH
-            or I_TR = TR_ST1_FETCH else
-    "11"  when I_TR = TR_INTR4_FETCH or I_TR = TR_RET_FETCH
-            or I_TR = TR_RETI2_RETI3 else
+    -- PC += 2
+    "01"  when I_STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111"
+                or (I_IS_INDR and P_OP1(4 downto 1) = "1011")
+                or (I_IS_SHORT and I_IS_ALU)) or I_STATE = STATE_ST2
+            or I_STATE = STATE_ALU2 or I_STATE = STATE_ALU3
+            or I_STATE = STATE_PUSH or I_STATE = STATE_POP else
+    -- PC += 4
+    "10"  when I_STATE = STATE_DEC2 and (P_OP1(4 downto 1) = "1011"
+                or (P_OP1 = "10110" and not I_JMP_GO))
+            or I_STATE = STATE_ALU1 or I_STATE = STATE_ST1 else
+    -- PC <- Din
+    "11"  when I_STATE = STATE_INTR4 or I_STATE = STATE_RETI2
+            or I_STATE = STATE_RET else
     "00";
   
   P_UPDATE_SP <=
-    "01"  when I_TR = TR_POP_FETCH or I_TR = TR_RET_FETCH
-            or I_TR = TR_RETI2_RETI3 or I_TR = TR_RETI3_FETCH else
-    "10"  when I_TR = TR_INTR1_INTR2 or I_TR = TR_INTR2_INTR3
-            or I_TR = TR_CALL1_FETCH or I_TR = TR_PUSH_FETCH else
+    -- SP += 2
+    "01"  when I_STATE = STATE_POP or I_STATE = STATE_RET
+            or I_STATE = STATE_RETI2 or I_STATE = STATE_RETI3 else
+    -- SP -= 1
+    "10"  when I_STATE = STATE_INTR1 or I_STATE = STATE_INTR2
+            or I_STATE = STATE_CALL1 or I_STATE = STATE_PUSH else
     "00";
   
-  P_LOAD_IR <= '1' when I_TR = TR_FETCH_DEC1 else '0';
-  
+  P_LOAD_IR <= '1' when I_STATE = STATE_FETCH and P_INTR = '0' and P_STOP = '0'
+          else '0';
+
   P_LOAD_DR <=
-    '1' when I_TR = TR_LOAD_DR or I_TR = TR_DEC1_IMM
-          or I_TR = TR_DEC1_DRCT or I_TR = TR_DEC1_INDR_IN
-          or I_TR = TR_DEC1_POP or I_TR = TR_DEC1_RET
-          or I_TR = TR_DEC2_ALU or I_TR = TR_DEC2_IN
-          or I_TR = TR_RETI1_RETI2 else
+    '1' when (I_STATE = STATE_FETCH and P_STOP = '0' and P_INTR = '0')
+          or (I_STATE = STATE_DEC1 and ((P_OP2 >= "000" and P_OP2 <= "011")
+            or (I_IS_INDR and (I_IS_ALU or P_OP1 = "10110"))
+            or (P_OP1 = "11000" and P_OP2(2) = '1')
+            or (P_OP1 = "11010" and P_OP2(2) = '0'))) else
     '0';
   
   -- ADD, SUB, ..., SHRL ではフラグが変化する
