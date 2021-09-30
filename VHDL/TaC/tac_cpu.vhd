@@ -226,7 +226,7 @@ begin
     P_UPDATE_PC   => I_UPDATE_PC,
     P_UPDATE_SP   => I_UPDATE_SP,
     P_LOAD_IR     => I_LOAD_IR,
-    P_LOAD_DR     => I_LOAD_RR,
+    P_LOAD_DR     => I_LOAD_DR,
     P_LOAD_FLAG   => I_LOAD_FLAG,
     P_LOAD_TMP    => I_LOAD_TMP,
     P_LOAD_GR     => I_LOAD_GR,
@@ -250,10 +250,7 @@ begin
   -- ポート
   P_ADDR <= I_ADDR;
   P_DOUT <= I_DOUT;
-  P_RW   <= '0'; -- TODO
-  P_IR   <= '0'; -- TODO
-  P_MR   <= '0'; -- TODO
-  P_LI   <= '0'; -- TODO
+  P_LI   <= I_LOAD_IR;
   P_VR   <= '0'; -- TODO
   P_HL   <= '0'; -- TODO
   P_BT   <= '0'; -- TODO
