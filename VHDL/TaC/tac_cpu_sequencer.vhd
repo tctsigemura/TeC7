@@ -247,9 +247,20 @@ begin
           or I_STATE = STATE_RET
           or I_STATE = STATE_RETI1 or I_STATE = STATE_RETI2 else
     '0';
+
+  P_IR <=
+    '1' when (I_STATE = STATE_DEC1 and I_IS_INDR and P_OP1(4 downto 1)="1011")
+          or (I_STATE = STATE_DEC2 and P_OP1(4 downto 1) = "1011") else
+    '0';
   
-  -- P_IR
-  -- P_RW
+  P_RW <=
+    '1' when I_STATE = STATE_INTR1 or I_STATE = STATE_INTR2
+          or (I_STATE = STATE_DEC1 and (
+            (I_IS_INDR and (P_OP1 = "00010" or P_OP1 = "10111"))
+              or (P_OP1 = "11000" and P_OP2(2) = '0')))
+          or (I_STATE = STATE_DEC2 and (
+            P_OP1 = "00010" or P_OP1 = "10111" or P_OP1 = "10101")) else
+    '0';
             
 end RTL;
                 
