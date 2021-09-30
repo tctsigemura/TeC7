@@ -119,7 +119,7 @@ signal I_SP          : Word;                          -- スタックポイン�
 signal I_RD          : Word;                          -- GR[Rd]
 signal I_RX          : Word;                          -- GR[Rx]
 signal I_DR_IN       : Word;                          -- DR への入力
-signal I_UPDATE_PC   : std_logic_vector(1 downto 0);  -- PC の更新
+signal I_UPDATE_PC   : std_logic_vector(2 downto 0);  -- PC の更新
 signal I_UPDATE_SP   : std_logic_vector(1 downto 0);  -- SP の更新
 signal I_LOAD_IR     : std_logic;                     -- IR のロード
 signal I_LOAD_DR     : std_logic;                     -- DR のロード
@@ -368,9 +368,10 @@ begin
       I_REG_PC <= (others => '0');
     elsif (P_CLK0'event and P_CLK0='1') then
       case I_UPDATE_PC is
-        when "01" => I_REG_PC <= I_REG_PC + 2;
-        when "10" => I_REG_PC <= I_REG_PC + 4;
-        when "11" => I_REG_PC <= P_DIN;
+        when "100" => I_REG_PC <= I_REG_PC + 2;
+        when "101" => I_REG_PC <= I_REG_PC + 4;
+        when "110" => I_REG_PC <= P_DIN;
+        when "111" => I_REG_PC <= I_EA;
         when others => NULL;
       end case;
     end if;

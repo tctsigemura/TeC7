@@ -37,7 +37,7 @@ entity TAC_CPU_SEQUENCER is
   P_ALU_BUSY    : in std_logic;
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
-  P_UPDATE_PC   : out std_logic_vector(1 downto 0);  -- PC の更新
+  P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
   P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
   P_LOAD_IR     : out std_logic;                     -- IR のロード
   P_LOAD_DR     : out std_logic;                     -- DR のロード
@@ -90,11 +90,11 @@ constant STATE_CON   : std_logic_vector(4 downto 0) := "11111";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
 
-signal   I_IS_INDR   : std_logic;
-signal   I_IS_SHORT  : std_logic;
-signal   I_IS_ALU    : std_logic;
-signal   I_JMP_GO    : std_logic;
-signal   I_IS_DIV    : std_logic;
+signal   I_IS_INDR   : std_logic; -- アドレッシングモードがFP相対か（バイト）レジスタインダイレクト
+signal   I_IS_SHORT  : std_logic; -- アドレッシングモードがレジスタレジスタかショートイミディエイト
+signal   I_IS_ALU    : std_logic; -- LD~SHRL (ST以外)
+signal   I_JMP_GO    : std_logic; -- JMP, CALL が成立するとき
+signal   I_IS_DIV    : std_logic; -- DIV, MOD
 
 begin
   
@@ -106,6 +106,7 @@ begin
   I_IS_INDR   <= '1' when P_OP2 = "011" or P_OP2(2 downto 1) = "11" else '0';
   I_IS_SHORT  <= '1' when P_OP2(2 downto 1) = "10" else '0';
   I_IS_DIV    <= '1' when P_OP1(4 downto 1) = "0101" else '0';
+  -- TODO: I_JMP_GO を書く
   
   -- ステートマシンはステートの遷移のみを書く
   process (P_CLK, P_RESET)
@@ -155,22 +156,24 @@ begin
   
   -- 信号に出力する内容をステートによって決める
   
-  --TODO: PC <- EAの意味の信号を作る（P_UPDATE_PCを3ビットに増やす）
   P_UPDATE_PC <=
     -- PC += 2
-    "01"  when I_STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111"
+    "100" when I_STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111"
                 or (I_IS_INDR and P_OP1(4 downto 1) = "1011")
                 or (I_IS_SHORT and I_IS_ALU)) or I_STATE = STATE_ST2
             or I_STATE = STATE_ALU2 or I_STATE = STATE_ALU3
             or I_STATE = STATE_PUSH or I_STATE = STATE_POP else
     -- PC += 4
-    "10"  when I_STATE = STATE_DEC2 and (P_OP1(4 downto 1) = "1011"
+    "101" when I_STATE = STATE_DEC2 and (P_OP1(4 downto 1) = "1011"
                 or (P_OP1 = "10110" and not I_JMP_GO))
             or I_STATE = STATE_ALU1 or I_STATE = STATE_ST1 else
     -- PC <- Din
-    "11"  when I_STATE = STATE_INTR4 or I_STATE = STATE_RETI2
+    "110" when I_STATE = STATE_INTR4 or I_STATE = STATE_RETI2
             or I_STATE = STATE_RET else
-    "00";
+    -- PC <- EA
+    "111" when I_STATE = STATE_DEC2 and (
+            (P_OP1 = "10100" and I_JMP_GO) or P_OP1 = "10101") else
+    "000";
   
   P_UPDATE_SP <=
     -- SP += 2
