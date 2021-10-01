@@ -145,7 +145,6 @@ signal I_INST_OP1    : std_logic_vector(4 downto 0);  -- 命令の OP1
 signal I_INST_OP2    : std_logic_vector(2 downto 0);  -- 命令の OP2
 signal I_INST_RD     : std_logic_vector(4 downto 0);  -- 命令の Rd
 signal I_INST_RX     : std_logic_vector(4 downto 0);  -- 命令の Rx
-signal I_STATE       : std_logic_vector(15 downto 0); -- 現在のステート
 
 -- 内部配線
 signal I_ADDR        : Word;                          -- アドレス出力
@@ -238,16 +237,14 @@ begin
     P_SELECT_B  => I_SELECT_B,
     P_ALU_START => I_ALU_START,
     P_ALU_BUSY  => I_ALU_BUSY,
-    P_FLAG_V    => I_ALU_OVERFLOW,
-    P_FLAG_C    => I_ALU_CARRY,
-    P_FLAG_Z    => I_ALU_ZERO,
-    P_FLAG_S    => I_ALU_SIGN,
+    P_FLAG_V    => I_FLAG_V,
+    P_FLAG_C    => I_FLAG_C,
+    P_FLAG_Z    => I_FLAG_Z,
+    P_FLAG_S    => I_FLAG_S,
     P_MR        => P_MR,
     P_IR        => P_IR,
     P_RW        => P_RW
   );
-    
-  --TODO: ステートマシン
 
   -- ポート
   P_ADDR <= I_ADDR;
@@ -353,49 +350,6 @@ begin
       I_REG_DR <= I_DR_IN;
     end if;
   end process;
-
-  -- ステートマシン
-  process(P_CLK0, P_RESET) then
-    if (P_RESET='0') then
-      I_STATE <= (others => '0');
-    elsif (P_CLK0' event and P_CLK0='1') then
-      case I_STATE is
-        --TODO
-        when STATE_FETCH =>
-          if (P_STOP='1') then
-            --TODO: コンソール制御
-          elsif (P_INTR='1') then
-            --TODO: 割り込み処理
-            I_REG_TMP <= I_FLAG;
-            I_FLAG_P  <= '1';
-            I_STATE   <= STATE_INTR1;
-          else
-            --TODO: フェッチ
-          end if;
-        when STATE_WAIT  => null;
-        when STATE_INTR1 => null;
-        when STATE_INTR2 => null;
-        when STATE_INTR3 => null;
-        when STATE_INTR4 => null;
-        when STATE_DEC1  => null;
-        when STATE_DEC2  => null;
-        when STATE_ALU1  => null;
-        when STATE_ALU2  => null;
-        when STATE_ALU3  => null;
-        when STATE_ST1   => null;
-        when STATE_ST2   => null;
-        when STATE_PUSH  => null;
-        when STATE_POP   => null;
-        when STATE_CALL1 => null;
-        when STATE_RET   => null;
-        when STATE_RETI1 => null;
-        when STATE_RETI2 => null;
-        when STATE_RETI3 => null;
-        when others => null;
-      end case;
-    end if;
-  end process;
-
       
   --- FLAG の書き込み制御
   process(P_CLK0, P_RESET) then

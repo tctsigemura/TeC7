@@ -37,7 +37,7 @@ entity TAC_CPU_SEQUENCER is
   P_ALU_BUSY    : in std_logic;
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
-  P_RD          : in std_logic_vector(3 downto 0);
+  P_RD          : in std_logic_vector(3 downto 0);   -- 命令の Rd
   P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
   P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
   P_LOAD_IR     : out std_logic;                     -- IR のロード
