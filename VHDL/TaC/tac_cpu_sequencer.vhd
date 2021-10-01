@@ -37,6 +37,7 @@ entity TAC_CPU_SEQUENCER is
   P_ALU_BUSY    : in std_logic;
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
+  P_RD          : in std_logic_vector(3 downto 0);
   P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
   P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
   P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -50,10 +51,10 @@ entity TAC_CPU_SEQUENCER is
   P_SELECT_B    : out std_logic;                     -- ALU B への入力の選択
   P_ALU_START   : out std_logic;
   P_ALU_BUSY    : in std_logic;
-  P_ALU_OVERFLOW: in std_logic;
-  P_ALU_CARRY   : in std_logic;
-  P_ALU_ZERO    : in std_logic;
-  P_ALU_SIGN    : in std_logic;
+  P_FLAG_V      : in std_logic;
+  P_FLAG_C      : in std_logic;
+  P_FLAG_Z      : in std_logic;
+  P_FLAG_S      : in std_logic;
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
   P_RW          : out std_logic                      -- Read/Write
@@ -106,7 +107,25 @@ begin
   I_IS_INDR   <= '1' when P_OP2 = "011" or P_OP2(2 downto 1) = "11" else '0';
   I_IS_SHORT  <= '1' when P_OP2(2 downto 1) = "10" else '0';
   I_IS_DIV    <= '1' when P_OP1(4 downto 1) = "0101" else '0';
-  -- TODO: I_JMP_GO を書く
+  I_JMP_GO    <=
+    '1' when P_OP1 = "10100" and (
+            (P_RD = "0000" and P_FLAG_Z = '1')                          -- JZ
+        or  (P_RD = "0001" and P_FLAG_C = '1')                          -- JC
+        or  (P_RD = "0010" and P_FLAG_S = '1')                          -- JM
+        or  (P_RD = "0011" and P_FLAG_V = '1')                          -- JO
+        or  (P_RD = "0100" and P_FLAG_Z = '0' and P_FLAG_S = P_FLAG_V)  -- JGT
+        or  (P_RD = "0101" and P_FLAG_S = P_FLAG_V)                     -- JGE
+        or  (P_RD = "0110" and (P_FLAG_Z = '1' or P_FLAG_S /= P_FLAG_V))-- JLE
+        or  (P_RD = "0111" and P_FLAG_S /= P_FLAG_V)                    -- JLT
+        or  (P_RD = "1000" and P_FLAG_Z = '0')                          -- JNZ
+        or  (P_RD = "1001" and P_FLAG_C = '0')                          -- JNC
+        or  (P_RD = "1010" and P_FLAG_S = '0')                          -- JNS
+        or  (P_RD = "1011" and P_FLAG_V = '0')                          -- JNV
+        or  (P_RD = "1100" and P_FLAG_Z = '0' and P_FLAG_C = '0')       -- JHI
+        or  (P_RD = "1110" and (P_FLAG_Z = '1' or P_FLAG_C = '1'))      -- JLO
+        or  P_RD = "1111")                                              -- JMP
+      or (P_OP1 = "10101" and P_RD = "0000") else                       -- CALL
+    '0';
   
   -- ステートマシンはステートの遷移のみを書く
   process (P_CLK, P_RESET)
