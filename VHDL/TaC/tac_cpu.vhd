@@ -107,7 +107,7 @@ component TAC_CPU_SEQUENCER is
   P_SELECT_W    : out std_logic_vector(1 downto 0);  -- DR への入力の選択
   P_SELECT_B    : out std_logic;                     -- ALU B への入力の選択
   P_ALU_START   : out std_logic;
-  P_ALU_BUSY    : in std_logic;
+  P_BUSY        : in std_logic;
   P_FLAG_V      : in std_logic;
   P_FLAG_C      : in std_logic;
   P_FLAG_Z      : in std_logic;
@@ -234,7 +234,7 @@ begin
     P_SELECT_W  => I_SELECT_W,
     P_SELECT_B  => I_SELECT_B,
     P_ALU_START => I_ALU_START,
-    P_ALU_BUSY  => I_ALU_BUSY,
+    P_ALU       => I_ALU_BUSY,
     P_FLAG_V    => I_FLAG_V,
     P_FLAG_C    => I_FLAG_C,
     P_FLAG_Z    => I_FLAG_Z,

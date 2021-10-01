@@ -49,7 +49,7 @@ entity TAC_CPU_SEQUENCER is
   P_SELECT_W    : out std_logic_vector(1 downto 0);  -- DR への入力の選択
   P_SELECT_B    : out std_logic;                     -- ALU B への入力の選択
   P_ALU_START   : out std_logic;
-  P_ALU_BUSY    : in std_logic;
+  P_BUSY        : in std_logic;
   P_FLAG_V      : in std_logic;
   P_FLAG_C      : in std_logic;
   P_FLAG_Z      : in std_logic;
@@ -64,28 +64,28 @@ end TAC_CPU_SEQUENCER;
 architecture RTL of TAC_CPU_SEQUENCER is
 
 -- ステート
-constant STATE_FETCH : std_logic_vector(4 downto 0) := "00001";
-constant STATE_WAIT  : std_logic_vector(4 downto 0) := "00010";
-constant STATE_INTR1 : std_logic_vector(4 downto 0) := "00011";
-constant STATE_INTR2 : std_logic_vector(4 downto 0) := "00100";
-constant STATE_INTR3 : std_logic_vector(4 downto 0) := "00101";
-constant STATE_INTR4 : std_logic_vector(4 downto 0) := "00110";
-constant STATE_DEC1  : std_logic_vector(4 downto 0) := "00111";
-constant STATE_DEC2  : std_logic_vector(4 downto 0) := "01000";
-constant STATE_ALU1  : std_logic_vector(4 downto 0) := "01001";
-constant STATE_ALU2  : std_logic_vector(4 downto 0) := "01010";
-constant STATE_ALU3  : std_logic_vector(4 downto 0) := "01011";
-constant STATE_ST1   : std_logic_vector(4 downto 0) := "01100";
-constant STATE_ST2   : std_logic_vector(4 downto 0) := "01101";
-constant STATE_PUSH  : std_logic_vector(4 downto 0) := "01110";
-constant STATE_POP   : std_logic_vector(4 downto 0) := "01111";
-constant STATE_CALL1 : std_logic_vector(4 downto 0) := "10000";
-constant STATE_RET   : std_logic_vector(4 downto 0) := "10001";
-constant STATE_RETI1 : std_logic_vector(4 downto 0) := "10010";
-constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10011";
-constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10100";
-constant STATE_IN1   : std_logic_vector(4 downto 0) := "11000";
-constant STATE_IN2   : std_logic_vector(4 downto 0) := "11001";
+constant STATE_FETCH : std_logic_vector(4 downto 0) := "00000";
+constant STATE_WAIT  : std_logic_vector(4 downto 0) := "00001";
+constant STATE_INTR1 : std_logic_vector(4 downto 0) := "00010";
+constant STATE_INTR2 : std_logic_vector(4 downto 0) := "00011";
+constant STATE_INTR3 : std_logic_vector(4 downto 0) := "00100";
+constant STATE_INTR4 : std_logic_vector(4 downto 0) := "00101";
+constant STATE_DEC1  : std_logic_vector(4 downto 0) := "00110";
+constant STATE_DEC2  : std_logic_vector(4 downto 0) := "00111";
+constant STATE_ALU1  : std_logic_vector(4 downto 0) := "01000";
+constant STATE_ALU2  : std_logic_vector(4 downto 0) := "01001";
+constant STATE_ALU3  : std_logic_vector(4 downto 0) := "01010";
+constant STATE_ST1   : std_logic_vector(4 downto 0) := "01011";
+constant STATE_ST2   : std_logic_vector(4 downto 0) := "01100";
+constant STATE_PUSH  : std_logic_vector(4 downto 0) := "01101";
+constant STATE_POP   : std_logic_vector(4 downto 0) := "01110";
+constant STATE_CALL  : std_logic_vector(4 downto 0) := "01111";
+constant STATE_RET   : std_logic_vector(4 downto 0) := "10000";
+constant STATE_RETI1 : std_logic_vector(4 downto 0) := "10001";
+constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10010";
+constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10011";
+constant STATE_IN1   : std_logic_vector(4 downto 0) := "10100";
+constant STATE_IN2   : std_logic_vector(4 downto 0) := "11000";
 constant STATE_CON   : std_logic_vector(4 downto 0) := "11111";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
@@ -164,7 +164,7 @@ begin
           I_STATE <=
             STATE_ALU1  when I_IS_ALU else
             STATE_ST1   when P_OP1 = "00010" else
-            STATE_CALL1 when P_OP1 = "10101" else
+            STATE_CALL  when P_OP1 = "10101" else
             STATE_FETCH;
         when others =>
           I_STATE <= STATE_FETCH;
@@ -199,7 +199,7 @@ begin
             or I_STATE = STATE_RETI2 or I_STATE = STATE_RETI3 else
     -- SP -= 1
     "10"  when I_STATE = STATE_INTR1 or I_STATE = STATE_INTR2
-            or I_STATE = STATE_CALL1 or I_STATE = STATE_PUSH else
+            or I_STATE = STATE_CALL  or I_STATE = STATE_PUSH else
     "00";
   
   P_LOAD_IR <= '1' when I_STATE = STATE_FETCH and P_INTR = '0' and P_STOP = '0'
