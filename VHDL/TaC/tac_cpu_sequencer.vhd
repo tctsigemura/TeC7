@@ -34,7 +34,6 @@ entity TAC_CPU_SEQUENCER is
   P_RESET       : in std_logic;
   P_STOP        : in std_logic;
   P_INTR        : in std_logic;
-  P_ALU_BUSY    : in std_logic;
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
   P_RD          : in std_logic_vector(3 downto 0);   -- 命令の Rd
