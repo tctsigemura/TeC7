@@ -129,7 +129,7 @@ begin
   -- ステートマシンはステートの遷移のみを書く
   process (P_CLK, P_RESET)
   begin
-    if (P_RESET='1') then
+    if (P_RESET='0') then
       I_STATE <= STATE_FETCH;
       P_STOP  <= '0';
       P_INTR  <= '0';

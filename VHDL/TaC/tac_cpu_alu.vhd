@@ -112,7 +112,7 @@ begin
     I_AmB <= ('0' & I_YX(30 downto 15)) - P_B;
     process (P_CLK, P_RESET)
     begin
-        if (P_RESET = '1') then
+        if (P_RESET = '0') then
             I_BUSY <= '0';
         elsif (P_CLK 'event and P_CLK = '1') then
             if (I_BUSY = '1') then
