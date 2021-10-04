@@ -137,7 +137,10 @@ begin
     end process;
 
     -- フラグ
-    P_OVERFLOW <= '1' when ((P_OP1 = "00011" and (P_A(15) xor P_B(15)) = '0') or (P_OP1 = "00100" and (P_A(15) xor P_B(15)) = '1') and (I_OUT(15) xor P_A(15) = '1');
+    P_OVERFLOW <= '1' when ((P_OP1 = "00011" and (P_A(15) xor P_B(15)) = '0')
+                        or ((P_OP1 = "00100" and (P_A(15) xor P_B(15)) = '1')
+                          and (I_OUT(15) xor P_A(15) = '1')) else
+                  '0';
     P_CARRY <= I_OUT(16);
     P_ZERO <= '1' when I_OUT(15 downto 0) = (others => '0') else '0';
     P_SIGN <= I_OUT(15);

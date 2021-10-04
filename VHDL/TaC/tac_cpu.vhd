@@ -393,4 +393,15 @@ begin
       end case;
     end if;
   end process;
+
+  -- TMP の書き込み制御
+  process(P_CLK0, P_RESET) then
+    if (P_RESET='0') then
+      I_REG_TMP <= (others => '0');
+    elsif (P_CLK0'event and P_CLK0='1') then
+      if (I_LOAD_TMP='1') then
+        I_REG_TMP <= I_FLAG;
+      end if;
+    end if;
+  end process;
 end RTL;
