@@ -153,6 +153,7 @@ signal i_bt             : std_logic;
 signal i_int_bit        : std_logic_vector(11 downto 0);
 signal i_pr             : std_logic;
 signal i_cpu_mr         : std_logic;
+signal i_mmu_busy       : std_logic;
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
@@ -227,7 +228,8 @@ component TAC_CPU
          P_BT       : out std_logic;                       -- Byte Access
          P_PR       : out std_logic;                       -- Privilege Mode
          P_INTR     : in  std_logic;                       -- Intrrupt
-         P_STOP     : in  std_logic                        -- Bus Request
+         P_STOP     : in  std_logic;                       -- Bus Request
+         P_MMU_BUSY : in  std_logic                        -- MMU Busy
        );
 end component;
 
@@ -411,6 +413,7 @@ component TAC_MMU is
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
          P_STOP     : in  std_logic;                     -- Panel RUN F/F
+         P_BUSY     : out std_logic;                     -- Busy
          P_VIO_INT  : out std_logic;                     -- Segment Violation
          P_ADR_INT  : out std_logic;                     -- Bad Address
          P_MR       : out std_logic;
@@ -494,7 +497,8 @@ begin
          P_BT       => i_bt,
          P_PR       => i_pr,
          P_INTR     => i_intr,
-         P_STOP     => i_stop
+         P_STOP     => i_stop,
+         P_MMU_BUSY => i_mmu_busy
   );
 
   i_iow       <= i_ir and i_rw and (not i_li);
@@ -584,6 +588,7 @@ begin
          P_BT          => i_bt,
          P_PR          => i_pr,
          P_STOP        => i_stop,
+         P_BUSY        => i_mmu_busy,
          P_VIO_INT     => i_int_bit(11),
          P_ADR_INT     => i_int_bit(10),
          P_MR          => i_mr,

@@ -59,7 +59,8 @@ entity TAC_CPU is
          P_PR    : out std_logic;                        -- privilege Mode
          P_IOPR  : out std_logic;                        -- IO privilege Mode
          P_INTR  : in  std_logic;                        -- Intrrupt
-         P_STOP  : in  std_logic                         -- Panel RUN F/F
+         P_STOP  : in  std_logic;                        -- Panel RUN F/F
+         P_MMU_BUSY: in std_logic;                       -- MMU Busy
         );
 end TAC_CPU;
 
@@ -164,6 +165,7 @@ signal I_SELECT_A    : std_logic_vector(2 downto 0);  -- MUX A の選択
 signal I_SELECT_D    : std_logic_vector(2 downto 0);  -- MUX D の選択
 signal I_SELECT_W    : std_logic_vector(1 downto 0);  -- MUX W の選択
 signal I_SELECT_B    : std_logic;                     -- MUX B の選択
+signal I_BUSY        : std_logic;                     -- ALU と MMU の BUSY 信号
 signal I_ALU_B       : Word;                          -- ALU への B 信号
 signal I_ALU_START   : std_logic;                     -- ALU への START 信号
 signal I_ALU_BUSY    : std_logic;                     -- ALU からの BUSY 信号
@@ -234,7 +236,7 @@ begin
     P_SELECT_W  => I_SELECT_W,
     P_SELECT_B  => I_SELECT_B,
     P_ALU_START => I_ALU_START,
-    P_ALU       => I_ALU_BUSY,
+    P_BUSY      => I_BUSY,
     P_FLAG_V    => I_FLAG_V,
     P_FLAG_C    => I_FLAG_C,
     P_FLAG_Z    => I_FLAG_Z,
@@ -311,7 +313,8 @@ begin
           I_REG_GR(conv_integer(I_INST_RX));
   
   I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
-            
+  
+  I_BUSY <= I_ALU_BUSY | I_MMU_BUSY;
   
   -- レジスタの制御
 
