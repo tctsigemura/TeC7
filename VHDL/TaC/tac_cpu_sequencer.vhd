@@ -137,9 +137,9 @@ begin
       case I_STATE is
         when STATE_FETCH =>
           I_STATE <=
-          STATE_DEC1  when P_STOP = '0' and P_INTR = '0' else
-          STATE_DEC2  when P_STOP = '0' and P_INTR = '1' else
-          STATE_CON;
+            STATE_DEC1  when P_STOP = '0' and P_INTR = '0' else
+            STATE_DEC2  when P_STOP = '0' and P_INTR = '1' else
+            STATE_CON;
         when STATE_WAIT =>
           I_STATE <= STATE_FETCH when P_INTR = '0' else STATE_WAIT;
         when STATE_INTR1 =>
@@ -149,23 +149,33 @@ begin
         when STATE_INTR3 =>
           I_STATE <= STATE_INTR4;
         when STATE_DEC1 =>
-          I_STATE <=
-            STATE_ALU1  when P_OP2 = "010" else
-            STATE_ALU2  when I_IS_INDR and I_IS_ALU else
-            STATE_ALU3  when I_IS_SHORT and I_IS_DIV else
-            STATE_DEC2  when P_OP2(2 downto 1) = "00" else
-            STATE_ST2   when I_IS_INDR and P_OP1 = "00010" else
-            STATE_PUSH  when P_OP1 = "11000" and P_OP2(2) = '0' else
-            STATE_POP   when P_OP1 = "11000" and P_OP2(2) = '1' else
-            STATE_RET   when P_OP1 = "11010" and P_OP2(2) = '0' else
-            STATE_RETI1 when P_OP1 = "11010" and P_OP2(2) = '1' else
-            STATE_FETCH;
+          if (P_BUSY='0') then
+            I_STATE <=
+              STATE_ALU1  when P_OP2 = "010" else
+              STATE_ALU2  when I_IS_INDR and I_IS_ALU else
+              STATE_ALU3  when I_IS_SHORT and I_IS_DIV else
+              STATE_DEC2  when P_OP2(2 downto 1) = "00" else
+              STATE_ST2   when I_IS_INDR and P_OP1 = "00010" else
+              STATE_PUSH  when P_OP1 = "11000" and P_OP2(2) = '0' else
+              STATE_POP   when P_OP1 = "11000" and P_OP2(2) = '1' else
+              STATE_RET   when P_OP1 = "11010" and P_OP2(2) = '0' else
+              STATE_RETI1 when P_OP1 = "11010" and P_OP2(2) = '1' else
+              STATE_FETCH;
+          end if;
         when STATE_DEC2 =>
-          I_STATE <=
-            STATE_ALU1  when I_IS_ALU else
-            STATE_ST1   when P_OP1 = "00010" else
-            STATE_CALL  when P_OP1 = "10101" else
-            STATE_FETCH;
+          if (P_BUSY='0') then
+            I_STATE <=
+              STATE_ALU1  when I_IS_ALU else
+              STATE_ST1   when P_OP1 = "00010" else
+              STATE_CALL  when P_OP1 = "10101" else
+              STATE_FETCH;
+          end if;
+        when STATE_RETI1 =>
+          if (P_BUSY='0') then
+            I_STATE <= STATE_RETI2;
+          end if;
+        when STATE_RETI2 =>
+          I_STATE <= STATE_RETI3;
         when others =>
           I_STATE <= STATE_FETCH;
       end case;
