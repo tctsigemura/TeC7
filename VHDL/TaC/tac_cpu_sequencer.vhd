@@ -107,7 +107,7 @@ begin
   I_IS_SHORT  <= '1' when P_OP2(2 downto 1) = "10" else '0';
   I_IS_DIV    <= '1' when P_OP1(4 downto 1) = "0101" else '0';
   I_JMP_GO    <=
-    '1' when P_OP1 = "10100" and (
+    '1' when (P_OP1 = "10100" and (
             (P_RD = "0000" and P_FLAG_Z = '1')                          -- JZ
         or  (P_RD = "0001" and P_FLAG_C = '1')                          -- JC
         or  (P_RD = "0010" and P_FLAG_S = '1')                          -- JM
@@ -122,7 +122,7 @@ begin
         or  (P_RD = "1011" and P_FLAG_V = '0')                          -- JNV
         or  (P_RD = "1100" and P_FLAG_Z = '0' and P_FLAG_C = '0')       -- JHI
         or  (P_RD = "1110" and (P_FLAG_Z = '1' or P_FLAG_C = '1'))      -- JLO
-        or  P_RD = "1111")                                              -- JMP
+        or  P_RD = "1111"))                                             -- JMP
       or (P_OP1 = "10101" and P_RD = "0000") else                       -- CALL
     '0';
   
