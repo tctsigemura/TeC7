@@ -75,18 +75,18 @@ begin
 
     I_OUT  <= '0' & P_B                 when P_OP1 = "00001" else   -- LD
               ('0' & P_A) + P_B         when P_OP1 = "00011" else   -- ADD
-              ('0' & P_A) - P_B         when P_OP1(4 downto 1) = "0010"-- SUB, CMP
+              ('0' & P_A) - P_B when P_OP1(4 downto 1) = "0010" else-- SUB, CMP
               '0' & (P_A and P_B)       when P_OP1 = "00110" else   -- AND
               '0' & (P_A or P_B)        when P_OP1 = "00111" else   -- OR
               '0' & (P_A xor P_B)       when P_OP1 = "01000" else   -- XOR
               ('0' & P_A) + (P_B & '0') when P_OP1 = "01001" else   -- ADDS
               -- MUL では CARRY は常に 0
               '0' & (P_A * P_B)(15 downto 0) when P_OP1 = "01010" else   -- MUL
-              '0' & I_YX(15 downto 0)   when P_OP1 = "01011"        -- DIV
-              '0' & I_YX(31 downto 16)  when P_OP1 = "01100"        -- MOD
+              '0' & I_YX(15 downto 0)   when P_OP1 = "01011" else   -- DIV
+              '0' & I_YX(31 downto 16)  when P_OP1 = "01100" else   -- MOD
               -- シフト命令では CARRY （端からあふれた値）は 1 ビットシフトの時だけ正しい値になる
-              P_A(15) & I_SHL           when P_OP1(4 downto 1) = "1000"-- SHLA, SHLL
-              P_A(0) & I_SHR            when P_OP1(4 downto 1) = "1001"-- SHRA, SHRL
+              P_A(15) & I_SHL when P_OP1(4 downto 1) = "1000" else-- SHLA, SHLL
+              P_A(0) & I_SHR when P_OP1(4 downto 1) = "1001" else-- SHRA, SHRL
               '0' & P_B                 when P_OP1 = "10110" or     -- IN
                                              P_OP1 = "11000" else   -- PUSH
               (others => '0');
