@@ -60,7 +60,7 @@ entity TAC_CPU is
          P_IOPR  : out std_logic;                        -- IO privilege Mode
          P_INTR  : in  std_logic;                        -- Intrrupt
          P_STOP  : in  std_logic;                        -- Panel RUN F/F
-         P_MMU_BUSY: in std_logic;                       -- MMU Busy
+         P_MMU_BUSY: in std_logic                        -- MMU Busy
         );
 end TAC_CPU;
 
@@ -174,28 +174,6 @@ signal I_ALU_OVERFLOW: std_logic;                     -- ALU の Over flow 出�
 signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
-
--- ステート
-constant STATE_FETCH    : std_logic_vector(4 downto 0) = "00000";
-constant STATE_WAIT     : std_logic_vector(4 downto 0) = "00001";
-constant STATE_INTR1    : std_logic_vector(4 downto 0) = "00100";
-constant STATE_INTR2    : std_logic_vector(4 downto 0) = "00101";
-constant STATE_INTR3    : std_logic_vector(4 downto 0) = "00110";
-constant STATE_INTR4    : std_logic_vector(4 downto 0) = "00111";
-constant STATE_DEC1     : std_logic_vector(4 downto 0) = "01000";
-constant STATE_DEC2     : std_logic_vector(4 downto 0) = "01001";
-constant STATE_ALU1     : std_logic_vector(4 downto 0) = "01100";
-constant STATE_ALU2     : std_logic_vector(4 downto 0) = "01101";
-constant STATE_ALU3     : std_logic_vector(4 downto 0) = "01110";
-constant STATE_ST1      : std_logic_vector(4 downto 0) = "10000";
-constant STATE_ST2      : std_logic_vector(4 downto 0) = "10001";
-constant STATE_PUSH     : std_logic_vector(4 downto 0) = "10010";
-constant STATE_POP      : std_logic_vector(4 downto 0) = "10011";
-constant STATE_CALL1    : std_logic_vector(4 downto 0) = "10100";
-constant STATE_RET      : std_logic_vector(4 downto 0) = "10101";
-constant STATE_RETI1    : std_logic_vector(4 downto 0) = "11000";
-constant STATE_RETI2    : std_logic_vector(4 downto 0) = "11001";
-constant STATE_RETI3    : std_logic_vector(4 downto 0) = "11010";
 
 begin
   
