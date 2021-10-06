@@ -131,8 +131,6 @@ begin
   begin
     if (P_RESET='0') then
       I_STATE <= STATE_FETCH;
-      P_STOP  <= '0';
-      P_INTR  <= '0';
     elsif (P_CLK'event and P_CLK='1') then
       case I_STATE is
         when STATE_FETCH =>
@@ -152,10 +150,10 @@ begin
           if (P_BUSY='0') then
             I_STATE <=
               STATE_ALU1  when P_OP2 = "010" else
-              STATE_ALU2  when I_IS_INDR and I_IS_ALU else
-              STATE_ALU3  when I_IS_SHORT and I_IS_DIV else
+              STATE_ALU2  when I_IS_INDR = '1' and I_IS_ALU = '1' else
+              STATE_ALU3  when I_IS_SHORT = '1' and I_IS_DIV = '1' else
               STATE_DEC2  when P_OP2(2 downto 1) = "00" else
-              STATE_ST2   when I_IS_INDR and P_OP1 = "00010" else
+              STATE_ST2   when I_IS_INDR = '1' and P_OP1 = "00010" else
               STATE_PUSH  when P_OP1 = "11000" and P_OP2(2) = '0' else
               STATE_POP   when P_OP1 = "11000" and P_OP2(2) = '1' else
               STATE_RET   when P_OP1 = "11010" and P_OP2(2) = '0' else
@@ -165,7 +163,7 @@ begin
         when STATE_DEC2 =>
           if (P_BUSY='0') then
             I_STATE <=
-              STATE_ALU1  when I_IS_ALU else
+              STATE_ALU1  when I_IS_ALU = '1' else
               STATE_ST1   when P_OP1 = "00010" else
               STATE_CALL  when P_OP1 = "10101" else
               STATE_FETCH;
@@ -187,20 +185,20 @@ begin
   P_UPDATE_PC <=
     -- PC += 2
     "100" when I_STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111"
-                or (I_IS_INDR and P_OP1(4 downto 1) = "1011")
-                or (I_IS_SHORT and I_IS_ALU)) or I_STATE = STATE_ST2
+                or (I_IS_INDR = '1' and P_OP1(4 downto 1) = "1011")
+                or (I_IS_SHORT = '1' and I_IS_ALU = '1')) or I_STATE = STATE_ST2
             or I_STATE = STATE_ALU2 or I_STATE = STATE_ALU3
             or I_STATE = STATE_PUSH or I_STATE = STATE_POP else
     -- PC += 4
     "101" when I_STATE = STATE_DEC2 and (P_OP1(4 downto 1) = "1011"
-                or (P_OP1 = "10110" and not I_JMP_GO))
+                or (P_OP1 = "10110" and I_JMP_GO = '0'))
             or I_STATE = STATE_ALU1 or I_STATE = STATE_ST1 else
     -- PC <- Din
     "110" when I_STATE = STATE_INTR4 or I_STATE = STATE_RETI2
             or I_STATE = STATE_RET else
     -- PC <- EA
     "111" when I_STATE = STATE_DEC2 and (
-            (P_OP1 = "10100" and I_JMP_GO) or P_OP1 = "10101") else
+            (P_OP1 = "10100" and I_JMP_GO = '1') or P_OP1 = "10101") else
     "000";
   
   P_UPDATE_SP <=
@@ -218,7 +216,7 @@ begin
   P_LOAD_DR <=
     '1' when (I_STATE = STATE_FETCH and P_STOP = '0' and P_INTR = '0')
           or (I_STATE = STATE_DEC1 and ((P_OP2 >= "000" and P_OP2 <= "011")
-            or (I_IS_INDR and (I_IS_ALU or P_OP1 = "10110"))
+            or (I_IS_INDR = '1' and (I_IS_ALU = '1' or P_OP1 = "10110"))
             or (P_OP1 = "11000" and P_OP2(2) = '1')
             or (P_OP1 = "11010" and P_OP2(2) = '0'))) else
     '0';
@@ -229,7 +227,7 @@ begin
   P_LOAD_TMP <= '1' when I_STATE = STATE_FETCH and P_INTR = '1' else '0';
   
   P_LOAD_GR <=
-    '1' when (I_STATE = STATE_DEC1 and I_IS_SHORT and I_IS_ALU)
+    '1' when (I_STATE = STATE_DEC1 and I_IS_SHORT = '1' and I_IS_ALU = '1')
           or I_STATE = STATE_ALU2 or I_STATE = STATE_ALU3
           or I_STATE = STATE_IN1 or I_STATE = STATE_IN2
           or I_STATE = STATE_RETI3 else
@@ -237,9 +235,10 @@ begin
   
   P_SELECT_A <=
     "001" when I_STATE = STATE_DEC1 and (P_OP2 = "000" or P_OP2 = "010") else
-    "010" when (I_STATE = STATE_DEC1 and I_IS_INDR)
+    "010" when (I_STATE = STATE_DEC1 and I_IS_INDR = '1')
             or (I_STATE = STATE_DEC2 and (
-              I_IS_ALU or P_OP1 = "00010" or P_OP1(4 downto 1) = "1011")) else
+              I_IS_ALU = '1'
+                or P_OP1 = "00010" or P_OP1(4 downto 1) = "1011")) else
     "100" when (I_STATE = STATE_DEC1 and ((P_OP1 = "11000" and P_OP2(2) = '1')
               or P_OP1 = "11010"))
             or I_STATE = STATE_RET or I_STATE = STATE_RETI2 else
@@ -252,7 +251,7 @@ begin
   P_SELECT_D <=
     "010" when I_STATE = STATE_DEC2 and P_OP1 = "10101" else
     "100" when (I_STATE = STATE_DEC1 and (
-            (I_IS_INDR and (P_OP1 = "00010" or P_OP1 = "10111"))
+            (I_IS_INDR = '1' and (P_OP1 = "00010" or P_OP1 = "10111"))
               or (P_OP1 = "11000" and P_OP2(2) = '0')))
             or (I_STATE = STATE_DEC2 and P_OP1 = "10111") else
     "111" when I_STATE = STATE_INTR2 else
@@ -269,9 +268,9 @@ begin
   
   P_ALU_START <=
     '1' when (I_STATE = STATE_DEC1 and (
-          P_OP2 = "010" or (I_IS_INDR and I_IS_ALU)
-            or (I_IS_SHORT and I_IS_DIV)))
-          or (I_STATE = STATE_DEC2 and I_IS_ALU) else
+          P_OP2 = "010" or (I_IS_INDR = '1' and I_IS_ALU = '1')
+            or (I_IS_SHORT = '1' and I_IS_DIV = '1')))
+          or (I_STATE = STATE_DEC2 and I_IS_ALU = '1') else
     '0';
 
   P_MR <=
@@ -288,14 +287,15 @@ begin
     '0';
 
   P_IR <=
-    '1' when (I_STATE = STATE_DEC1 and I_IS_INDR and P_OP1(4 downto 1)="1011")
+    '1' when (I_STATE = STATE_DEC1
+            and I_IS_INDR = '1' and P_OP1(4 downto 1)="1011")
           or (I_STATE = STATE_DEC2 and P_OP1(4 downto 1) = "1011") else
     '0';
   
   P_RW <=
     '1' when I_STATE = STATE_INTR1 or I_STATE = STATE_INTR2
           or (I_STATE = STATE_DEC1 and (
-            (I_IS_INDR and (P_OP1 = "00010" or P_OP1 = "10111"))
+            (I_IS_INDR = '1' and (P_OP1 = "00010" or P_OP1 = "10111"))
               or (P_OP1 = "11000" and P_OP2(2) = '0')))
           or (I_STATE = STATE_DEC2 and (
             P_OP1 = "00010" or P_OP1 = "10111" or P_OP1 = "10101")) else
