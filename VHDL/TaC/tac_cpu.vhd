@@ -80,7 +80,7 @@ component TAC_CPU_ALU is
           P_OVERFLOW  : out std_logic;
           P_CARRY     : out std_logic;
           P_ZERO      : out std_logic;
-          P_SIGN      : out std_logic;
+          P_SIGN      : out std_logic
           );
 end component;
 
@@ -292,7 +292,7 @@ begin
   
   I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
   
-  I_BUSY <= I_ALU_BUSY | I_MMU_BUSY;
+  I_BUSY <= '1' when I_ALU_BUSY = '1' or I_MMU_BUSY = '1' else '0';
   
   -- レジスタの制御
 
@@ -322,7 +322,7 @@ begin
   end process;
 
   --- DR の書き込み制御
-  process(P_CLK0, P_RESET) then
+  process(P_CLK0, P_RESET) begin
     if (P_RESET='0') then
       I_REG_DR <= (others => '0');
     elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_DR='1') then
@@ -331,7 +331,7 @@ begin
   end process;
       
   --- FLAG の書き込み制御
-  process(P_CLK0, P_RESET) then
+  process(P_CLK0, P_RESET) begin
     if (P_RESET='0') then
       I_FLAG_E <= '0';
       I_FLAG_P <= '1';
