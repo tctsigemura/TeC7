@@ -196,6 +196,10 @@ begin
           end if;
         when STATE_RETI2 =>
           I_STATE <= STATE_RETI3;
+        when STATE_ALU1 | STATE_ALU2 | STATE_ALU3 =>
+          if (P_BUSY='0') then
+            I_STATE <= STATE_FETCH;
+          end if;
         when others =>
           I_STATE <= STATE_FETCH;
       end case;
