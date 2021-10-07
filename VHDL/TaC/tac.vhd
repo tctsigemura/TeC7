@@ -173,6 +173,7 @@ signal i_dout_pio       : std_logic_vector( 7 downto 0);
 signal i_dout_tmr0      : std_logic_vector(15 downto 0);
 signal i_dout_tmr1      : std_logic_vector(15 downto 0);
 signal i_dout_tec       : std_logic_vector( 7 downto 0);
+signal i_dout_mmu       : std_logic_vector( 7 downto 0);
 
 -- address decoder
 signal i_ior            : std_logic;
@@ -406,17 +407,19 @@ component TAC_MMU is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
          P_EN       : in  std_logic;
+         --P_IOR      : out  std_logic;
          P_IOW      : in  std_logic;
-         P_MMU_MR   : in  std_logic;
+         P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
          P_STOP     : in  std_logic;                     -- Panel RUN F/F
-         P_VIO_INT  : out std_logic;                     -- Segment Violation
-         P_ADR_INT  : out std_logic;                     -- Bad Address
-         P_MR       : out std_logic;
+         P_VIO_INT  : out std_logic;                     -- Memory Vio inter
+         P_ADR_INT  : out std_logic;                     -- Bad Address inter
+         P_MR       : out std_logic;                     -- Memory Request
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
-         P_DIN      : in  std_logic_vector(15 downto 0)
+         P_DIN      : in  std_logic_vector(15 downto 0); -- New TLB field
+         P_DOUT     : out std_logic_vector(7 downto 0)  -- page to cpu
        );
 end component;
 
@@ -510,6 +513,8 @@ begin
   i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110" and
                       (i_addr(2)='1' or i_addr(1)='1')) else '0'; -- f2‾f7
 
+  
+
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
                i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
                i_dout_tmr0  when (i_ir='1' and i_en_tmr0='1') else
@@ -520,6 +525,7 @@ begin
                ("00000000"&i_dout_pio) when (i_ir='1' and i_en_pio='1') else
                ("00000000"&i_dout_rn) when (i_ir='1' and i_en_rn='1') else
                ("00000000"&i_dout_tec) when (i_ir='1' and i_en_tec='1') else
+               ("00000000"&i_dout_mmu) when (i_ir='1' and i_en_mmu='1') else
                i_dout_intc when (i_vr='1') else
                "0000000000000000";
 
@@ -577,6 +583,7 @@ begin
          P_CLK         => P_CLK0,
          P_RESET       => i_reset,
          P_EN          => i_en_mmu,
+         --P_IOR         => i_ior,  
          P_IOW         => i_iow,
          P_MMU_MR      => i_cpu_mr,
          P_BT          => i_bt,
@@ -587,7 +594,8 @@ begin
          P_MR          => i_mr,
          P_ADDR        => i_addr,
          P_MMU_ADDR    => i_cpu_addr,
-         P_DIN         => i_dout_cpu
+         P_DIN         => i_dout_cpu,
+         P_DOUT        => i_dout_mmu
   );
 
   -- RAM

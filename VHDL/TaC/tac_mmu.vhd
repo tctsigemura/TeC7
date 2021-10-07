@@ -34,7 +34,7 @@ entity TAC_MMU is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
          P_EN       : in  std_logic;
-         P_IOR      : in  std_logic;                     -- Interrupt 
+         --P_IOR      : out std_logic;                  
          P_IOW      : in  std_logic;
          P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
          P_BT       : in  std_logic;                     -- Byte access
@@ -46,7 +46,7 @@ entity TAC_MMU is
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
          P_DIN      : in  std_logic_vector(15 downto 0); -- New TLB field
-         P_DOUT     : out std_logic_vector(15 downto 0)  -- Entry fault happend 
+         P_DOUT     : out std_logic_vector(7 downto 0)  -- page happend intr to cpu
        );
 end TAC_MMU;
 
@@ -67,6 +67,9 @@ signal i_adr : std_logic;                                -- Bad Address
 --PAGE:ページ番号, V:Valid, *:未定義, R:Reference, D:Dirty,
 --R/W/X:Read/Write/eXecute, FRAME:フレーム番号
 
+--warning
+--tlb 8-14 16-23 2677, entry 8-14 2677, entry 1-7 15 1710, tlb 1-7 15 1895 tlb 16-23 1898
+--flag 2677, index 0 10 2677 katahenkan https://www.eevblog.com/forum/microcontrollers/is-this-code-valid-vhdl/
 
 subtype TLB_field is std_logic_vector(23 downto 0); 
 type TLB_array is array(0 to 7) of TLB_field;           --array of 24bit * 8 
@@ -76,17 +79,13 @@ signal page : std_logic_vector(7 downto 0);             --page number of key
 signal offset : std_logic_vector(7 downto 0);
 signal field : TLB_field;                               --TLB field gotten with key
 signal frame : std_logic_vector(7 downto 0);             --frame num gotten with key
-signal entry : std_logic_vector(15 downto 0);           --ctrl + frame num
-signal index : std_logic_vector(10 downto 0);           --page num index + page num
-signal flag : std_logic;                                --update flag
 
 begin 
-
-  page <= P_MMU_ADDR(15 downto 8);                        
+  page <= P_MMU_ADDR(15 downto 8);
   offset <= P_MMU_ADDR(7 downto 0);
   frame <= field(7 downto 0);
         
---pick up TLB_field
+--pick up TLB_field 
   field <= TLB(0) when page=TLB(0)(23 downto 16) else
           TLB(1) when page=TLB(1)(23 downto 16) else
           TLB(2) when page=TLB(2)(23 downto 16) else
@@ -95,49 +94,81 @@ begin
           TLB(5) when page=TLB(5)(23 downto 16) else
           TLB(6) when page=TLB(6)(23 downto 16) else
           TLB(7) when page=TLB(7)(23 downto 16) else
-				"XXXXXXXX0XXXXXXXXXXXXXXX"; -- TLBmiss
-  
-  --ready to update entry
+				  "XXXXXXXX0XXXXXXXXXXXXXXX"; --tlb miss
+
+  --エントリ入れ替え
   process(P_CLK,P_RESET)
+    variable entry : std_logic_vector(15 downto 0); --ctrl+frame num
   begin 
     if(P_RESET='0') then
       i_en <= '0';
-      flag <= '0';
+      TLB(0),TLB(1),TLB(2),TLB(3),TLB(4),TLB(5),TLB(6),TLB(7)<=(others=>'0')
     elsif (P_CLK'event and P_CLK='1') then
       if(P_EN='1' and P_IOW='1') then 
         if(P_MMU_ADDR(2)='1') then    --when MMU mode is paging
           i_en <= P_DIN(0);
         elsif(P_MMU_ADDR(1)='0') then    
-          entry <= P_DIN;
-        else
-          index <= P_DIN(10 downto 0);
-          flag <= '1';
+          entry := P_DIN;
+        else  --P_DIN(10-8)=tlb, index P_DIN(7-0)=page num
+          TLB(CONV_INTEGER(P_DIN(10 downto 8))) <= P_DIN(7 downto 0) & entry;
         end if;
-      else  
-        flag <= '0';
-      end if;
-    end if;
-  end process;
-
-  --update entry 
-  --to do next: need to change R, D bit on memory before replacing old entry
-  process(P_CLK)
-  begin
-    if(P_CLK'event and P_CLK='1') then
-      if(flag='1') then
-       TLB(CONV_INTEGER(index(10 downto 8))) <= index(7 downto 0) & entry;
       end if;
     end if;
   end process;
 
   i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
-  i_mis <= not field(15) and i_act;
-  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;
+  i_mis <= not field(15) and i_act;      
+  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;  
   P_ADDR <= frame & offset;
   P_MR <= P_MMU_MR and (not i_mis);
-  P_VIO_INT <= i_mis;
-  P_ADR_INT <= i_adr;
+  P_VIO_INT <= i_mis;  
+  P_ADR_INT <= i_adr; 
+  P_DOUT <= field(23 downto 16);
 
+--ready to update entry
+  --process(P_CLK,P_RESET)
+  --begin 
+    --if(P_RESET='0') then
+      --i_en <= '0';
+      --flag <= '0';
+    --elsif (P_CLK'event and P_CLK='1') then
+      --if(P_EN='1' and P_IOW='1') then 
+        --if(P_MMU_ADDR(2)='1') then    --when MMU mode is paging
+          --i_en <= P_DIN(0);
+        --elsif(P_MMU_ADDR(1)='0') then    
+          --entry <= P_DIN;
+        --else
+          --index <= P_DIN(10 downto 0);
+          --flag <= '1';
+        --end if;
+      --else  
+        --flag <= '0';
+      --end if;
+    --end if;
+  --end process;
+
+  --update entry 
+
+  --process(P_CLK)
+  --begin
+    --if(P_CLK'event and P_CLK='1') then
+      --if(flag='1') then
+       --TLB(CONV_INTEGER(index(10 downto 8))) <= index(7 downto 0) & entry;
+      --end if;
+    --end if;
+  --end process;
+
+  --RWX check
+  --process(P_CLK)
+  --begin
+    --if(P_CLK'event and P_CLK='1') then
+      --if(i_act='1') then
+        --if(rwx and cpu_rwx="000") then
+          --i_rwx='1';
+        --end if;
+      --end if;
+    --end if;
+  --end process;
 
 --relocation register
 --begin
