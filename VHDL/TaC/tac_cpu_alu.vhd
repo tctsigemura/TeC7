@@ -54,7 +54,7 @@ signal I_S3   : std_logic_vector(15 downto 0);
 signal I_S7   : std_logic_vector(15 downto 0);
 signal I_SHL  : std_logic_vector(15 downto 0);
 
-signal I_SIGN : std_logic_vector(15 downto 0);
+signal I_SIGN : std_logic;
 signal I_E8   : std_logic_vector(15 downto 0);
 signal I_S8   : std_logic_vector(15 downto 0);
 signal I_E12  : std_logic_vector(15 downto 0);
@@ -67,11 +67,14 @@ signal I_SHR  : std_logic_vector(15 downto 0);
 signal I_CNT  : std_logic_vector(4 downto 0);
 signal I_YX   : std_logic_vector(31 downto 0);
 signal I_AmB  : std_logic_vector(16 downto 0);
+signal I_AtB  : std_logic_vector(31 downto 0);
 
 begin
 
     P_BUSY <= I_BUSY;
     P_OUT  <= I_OUT(15 downto 0);
+
+    I_AtB <= P_A * P_B;
 
     I_OUT  <= '0' & P_B                 when P_OP1 = "00001" else   -- LD
               ('0' & P_A) + P_B         when P_OP1 = "00011" else   -- ADD
@@ -81,7 +84,7 @@ begin
               '0' & (P_A xor P_B)       when P_OP1 = "01000" else   -- XOR
               ('0' & P_A) + (P_B & '0') when P_OP1 = "01001" else   -- ADDS
               -- MUL では CARRY は常に 0
-              '0' & (P_A * P_B)(15 downto 0) when P_OP1 = "01010" else   -- MUL
+              '0' & I_AtB(15 downto 0) when P_OP1 = "01010" else   -- MUL
               '0' & I_YX(15 downto 0)   when P_OP1 = "01011" else   -- DIV
               '0' & I_YX(31 downto 16)  when P_OP1 = "01100" else   -- MOD
               -- シフト命令では CARRY （端からあふれた値）は 1 ビットシフトの時だけ正しい値になる
@@ -130,16 +133,16 @@ begin
                 end if;
             elsif (P_START = '1' and (P_OP1 = "01011" or P_OP1 = "01100")) then
                 I_BUSY <= '1';
-                I_CNT <= 0;
+                I_CNT <= "00000";
                 I_YX <= "0000000000000000" & P_A;
             end if;
         end if;
     end process;
 
     -- フラグ
-    P_OVERFLOW <= '1' when ((P_OP1 = "00011" and (P_A(15) xor P_B(15)) = '0')
+    P_OVERFLOW <= '1' when (P_OP1 = "00011" and (P_A(15) xor P_B(15)) = '0')
                         or ((P_OP1 = "00100" and (P_A(15) xor P_B(15)) = '1')
-                          and (I_OUT(15) xor P_A(15) = '1')) else
+                          and (I_OUT(15) = '1' xor P_A(15) = '1')) else
                   '0';
     P_CARRY <= I_OUT(16);
     P_ZERO <= '1' when I_OUT(15 downto 0) = (others => '0') else '0';

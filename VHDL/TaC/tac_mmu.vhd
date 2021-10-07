@@ -46,7 +46,7 @@ entity TAC_MMU is
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
          P_DIN      : in  std_logic_vector(15 downto 0);
          P_RW       : in  std_logic;                     -- Read/Write
-         P_LI       : in  std_logic;                     -- Fetch
+         P_LI       : in  std_logic                      -- Fetch
        );
 end TAC_MMU;
 

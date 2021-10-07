@@ -133,12 +133,19 @@ begin
     elsif (P_CLK'event and P_CLK='1') then
       case I_STATE is
         when STATE_FETCH =>
-          I_STATE <=
-            STATE_DEC1  when P_STOP = '0' and P_INTR = '0' else
-            STATE_INTR1 when P_STOP = '0' and P_INTR = '1' else
-            STATE_CON;
+          if (P_STOP = '0' and P_INTR = '0') then
+            I_STATE <= STATE_DEC1;
+          elsif (P_STOP = '0' and P_INTR = '1') then
+            I_STATE <= STATE_INTR1;
+          else
+            I_STATE <= STATE_CON;
+          end if;
         when STATE_WAIT =>
-          I_STATE <= STATE_FETCH when P_INTR = '0' else STATE_WAIT;
+          if (P_INTR = '0') then
+            I_STATE <= STATE_FETCH;
+          else
+            I_STATE <= STATE_WAIT;
+          end if;
         when STATE_INTR1 =>
           I_STATE <= STATE_INTR2;
         when STATE_INTR2 =>
@@ -147,26 +154,41 @@ begin
           I_STATE <= STATE_INTR4;
         when STATE_DEC1 =>
           if (P_BUSY='0') then
-            I_STATE <=
-              STATE_PUSH  when P_OP1 = "11000" and P_OP2(2) = '0' else
-              STATE_POP   when P_OP1 = "11000" and P_OP2(2) = '1' else
-              STATE_RET   when P_OP1 = "11010" and P_OP2(2) = '0' else
-              STATE_RETI1 when P_OP1 = "11010" and P_OP2(2) = '1' else
-              STATE_ST2   when I_IS_INDR = '1' and P_OP1 = "00010" else
-              STATE_ALU2  when I_IS_INDR = '1' and I_IS_ALU = '1' else
-              STATE_ALU3  when I_IS_SHORT = '1' and I_IS_DIV = '1' else
-              STATE_ALU1  when P_OP2 = "010" else
-              STATE_DEC2  when P_OP2(2 downto 1) = "00" else
-              STATE_FETCH;
+            if (P_OP1 = "11000" and P_OP2(2) = '0' ) then
+              I_STATE <= STATE_PUSH;
+            elsif (P_OP1 = "11000" and P_OP2(2) = '1' ) then
+              I_STATE <= STATE_POP;
+            elsif (P_OP1 = "11010" and P_OP2(2) = '0' ) then
+              I_STATE <= STATE_RET;
+            elsif (P_OP1 = "11010" and P_OP2(2) = '1' ) then
+              I_STATE <= STATE_RETI1;
+            elsif (I_IS_INDR = '1' and P_OP1 = "00010" ) then
+              I_STATE <= STATE_ST2;
+            elsif (I_IS_INDR = '1' and I_IS_ALU = '1' ) then
+              I_STATE <= STATE_ALU2;
+            elsif (I_IS_SHORT = '1' and I_IS_DIV = '1' ) then
+              I_STATE <= STATE_ALU3;
+            elsif (P_OP2 = "010" ) then
+              I_STATE <= STATE_ALU1;
+            elsif (P_OP2(2 downto 1) = "00" ) then
+              I_STATE <= STATE_DEC2;
+            else
+              I_STATE <= STATE_FETCH;
+            end if;
           end if;
         when STATE_DEC2 =>
           if (P_BUSY='0') then
-            I_STATE <=
-              STATE_ALU1  when I_IS_ALU = '1' else
-              STATE_ST1   when P_OP1 = "00010" else
-              STATE_CALL  when P_OP1 = "10101" else
-              STATE_IN1   when P_OP1 = "10110" else
-              STATE_FETCH;
+            if (I_IS_ALU = '1') then
+              I_STATE <= STATE_ALU1;
+            elsif (P_OP1 = "00010") then
+              I_STATE <= STATE_ST1;
+            elsif (P_OP1 = "10101") then
+              I_STATE <= STATE_CALL;
+            elsif (P_OP1 = "10110") then
+              I_STATE <= STATE_IN1;
+            else
+              I_STATE <= STATE_FETCH;
+            end if;
           end if;
         when STATE_RETI1 =>
           if (P_BUSY='0') then

@@ -93,9 +93,6 @@ component TAC_CPU_SEQUENCER is
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
   P_RD          : in std_logic_vector(3 downto 0);
-  P_FLAG_C      : in std_logic;
-  P_FLAG_S      : in std_logic;
-  P_FLAG_Z      : in std_logic;
   P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
   P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
   P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -264,7 +261,7 @@ begin
   
   --- MUX B
   with I_SELECT_B select
-    I_ALU_B <= I_REG_DR        when "0",
+    I_ALU_B <= I_REG_DR        when '0',
                I_RX            when others;
 
   --- EA
@@ -279,13 +276,13 @@ begin
   I_SP <= I_REG_SSP when I_FLAG_P='1' else I_REG_USP;
 
   I_RD <= I_REG_FP   when I_INST_RD="1100" else
-          I_REG_SP   when I_INST_RD="1101" else
+          I_SP       when I_INST_RD="1101" else
           I_REG_USP  when I_INST_RD="1110" else
           I_FLAG     when I_INST_RD="1111" else
           I_REG_GR(conv_integer(I_INST_RD));
   
   I_RX <= I_REG_FP   when I_INST_RX="1100" else
-          I_REG_SP   when I_INST_RX="1101" else
+          I_SP       when I_INST_RX="1101" else
           I_REG_USP  when I_INST_RX="1110" else
           I_FLAG     when I_INST_RX="1111" else
           I_REG_GR(conv_integer(I_INST_RX));
@@ -303,9 +300,9 @@ begin
       for i in 0 to 11 loop
         I_REG_GR(i) <= (others => '0');
       end loop;
-      I_FP   <= (others => '0');
-      I_SSP  <= (others => '0');
-      I_USP  <= (others => '0');
+      I_REG_FP  <= (others => '0');
+      I_REG_SSP <= (others => '0');
+      I_rEG_USP <= (others => '0');
     elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_GR='1') then
       case I_INST_RD is
         when "1100" => I_REG_FP   <= I_ALU_OUT;
@@ -341,7 +338,7 @@ begin
       I_FLAG_S <= '0';
       I_FLAG_Z <= '0';
     elsif (P_CLK0'event and P_CLK0='1') then
-      if I_LOAD_GR='1' and I_INST_RD="1111") then
+      if (I_LOAD_GR='1' and I_INST_RD="1111") then
         if (I_FLAG_P='1') then
           I_FLAG_E <= I_ALU_OUT(7);
           I_FLAG_P <= I_ALU_OUT(6);
@@ -361,7 +358,7 @@ begin
   end process;
   
   -- PC の書き込み制御
-  process(P_CLK0, P_RESET) then
+  process(P_CLK0, P_RESET) begin
     if (P_RESET='0') then
       I_REG_PC <= (others => '0');
     elsif (P_CLK0'event and P_CLK0='1') then
@@ -376,7 +373,7 @@ begin
   end process;
 
   -- TMP の書き込み制御
-  process(P_CLK0, P_RESET) then
+  process(P_CLK0, P_RESET) begin
     if (P_RESET='0') then
       I_REG_TMP <= (others => '0');
     elsif (P_CLK0'event and P_CLK0='1') then
