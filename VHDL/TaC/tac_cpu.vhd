@@ -71,6 +71,7 @@ subtype Word is std_logic_vector(15 downto 0);
 
 component TAC_CPU_ALU is
   port (  P_CLK       : in std_logic;
+          P_RESET     : in std_logic;
           P_START     : in std_logic;
           P_OP1       : in std_logic_vector(4 downto 0);
           P_A         : in std_logic_vector(15 downto 0);
