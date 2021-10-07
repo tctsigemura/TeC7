@@ -107,7 +107,7 @@ begin
   I_IS_SHORT  <= '1' when P_OP2(2 downto 1) = "10" else '0';
   I_IS_DIV    <= '1' when P_OP1(4 downto 1) = "0101" else '0';
   I_JMP_GO    <=
-    '1' when (P_OP1 = "10100" and (
+    '1' when
             (P_RD = "0000" and P_FLAG_Z = '1')                          -- JZ
         or  (P_RD = "0001" and P_FLAG_C = '1')                          -- JC
         or  (P_RD = "0010" and P_FLAG_S = '1')                          -- JM
@@ -118,12 +118,11 @@ begin
         or  (P_RD = "0111" and P_FLAG_S /= P_FLAG_V)                    -- JLT
         or  (P_RD = "1000" and P_FLAG_Z = '0')                          -- JNZ
         or  (P_RD = "1001" and P_FLAG_C = '0')                          -- JNC
-        or  (P_RD = "1010" and P_FLAG_S = '0')                          -- JNS
-        or  (P_RD = "1011" and P_FLAG_V = '0')                          -- JNV
+        or  (P_RD = "1010" and P_FLAG_S = '0')                          -- JNM
+        or  (P_RD = "1011" and P_FLAG_V = '0')                          -- JNO
         or  (P_RD = "1100" and P_FLAG_Z = '0' and P_FLAG_C = '0')       -- JHI
-        or  (P_RD = "1110" and (P_FLAG_Z = '1' or P_FLAG_C = '1'))      -- JLO
-        or  P_RD = "1111"))                                             -- JMP
-      or (P_OP1 = "10101" and P_RD = "0000") else                       -- CALL
+        or  (P_RD = "1110" and (P_FLAG_Z = '1' or P_FLAG_C = '1'))      -- JLS
+        or  P_RD = "1111" else                                          -- JMP
     '0';
   
   -- ステートマシンはステートの遷移のみを書く
@@ -136,7 +135,7 @@ begin
         when STATE_FETCH =>
           I_STATE <=
             STATE_DEC1  when P_STOP = '0' and P_INTR = '0' else
-            STATE_DEC2  when P_STOP = '0' and P_INTR = '1' else
+            STATE_INTR1 when P_STOP = '0' and P_INTR = '1' else
             STATE_CON;
         when STATE_WAIT =>
           I_STATE <= STATE_FETCH when P_INTR = '0' else STATE_WAIT;
@@ -149,15 +148,15 @@ begin
         when STATE_DEC1 =>
           if (P_BUSY='0') then
             I_STATE <=
-              STATE_ALU1  when P_OP2 = "010" else
-              STATE_ALU2  when I_IS_INDR = '1' and I_IS_ALU = '1' else
-              STATE_ALU3  when I_IS_SHORT = '1' and I_IS_DIV = '1' else
-              STATE_DEC2  when P_OP2(2 downto 1) = "00" else
-              STATE_ST2   when I_IS_INDR = '1' and P_OP1 = "00010" else
               STATE_PUSH  when P_OP1 = "11000" and P_OP2(2) = '0' else
               STATE_POP   when P_OP1 = "11000" and P_OP2(2) = '1' else
               STATE_RET   when P_OP1 = "11010" and P_OP2(2) = '0' else
               STATE_RETI1 when P_OP1 = "11010" and P_OP2(2) = '1' else
+              STATE_ST2   when I_IS_INDR = '1' and P_OP1 = "00010" else
+              STATE_ALU2  when I_IS_INDR = '1' and I_IS_ALU = '1' else
+              STATE_ALU3  when I_IS_SHORT = '1' and I_IS_DIV = '1' else
+              STATE_ALU1  when P_OP2 = "010" else
+              STATE_DEC2  when P_OP2(2 downto 1) = "00" else
               STATE_FETCH;
           end if;
         when STATE_DEC2 =>
@@ -166,6 +165,7 @@ begin
               STATE_ALU1  when I_IS_ALU = '1' else
               STATE_ST1   when P_OP1 = "00010" else
               STATE_CALL  when P_OP1 = "10101" else
+              STATE_IN1   when P_OP1 = "10110" else
               STATE_FETCH;
           end if;
         when STATE_RETI1 =>
