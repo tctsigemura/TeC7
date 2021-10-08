@@ -114,7 +114,7 @@ component TAC_CPU_SEQUENCER is
   P_FLAG_C      : in std_logic;
   P_FLAG_Z      : in std_logic;
   P_FLAG_S      : in std_logic;
-  P_MMU_INT     : in std_logic;                      -- MMU Interrupt
+  P_TLBMISS     : in std_logic;                      -- MMU Interrupt
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
   P_RW          : out std_logic                      -- Read/Write
@@ -176,7 +176,7 @@ signal I_ALU_OVERFLOW: std_logic;                     -- ALU の Over flow 出�
 signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
-signal I_MMU_INT     : std_logic;                     -- MMU の割込み
+signal I_TLBMISS     : std_logic;                     -- MMU の割込み
 
 begin
   
@@ -222,7 +222,7 @@ begin
     P_FLAG_C    => I_FLAG_C,
     P_FLAG_Z    => I_FLAG_Z,
     P_FLAG_S    => I_FLAG_S,
-    P_MMU_INT   => I_MMU_INT,
+    P_TLBMISS   => I_TLBMISS,
     P_MR        => P_MR,
     P_IR        => P_IR,
     P_RW        => P_RW
@@ -298,7 +298,7 @@ begin
   
   I_BUSY <= '1' when I_ALU_BUSY = '1' or I_MMU_BUSY = '1' else '0';
 
-  I_MMU_INT <= '1' when P_ADR_INT = '1' or P_VIO_INT = '1' or P_TLBM_INT = '1'
+  I_TLBMISS <= '1' when P_ADR_INT = '1' or P_VIO_INT = '1' or P_TLBM_INT = '1'
           else '0';
   
   -- レジスタの制御

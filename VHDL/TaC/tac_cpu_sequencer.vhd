@@ -54,7 +54,7 @@ entity TAC_CPU_SEQUENCER is
   P_FLAG_C      : in std_logic;
   P_FLAG_Z      : in std_logic;
   P_FLAG_S      : in std_logic;
-  P_MMU_INT     : in std_logic;                      -- MMU Interrupt
+  P_TLBMISS     : in std_logic;                      -- TLB miss
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
   P_RW          : out std_logic                      -- Read/Write
@@ -156,7 +156,9 @@ begin
         when STATE_INTR3 =>
           I_STATE <= STATE_INTR4;
         when STATE_DEC1 =>
-          if (P_MMU_INT='1') then
+          -- TLB miss の時は復元するため、内部状態が書き換わってはいけない
+          -- 一足先に STATE_WAIT へ飛ぶ
+          if (P_TLBMISS='1') then
             I_STATE <= STATE_WAIT;
           elsif (P_BUSY='0') then
             if (P_OP1 = "11000" and P_OP2(2) = '0' ) then

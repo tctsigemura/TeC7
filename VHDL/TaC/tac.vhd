@@ -154,7 +154,7 @@ signal i_int_bit        : std_logic_vector(11 downto 0);
 signal i_pr             : std_logic;
 signal i_cpu_mr         : std_logic;
 signal i_mmu_busy       : std_logic;
-signal i_mmu_tlb_miss       : std_logic;
+signal i_mmu_tlbm_int       : std_logic;
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
@@ -504,7 +504,7 @@ begin
          P_INTR     => i_intr,
          P_STOP     => i_stop,
          P_MMU_BUSY => i_mmu_busy,
-         P_TLBM_INT => i_mmu_tlb_miss
+         P_TLBM_INT => i_mmu_tlbm_int
   );
 
   i_iow       <= i_ir and i_rw and (not i_li);

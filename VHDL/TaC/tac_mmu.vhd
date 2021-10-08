@@ -41,7 +41,7 @@ entity TAC_MMU is
          P_STOP     : in  std_logic;                     -- Panel RUN F/F
          P_VIO_INT  : out std_logic;                     -- Memory Vio inter
          P_ADR_INT  : out std_logic;                     -- Bad Address inter
-         P_TLBM_INT : out std_logic;                     -- TLB miss
+         P_TLBM_INT : out std_logic;                     -- TLB miss inter
          P_MR       : out std_logic;                     -- Memory Request
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
