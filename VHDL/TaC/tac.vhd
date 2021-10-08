@@ -155,6 +155,7 @@ signal i_pr             : std_logic;
 signal i_cpu_mr         : std_logic;
 signal i_mmu_busy       : std_logic;
 signal i_mmu_tlbm_int       : std_logic;
+signal i_svc            : std_logic;
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
@@ -205,6 +206,7 @@ component TAC_INTC is
          P_DOUT     : out std_logic_vector(15 downto 0);
          P_VR       : in  std_logic;
          P_INTR     : out std_logic;
+         P_SVC      : in  std_logic;
 
          P_INT_BIT  : in  std_logic_vector(11 downto 0)
        );
@@ -228,6 +230,7 @@ component TAC_CPU
          P_HL       : out std_logic;                       -- Halt instruction
          P_BT       : out std_logic;                       -- Byte Access
          P_PR       : out std_logic;                       -- Privilege Mode
+         P_SVC      : out std_logic;                       -- Super Visor Call
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic;                       -- Bus Request
          P_MMU_BUSY : in  std_logic;                       -- MMU Busy
@@ -479,6 +482,7 @@ begin
          P_DOUT     => i_dout_intc,
          P_VR       => i_vr,
          P_INTR     => i_intr,
+         P_SVC      => i_svc,
          P_INT_BIT  => i_int_bit
       );
 
@@ -501,6 +505,7 @@ begin
          P_HL       => i_hl,
          P_BT       => i_bt,
          P_PR       => i_pr,
+         P_SVC      => i_svc,
          P_INTR     => i_intr,
          P_STOP     => i_stop,
          P_MMU_BUSY => i_mmu_busy,

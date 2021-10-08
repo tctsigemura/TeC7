@@ -41,6 +41,7 @@ entity TAC_INTC is
          P_DOUT     : out std_logic_vector(15 downto 0);
          P_VR       : in  std_logic;
          P_INTR     : out std_logic;
+         P_SVC      : in  std_logic;
          P_INT_BIT  : in  std_logic_vector(11 downto 0)
        );
 end TAC_INTC;
