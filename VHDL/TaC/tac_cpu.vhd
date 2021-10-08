@@ -117,7 +117,8 @@ component TAC_CPU_SEQUENCER is
   P_TLBMISS     : in std_logic;                      -- MMU Interrupt
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
-  P_RW          : out std_logic                      -- Read/Write
+  P_RW          : out std_logic;                     -- Read/Write
+  P_SVC         : out std_logic                      -- Super Visor Call
   );
 end component;
 
@@ -177,6 +178,7 @@ signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
 signal I_TLBMISS     : std_logic;                     -- MMU の割込み
+signal I_SVC         : std_logic;                     -- SVC
 
 begin
   
@@ -225,7 +227,8 @@ begin
     P_TLBMISS   => I_TLBMISS,
     P_MR        => P_MR,
     P_IR        => P_IR,
-    P_RW        => P_RW
+    P_RW        => P_RW,
+    P_SVC       => I_SVC
   );
 
   -- ポート

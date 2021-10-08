@@ -57,8 +57,8 @@ entity TAC_CPU_SEQUENCER is
   P_TLBMISS     : in std_logic;                      -- TLB miss
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
-  P_RW          : out std_logic                      -- Read/Write
-  --TODO
+  P_RW          : out std_logic;                     -- Read/Write
+  P_SVC         : out std_logic                      -- Super Visor Call
   );
 end TAC_CPU_SEQUENCER;
   
@@ -161,19 +161,21 @@ begin
           if (P_TLBMISS='1') then
             I_STATE <= STATE_WAIT;
           elsif (P_BUSY='0') then
-            if (P_OP1 = "11000" and P_OP2(2) = '0' ) then
-              I_STATE <= STATE_PUSH;
-            elsif (P_OP1 = "11000" and P_OP2(2) = '1' ) then
-              I_STATE <= STATE_POP;
-            elsif (P_OP1 = "11010" and P_OP2(2) = '0' ) then
-              I_STATE <= STATE_RET;
-            elsif (P_OP1 = "11010" and P_OP2(2) = '1' ) then
-              I_STATE <= STATE_RETI1;
-            elsif (I_IS_INDR = '1' and P_OP1 = "00010" ) then
+            if (P_OP1 = "00010" and I_IS_INDR = '1') then
               I_STATE <= STATE_ST2;
-            elsif (I_IS_INDR = '1' and I_IS_ALU = '1' ) then
+            elsif (P_OP1 = "11000" and P_OP2(2) = '0') then
+              I_STATE <= STATE_PUSH;
+            elsif (P_OP1 = "11000" and P_OP2(2) = '1') then
+              I_STATE <= STATE_POP;
+            elsif (P_OP1 = "11010" and P_OP2(2) = '0') then
+              I_STATE <= STATE_RET;
+            elsif (P_OP1 = "11010" and P_OP2(2) = '1') then
+              I_STATE <= STATE_RETI1;
+            elsif (P_OP1 = "11110") then
+              I_STATE <= STATE_WAIT;
+            elsif (I_IS_INDR = '1' and I_IS_ALU = '1') then
               I_STATE <= STATE_ALU2;
-            elsif (I_IS_SHORT = '1' and I_IS_DIV = '1' ) then
+            elsif (I_IS_SHORT = '1' and I_IS_DIV = '1') then
               I_STATE <= STATE_ALU3;
             elsif (P_OP2 = "010" ) then
               I_STATE <= STATE_ALU1;
@@ -337,6 +339,8 @@ begin
           or (I_STATE = STATE_DEC2 and (
             P_OP1 = "00010" or P_OP1 = "10111" or P_OP1 = "10101")) else
     '0';
+
+  P_SVC <= '1' when I_STATE = STATE_DEC1 and P_OP1 = "11110" else '0';
             
 end RTL;
                 
