@@ -57,9 +57,10 @@ signal i_en  : std_logic;                                -- Enable resister
 --signal i_b   : std_logic_vector(15 downto 0);            -- Base  register
 --signal i_l   : std_logic_vector(15 downto 0);            -- Limit register
 signal i_act : std_logic;                                -- Activate MMU
+signal i_vio : std_logic;                                -- Memory Violation
 signal i_mis : std_logic;                                -- TLB miss
 signal i_adr : std_logic;                                -- Bad Address
- 
+
 --TLBエントリのビット構成
 --|<------ 8 ---->|<-- 5 -->|<-3->|<------ 8 ---->|
 --+---------------+-+-+-+-+-+-----+---------------+
@@ -74,49 +75,34 @@ type TLB_array is array(0 to 7) of TLB_field;           --array of 24bit * 8
 
 signal TLB : TLB_array;                                 --TLB
 signal field : TLB_field;                               --TLB field gotten with key
-signal entry : std_logic_vector(15 downto 0);
+signal index : std_logic_vector(3 downto 0);            --TLB index number 0~7
+signal entry : std_logic_vector(15 downto 0);           --temporary CONTOROL & FRAME
 signal page : std_logic_vector(7 downto 0);
 signal offset : std_logic_vector(7 downto 0);
-
-signal TLB_index : std_logic_vector(3 downto 0);
---signal pagemiss : std_logic;
---signal i_vio : std_logic;
---signal request : std_logic_vector(2 downto 0);
+signal pagemiss : std_logic;
+signal pagefault : std_logic;
+signal request : std_logic_vector(2 downto 0);          --RWX from cpu
 
 begin 
 
   page <= P_MMU_ADDR(15 downto 8);
   offset <= P_MMU_ADDR(7 downto 0);
+  request <= not P_RW & P_RW & P_LI;
 
-  --request <= not P_RW & P_RW & P_LI;
+  -- pick up an index of TLB 
+  tlbindex<= X"0" when page=TLB(0)(23 downto 16) else
+             X"1" when page=TLB(0)(23 downto 16) else
+             X"2" when page=TLB(0)(23 downto 16) else
+             X"3" when page=TLB(0)(23 downto 16) else
+             X"4" when page=TLB(0)(23 downto 16) else
+             X"5" when page=TLB(0)(23 downto 16) else
+             X"6" when page=TLB(0)(23 downto 16) else
+             X"7" when page=TLB(0)(23 downto 16) else
+             X"8";    --page miss
 
-  --tlbindex<= X"0" when page=TLB(0)(23 downto 16) else
-             --X"1" when page=TLB(0)(23 downto 16) else
-             --X"2" when page=TLB(0)(23 downto 16) else
-             --X"3" when page=TLB(0)(23 downto 16) else
-             --X"4" when page=TLB(0)(23 downto 16) else
-             --X"5" when page=TLB(0)(23 downto 16) else
-             --X"6" when page=TLB(0)(23 downto 16) else
-             --X"7" when page=TLB(0)(23 downto 16) else
-             --X"8";
-
-  --pagemiss <= TLB_index and X"8";
-  --field <= TLB(TO_INTEGER(TLB_index)) when pagemiss='0';
-
-  --i_vio <= '1' when ( (P_MMU_MR='1' and (request and field(10 downto 8) )="000") );
-  --i_miss <= pagemiss and i_act; 
-  --pagefault <= not field(15) and i_act;
-
-  pick up TLB_field 
-  field <= TLB(0) when page=TLB(0)(23 downto 16) else
-          TLB(1) when page=TLB(1)(23 downto 16) else
-          TLB(2) when page=TLB(2)(23 downto 16) else
-          TLB(3) when page=TLB(3)(23 downto 16) else
-          TLB(4) when page=TLB(4)(23 downto 16) else
-          TLB(5) when page=TLB(5)(23 downto 16) else
-          TLB(6) when page=TLB(6)(23 downto 16) else
-          TLB(7) when page=TLB(7)(23 downto 16) else
-				  "XXXXXXXX0XXXXXXXXXXXXXXX"; --tlb miss
+  pagemiss <= index and X"8";
+  field <= TLB(TO_INTEGER(index)) when pagemiss='0';
+  pagefault <= not field(15) and i_act;               --pagefault should OUT port
 
   --エントリ入れ替え
   process(P_CLK,P_RESET)
@@ -139,11 +125,13 @@ begin
   end process;
 
   i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
-  i_mis <= not field(15) and i_act;      
+  i_vio <= '1' when ( (P_MMU_MR='1' and (request and field(10 downto 8) )="000") );
+  i_miss <= pagemiss and i_act; 
+  --i_mis <= not field(15) and i_act;      
   i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;  
   P_ADDR <= field(7 downto 0) & P_MMU_ADDR(7 downto 0);
   P_MR <= P_MMU_MR and (not i_mis);
-  P_VIO_INT <= i_mis;  
+  P_VIO_INT <= i_mis;               
   P_ADR_INT <= i_adr; 
   P_DOUT <= field(23 downto 16);
 
