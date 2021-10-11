@@ -28,7 +28,7 @@
 
 library IEEE;
 use IEEE.std_logic_1164.ALL;
-use ieee.std_logic_unsigned.all;
+use IEEE.numeric_std.ALL;
 
 entity TAC_MMU is
   Port ( P_CLK      : in  std_logic;
@@ -95,17 +95,18 @@ offset <= P_MMU_ADDR(7 downto 0);
   --エントリ入れ替え
   process(P_CLK,P_RESET)
   begin 
-    if(P_RESET='0') then
+    if (P_RESET='0') then
       i_en <= '0';
-      --TLB(0),TLB(1),TLB(2),TLB(3),TLB(4),TLB(5),TLB(6),TLB(7)<=(others=>'0');
     elsif (P_CLK'event and P_CLK='1') then
-      if(P_EN='1' and P_IOW='1') then 
-        if(P_MMU_ADDR(2)='0' and P_MMU_ADDR(1)='1') then    --when MMU mode is paging
-          i_en <= P_DIN(0);
-        elsif(P_MMU_ADDR(1)='0') then    
+      if (P_EN='1' and P_IOW='1') then 
+        if (P_MMU_ADDR(2)='0') then    
+          if (P_MMU_ADDR(1)='1') then     --01X番地
+            i_en <= P_DIN(0);
+          end if;
+        elsif (P_MMU_ADDR(1)='0') then    --10X番地
           entry <= P_DIN;
-        else  --P_DIN(10-8)=tlb, index P_DIN(7-0)=page num
-          TLB(CONV_INTEGER(P_DIN(10 downto 8))) <= P_DIN(7 downto 0) & entry;
+        else                              --11X番地
+          TLB(TO_INTEGER(unsigned(P_DIN(10 downto 8)))) <= P_DIN(7 downto 0) & entry;
         end if;
       end if;
     end if;
