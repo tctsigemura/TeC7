@@ -409,6 +409,8 @@ component TAC_MMU is
          P_EN       : in  std_logic;
          --P_IOR      : out  std_logic;
          P_IOW      : in  std_logic;
+         P_RW       : in  std_logic;
+         P_LI       : in  std_logic;
          P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
@@ -584,6 +586,8 @@ begin
          P_EN          => i_en_mmu,
          --P_IOR         => i_ior,  
          P_IOW         => i_iow,
+         P_RW          => i_rw;
+         P_LI          => i_li;
          P_MMU_MR      => i_cpu_mr,
          P_BT          => i_bt,
          P_PR          => i_pr,

@@ -36,6 +36,8 @@ entity TAC_MMU is
          P_EN       : in  std_logic;
          --P_IOR      : out std_logic;                  
          P_IOW      : in  std_logic;
+         P_RW       : in  std_logic;
+         P_LI       : in  std_logic;
          P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
@@ -76,12 +78,36 @@ signal entry : std_logic_vector(15 downto 0);
 signal page : std_logic_vector(7 downto 0);
 signal offset : std_logic_vector(7 downto 0);
 
+signal TLB_index : std_logic_vector(3 downto 0);
+--signal pagemiss : std_logic;
+--signal i_vio : std_logic;
+--signal request : std_logic_vector(2 downto 0);
+
 begin 
 
-page <= P_MMU_ADDR(15 downto 8);
-offset <= P_MMU_ADDR(7 downto 0);
+  page <= P_MMU_ADDR(15 downto 8);
+  offset <= P_MMU_ADDR(7 downto 0);
 
---pick up TLB_field 
+  --request <= not P_RW & P_RW & P_LI;
+
+  --tlbindex<= X"0" when page=TLB(0)(23 downto 16) else
+             --X"1" when page=TLB(0)(23 downto 16) else
+             --X"2" when page=TLB(0)(23 downto 16) else
+             --X"3" when page=TLB(0)(23 downto 16) else
+             --X"4" when page=TLB(0)(23 downto 16) else
+             --X"5" when page=TLB(0)(23 downto 16) else
+             --X"6" when page=TLB(0)(23 downto 16) else
+             --X"7" when page=TLB(0)(23 downto 16) else
+             --X"8";
+
+  --pagemiss <= TLB_index and X"8";
+  --field <= TLB(TO_INTEGER(TLB_index)) when pagemiss='0';
+
+  --i_vio <= '1' when ( (P_MMU_MR='1' and (request and field(10 downto 8) )="000") );
+  --i_miss <= pagemiss and i_act; 
+  --pagefault <= not field(15) and i_act;
+
+  pick up TLB_field 
   field <= TLB(0) when page=TLB(0)(23 downto 16) else
           TLB(1) when page=TLB(1)(23 downto 16) else
           TLB(2) when page=TLB(2)(23 downto 16) else
@@ -120,18 +146,6 @@ offset <= P_MMU_ADDR(7 downto 0);
   P_VIO_INT <= i_mis;  
   P_ADR_INT <= i_adr; 
   P_DOUT <= field(23 downto 16);
-
-  --RWX check
-  --process(P_CLK)
-  --begin
-    --if(P_CLK'event and P_CLK='1') then
-      --if(i_act='1') then
-        --if(rwx and cpu_rwx="000") then
-          --i_rwx='1';
-        --end if;
-      --end if;
-    --end if;
-  --end process;
 
 --relocation register
 --begin
