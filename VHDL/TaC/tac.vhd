@@ -510,6 +510,8 @@ begin
          P_INVINST  => i_int_bit(14),
          P_INTR     => i_intr,
          P_STOP     => i_stop,
+         P_ADR_INT  => i_adr_int,
+         P_VIO_INT  => i_vio_int,
          P_TLBMISS  => i_int_bit(11)
   );
 
