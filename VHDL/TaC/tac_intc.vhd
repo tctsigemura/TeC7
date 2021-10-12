@@ -61,7 +61,7 @@ begin
   process(P_RESET, P_CLK)
   begin
     if (P_RESET='0') then
-      intInp <= "000000000000";
+      intInp <= (others => '0');
     elsif (P_CLK'event and P_CLK='1') then
       intInp <= P_INT_BIT;
     end if;
@@ -71,8 +71,8 @@ begin
   process(P_RESET, P_CLK)
   begin
     if (P_RESET='0') then
-      intReg  <= "000000000000";
-      intInpD <= "000000000000";
+      intReg  <= (others => '0');
+      intInpD <= (others => '0');
     elsif (P_CLK'event and P_CLK='1') then
       intReg <= (intReg and not intSnd) or
                 (intInp and (intInpD xor intInp));
@@ -84,7 +84,7 @@ begin
   intMsk(1) <= intReg(0);
   intMsk(11 downto 2) <= intMsk(10 downto 1) or intReg(10 downto 1);
   intSnd <= intReg and (not (intMsk & "0")) when (P_VR='1') else
-            "000000000000";
+            (others => '0');
 
   -- to cpu
   P_INTR  <= '0' when (intReg = 0) else '1';
