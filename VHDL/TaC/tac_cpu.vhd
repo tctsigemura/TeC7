@@ -401,4 +401,21 @@ begin
       end if;
     end if;
   end process;
+
+  -- IR の書き込み制御
+  process(P_CLK0, P_RESET) begin
+    if (P_RESET='0') then
+      I_INST_OP1 <= "00000";
+      I_INST_OP2 <= "000";
+      I_INST_RD <= "0000";
+      I_INST_RX <= "0000";
+    elsif (P_CLK0'event and P_CLK0='1') then
+      if (I_LOAD_IR='1') then
+        I_INST_OP1 <= P_DIN(15 downto 11);
+        I_INST_OP2 <= P_DIN(10 downto 8);
+        I_INST_RD <= P_DIN(7 downto 4);
+        I_INST_RX <= P_DIN(3 downto 0);
+      end if;
+    end if;
+  end process;
 end RTL;
