@@ -153,7 +153,6 @@ signal i_bt             : std_logic;
 signal i_int_bit        : std_logic_vector(15 downto 0);
 signal i_pr             : std_logic;
 signal i_cpu_mr         : std_logic;
-signal i_mmu_busy       : std_logic;
 signal i_mmu_tlbm_int       : std_logic;
 
 -- address bus
@@ -231,7 +230,6 @@ component TAC_CPU
          P_INT_BIT  : in  std_logic_vector(15 downto 0);   -- Interrupts
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic;                       -- Bus Request
-         P_MMU_BUSY : in  std_logic;                       -- MMU Busy
          P_ADR_INT  : in  std_logic;                       -- Address Violation
          P_VIO_INT  : in  std_logic;                       -- Memory Violation
          P_TLBM_INT : in  std_logic                        -- MMU TLB miss
@@ -505,7 +503,6 @@ begin
          P_INT_BIT  => i_int_bit,
          P_INTR     => i_intr,
          P_STOP     => i_stop,
-         P_MMU_BUSY => i_mmu_busy,
          P_TLBM_INT => i_mmu_tlbm_int
   );
 
@@ -596,7 +593,6 @@ begin
          P_BT          => i_bt,
          P_PR          => i_pr,
          P_STOP        => i_stop,
-         P_BUSY        => i_mmu_busy,
          P_VIO_INT     => i_int_bit(11),
          P_ADR_INT     => i_int_bit(10),
          P_TLBM_INT    => i_mmu_tlbm_int,

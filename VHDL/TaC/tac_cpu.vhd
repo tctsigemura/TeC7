@@ -61,7 +61,6 @@ entity TAC_CPU is
          P_INT_BIT: in std_logic_vector(15 downto 0);    -- Interrupts
          P_INTR  : in  std_logic;                        -- Intrrupt
          P_STOP  : in  std_logic;                        -- Panel RUN F/F
-         P_MMU_BUSY: in std_logic;                       -- MMU Busy
          P_ADR_INT: in std_logic;                        -- Address Violation
          P_VIO_INT: in std_logic;                        -- Memory Violation
          P_TLBM_INT: in std_logic                        -- TLB miss
@@ -299,7 +298,7 @@ begin
   
   I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
   
-  I_BUSY <= '1' when I_ALU_BUSY = '1' or I_MMU_BUSY = '1' else '0';
+  I_BUSY <= '1' when I_ALU_BUSY = '1' else '0';
 
   I_TLBMISS <= '1' when P_ADR_INT = '1' or P_VIO_INT = '1' or P_TLBM_INT = '1'
           else '0';
