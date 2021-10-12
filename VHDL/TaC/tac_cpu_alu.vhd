@@ -36,6 +36,7 @@ entity TAC_CPU_ALU is
             P_A         : in std_logic_vector(15 downto 0);
             P_B         : in std_logic_vector(15 downto 0);
             P_BUSY      : out std_logic;
+            P_ZDIV      : out std_logic;
             P_OUT       : out std_logic_vector(15 downto 0);
             P_OVERFLOW  : out std_logic;
             P_CARRY     : out std_logic;
@@ -75,6 +76,10 @@ begin
     P_OUT  <= I_OUT(15 downto 0);
 
     I_AtB <= P_A * P_B;
+
+    P_ZDIV <= '1' when  (P_OP1 = "01011" or P_OP1 = "01100")
+                    and P_B = (others => '0') else
+              '0';
 
     I_OUT  <= '0' & P_B                 when P_OP1 = "00001" else   -- LD
               ('0' & P_A) + P_B         when P_OP1 = "00011" else   -- ADD
