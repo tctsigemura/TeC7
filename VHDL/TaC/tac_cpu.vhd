@@ -41,29 +41,32 @@ use IEEE.std_logic_unsigned.all;
 library work;
 
 entity TAC_CPU is
-  port ( P_CLK0  : in  std_logic;                        -- Clock
-         P_CLK90 : in  std_logic;
-         P_RESET : in  std_logic;                        -- Reset
+  port ( P_CLK0     : in  std_logic;                        -- Clock
+         P_CLK90    : in  std_logic;
+         P_RESET    : in  std_logic;                        -- Reset
 
-         P_ADDR  : out std_logic_vector(15 downto 0);    -- ADDRESS BUS
-         P_DIN   : in  std_logic_vector(15 downto 0);    -- DATA    BUS
-         P_DOUT  : out std_logic_vector(15 downto 0);    -- DATA    BUS
+         P_ADDR     : out std_logic_vector(15 downto 0);    -- ADDRESS BUS
+         P_DIN      : in  std_logic_vector(15 downto 0);    -- DATA    BUS
+         P_DOUT     : out std_logic_vector(15 downto 0);    -- DATA    BUS
 
-         P_RW    : out std_logic;                        -- Read/Write
-         P_IR    : out std_logic;                        -- I/O Req.
-         P_MR    : out std_logic;                        -- Memory Req.
-         P_LI    : out std_logic;                        -- Instruction Fetch
-         P_VR    : out std_logic;                        -- Vector Fetch
-         P_HL    : out std_logic;                        -- Halt Instruction
-         P_BT    : out std_logic;                        -- Byte to
-         P_PR    : out std_logic;                        -- privilege Mode
-         P_IOPR  : out std_logic;                        -- IO privilege Mode
-         P_INT_BIT: out std_logic_vector(15 downto 0);    -- Interrupts
-         P_INTR  : in  std_logic;                        -- Intrrupt
-         P_STOP  : in  std_logic;                        -- Panel RUN F/F
-         P_ADR_INT: in std_logic;                        -- Address Violation
-         P_VIO_INT: in std_logic;                        -- Memory Violation
-         P_TLBM_INT: in std_logic                        -- TLB miss
+         P_RW       : out std_logic;                        -- Read/Write
+         P_IR       : out std_logic;                        -- I/O Req.
+         P_MR       : out std_logic;                        -- Memory Req.
+         P_LI       : out std_logic;                        -- Instruction Fetch
+         P_VR       : out std_logic;                        -- Vector Fetch
+         P_HL       : out std_logic;                        -- Halt Instruction
+         P_BT       : out std_logic;                        -- Byte to
+         P_PR       : out std_logic;                        -- privilege Mode
+         P_IOPR     : out std_logic;                        -- IO privilege Mode
+         P_SVC      : out std_logic;                        -- Super Visor Call
+         P_ZDIV     : out std_logic;                        -- Zero Division
+         P_PRIVIO   : out std_logic;                        -- Privilege Vio.
+         P_INVINST  : out std_logic;                        -- 
+         P_INTR     : in  std_logic;                        -- Intrrupt
+         P_STOP     : in  std_logic;                        -- Panel RUN F/F
+         P_ADR_INT  : in std_logic;                        -- Address Violation
+         P_VIO_INT  : in std_logic;                        -- Memory Violation
+         P_TLB_MISS : in std_logic                        -- TLB miss
         );
 end TAC_CPU;
 
@@ -80,6 +83,7 @@ component TAC_CPU_ALU is
           P_A         : in std_logic_vector(15 downto 0);
           P_B         : in std_logic_vector(15 downto 0);
           P_BUSY      : out std_logic;
+          P_ZDIV      : out std_logic;
           P_OUT       : out std_logic_vector(15 downto 0);
           P_OVERFLOW  : out std_logic;
           P_CARRY     : out std_logic;
@@ -178,7 +182,7 @@ signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
 signal I_TLBMISS     : std_logic;                     -- MMU の割込み
-signal I_SVC         : std_logic;                     -- Super Visor Call
+signal I_PRIVIO      : std_logic;                     -- 特権違反
 
 begin
   
@@ -191,6 +195,7 @@ begin
     P_A         => I_RD,
     P_B         => I_ALU_B,
     P_BUSY      => I_ALU_BUSY,
+    P_ZDIV      => P_ZDIV,
     P_OUT       => I_ALU_OUT,
     P_OVERFLOW  => I_ALU_OVERFLOW,
     P_CARRY     => I_ALU_CARRY,
@@ -228,16 +233,7 @@ begin
     P_MR        => P_MR,
     P_IR        => P_IR,
     P_RW        => P_RW,
-    P_SVC       => I_SVC
-  );
-
-  -- 割り込み信号
-  P_INT_BIT <= (
-    15 => I_SVC,
-    --14 => 未定義命令
-    13 => P_VIO_INT,
-    --12 => ゼロ除算
-    others => '0'
+    P_SVC       => P_SVC
   );
 
   -- ポート
@@ -249,6 +245,7 @@ begin
   P_BT   <= '0'; -- TODO
   P_PR   <= I_FLAG_P;
   P_IOPR <= I_FLAG_I;
+  P_PRIVIO <= '0'; --TODO: 命令で特権違反がある場合1
 
   -- マルチプレクサ
 
@@ -310,7 +307,7 @@ begin
   
   I_BUSY <= '1' when I_ALU_BUSY = '1' else '0';
 
-  I_TLBMISS <= '1' when P_ADR_INT = '1' or P_VIO_INT = '1' or P_TLBM_INT = '1'
+  I_TLBMISS <= '1' when P_ADR_INT = '1' or P_VIO_INT = '1' or P_TLBMISS = '1'
           else '0';
   
   -- レジスタの制御
