@@ -86,5 +86,6 @@ begin
   P_MR <= P_MMU_MR and (not i_vio);
   P_VIO_INT <= i_vio;
   P_ADR_INT <= i_adr;
+  P_TLBMISS <= '0';
 
 end Behavioral;

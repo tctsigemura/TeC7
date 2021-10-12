@@ -153,7 +153,8 @@ signal i_bt             : std_logic;
 signal i_int_bit        : std_logic_vector(15 downto 0);
 signal i_pr             : std_logic;
 signal i_cpu_mr         : std_logic;
-signal i_mmu_tlbmiss    : std_logic;
+signal i_adr_int        : std_logic;
+signal i_vio_int        : std_logic;
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
@@ -509,7 +510,7 @@ begin
          P_INVINST  => i_int_bit(14),
          P_INTR     => i_intr,
          P_STOP     => i_stop,
-         P_TLBMISS  => i_mmu_tlbmiss
+         P_TLBMISS  => i_int_bit(11)
   );
 
   i_iow       <= i_ir and i_rw and (not i_li);
@@ -599,9 +600,9 @@ begin
          P_BT          => i_bt,
          P_PR          => i_pr,
          P_STOP        => i_stop,
-         P_VIO_INT     => i_int_bit(11),
-         P_ADR_INT     => i_int_bit(10),
-         P_TLBMISS     => i_mmu_tlbmiss,
+         P_VIO_INT     => i_vio_int,
+         P_ADR_INT     => i_adr_int,
+         P_TLBMISS     => i_int_bit(11),
          P_MR          => i_mr,
          P_ADDR        => i_addr,
          P_MMU_ADDR    => i_cpu_addr,
@@ -609,6 +610,8 @@ begin
          P_RW          => i_rw,
          P_LI          => i_li
   );
+  
+  i_int_bit(10) <= '1' when i_vio_int = '1' or i_adr_int = '1' else '0';
 
   -- RAM
   TAC_RAM1 : TAC_RAM
