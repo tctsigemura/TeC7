@@ -58,7 +58,7 @@ entity TAC_CPU is
          P_BT    : out std_logic;                        -- Byte to
          P_PR    : out std_logic;                        -- privilege Mode
          P_IOPR  : out std_logic;                        -- IO privilege Mode
-         P_SVC   : out std_logic;                        -- Super Visor Call
+         P_INT_BIT: in std_logic_vector(15 downto 0);    -- Interrupts
          P_INTR  : in  std_logic;                        -- Intrrupt
          P_STOP  : in  std_logic;                        -- Panel RUN F/F
          P_MMU_BUSY: in std_logic;                       -- MMU Busy
@@ -228,7 +228,7 @@ begin
     P_MR        => P_MR,
     P_IR        => P_IR,
     P_RW        => P_RW,
-    P_SVC       => P_SVC
+    P_SVC       => P_INT_BIT(15)
   );
 
   -- ポート
