@@ -102,9 +102,9 @@ begin
             "1001" when (intReg(9)  = '1') else  -- Int9
             "1010" when (intReg(10) = '1') else  -- Int10
             "1011" when (intReg(11) = '1') else  -- Int11
---          "1100" when (intReg(12) = '1') else  -- Int12
---          "1101" when (intReg(13) = '1') else  -- Int13
---          "1110" when (intReg(14) = '1') else  -- Int14
+            "1100" when (intReg(12) = '1') else  -- Int12
+            "1101" when (intReg(13) = '1') else  -- Int13
+            "1110" when (intReg(14) = '1') else  -- Int14
             "1111";                              -- Int15
   P_DOUT(0) <= '0';
 end RTL;
