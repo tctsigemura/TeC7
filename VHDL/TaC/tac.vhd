@@ -206,7 +206,7 @@ component TAC_INTC is
          P_VR       : in  std_logic;
          P_INTR     : out std_logic;
 
-         P_INT_BIT  : in  std_logic_vector(11 downto 0)
+         P_INT_BIT  : in  std_logic_vector(15 downto 0)
        );
 end component;
 
