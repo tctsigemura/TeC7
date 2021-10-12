@@ -234,8 +234,6 @@ component TAC_CPU
          P_INVINST  : out std_logic;                       -- 
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic;                       -- Bus Request
-         P_ADR_INT  : in  std_logic;                       -- Address Violation
-         P_VIO_INT  : in  std_logic;                       -- Memory Violation
          P_TLBMISS  : in  std_logic                        -- MMU TLB miss
        );
 end component;
@@ -510,8 +508,6 @@ begin
          P_INVINST  => i_int_bit(14),
          P_INTR     => i_intr,
          P_STOP     => i_stop,
-         P_ADR_INT  => i_adr_int,
-         P_VIO_INT  => i_vio_int,
          P_TLBMISS  => i_int_bit(11)
   );
 

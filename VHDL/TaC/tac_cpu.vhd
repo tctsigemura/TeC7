@@ -64,8 +64,6 @@ entity TAC_CPU is
          P_INVINST  : out std_logic;                        -- 
          P_INTR     : in  std_logic;                        -- Intrrupt
          P_STOP     : in  std_logic;                        -- Panel RUN F/F
-         P_ADR_INT  : in std_logic;                        -- Address Violation
-         P_VIO_INT  : in std_logic;                        -- Memory Violation
          P_TLBMISS  : in std_logic                        -- TLB miss
         );
 end TAC_CPU;
@@ -307,8 +305,7 @@ begin
   
   I_BUSY <= '1' when I_ALU_BUSY = '1' else '0';
 
-  I_TLBMISS <= '1' when P_ADR_INT = '1' or P_VIO_INT = '1' or P_TLBMISS = '1'
-          else '0';
+  I_TLBMISS <= '1' when P_TLBMISS = '1' else '0';
   
   -- レジスタの制御
 
