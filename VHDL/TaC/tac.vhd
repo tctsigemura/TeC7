@@ -227,7 +227,7 @@ component TAC_CPU
          P_HL       : out std_logic;                       -- Halt instruction
          P_BT       : out std_logic;                       -- Byte Access
          P_PR       : out std_logic;                       -- Privilege Mode
-         P_INT_BIT  : in  std_logic_vector(15 downto 0);   -- Interrupts
+         P_INT_BIT  : out std_logic_vector(15 downto 0);   -- Interrupts
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic;                       -- Bus Request
          P_ADR_INT  : in  std_logic;                       -- Address Violation

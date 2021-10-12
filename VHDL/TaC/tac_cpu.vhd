@@ -58,7 +58,7 @@ entity TAC_CPU is
          P_BT    : out std_logic;                        -- Byte to
          P_PR    : out std_logic;                        -- privilege Mode
          P_IOPR  : out std_logic;                        -- IO privilege Mode
-         P_INT_BIT: in std_logic_vector(15 downto 0);    -- Interrupts
+         P_INT_BIT: out std_logic_vector(15 downto 0);    -- Interrupts
          P_INTR  : in  std_logic;                        -- Intrrupt
          P_STOP  : in  std_logic;                        -- Panel RUN F/F
          P_ADR_INT: in std_logic;                        -- Address Violation
@@ -178,6 +178,7 @@ signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
 signal I_TLBMISS     : std_logic;                     -- MMU の割込み
+signal I_SVC         : std_logic;                     -- Super Visor Call
 
 begin
   
@@ -227,7 +228,16 @@ begin
     P_MR        => P_MR,
     P_IR        => P_IR,
     P_RW        => P_RW,
-    P_SVC       => P_INT_BIT(15)
+    P_SVC       => I_SVC
+  );
+
+  -- 割り込み信号
+  P_INT_BIT <= (
+    15 => I_SVC,
+    --14 => 未定義命令
+    13 => P_VIO_INT,
+    --12 => ゼロ除算
+    others => '0'
   );
 
   -- ポート
