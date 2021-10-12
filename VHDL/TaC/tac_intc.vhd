@@ -48,13 +48,13 @@ end TAC_INTC;
 architecture RTL of TAC_INTC is
 
 -- register
-signal intReg  : std_logic_vector(11 downto 0);
-signal intInp  : std_logic_vector(11 downto 0);
-signal intInpD : std_logic_vector(11 downto 0);
+signal intReg  : std_logic_vector(15 downto 0);
+signal intInp  : std_logic_vector(15 downto 0);
+signal intInpD : std_logic_vector(15 downto 0);
 
 -- signal
-signal intSnd  : std_logic_vector(11 downto 0);
-signal intMsk  : std_logic_vector(11 downto 1);
+signal intSnd  : std_logic_vector(15 downto 0);
+signal intMsk  : std_logic_vector(15 downto 1);
 
 begin
   -- synchronize with CLK
