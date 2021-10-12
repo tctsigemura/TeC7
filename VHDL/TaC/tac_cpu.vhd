@@ -278,7 +278,7 @@ begin
   with I_INST_OP2 select
     I_EA <= I_REG_DR                when "000",
             I_REG_DR + I_RX         when "001",
-            I_REG_FP + I_REG_DR * 2 when "011",
+            I_REG_FP + (I_REG_DR(14 downto 0) & "0") when "011",
             I_RX                    when "110",
             I_RD                    when others;
 
