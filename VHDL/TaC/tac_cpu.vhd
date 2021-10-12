@@ -66,7 +66,7 @@ entity TAC_CPU is
          P_STOP     : in  std_logic;                        -- Panel RUN F/F
          P_ADR_INT  : in std_logic;                        -- Address Violation
          P_VIO_INT  : in std_logic;                        -- Memory Violation
-         P_TLB_MISS : in std_logic                        -- TLB miss
+         P_TLBMISS  : in std_logic                        -- TLB miss
         );
 end TAC_CPU;
 
