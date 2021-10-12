@@ -78,7 +78,7 @@ begin
     I_AtB <= P_A * P_B;
 
     P_ZDIV <= '1' when  (P_OP1 = "01011" or P_OP1 = "01100")
-                    and P_B = (others => '0') else
+                    and P_B = "0000000000000000" else
               '0';
 
     I_OUT  <= '0' & P_B                 when P_OP1 = "00001" else   -- LD

@@ -150,8 +150,8 @@ signal I_REG_DR  : Word;                              -- DR
 signal I_REG_TMP : Word;                              -- TMP
 signal I_INST_OP1    : std_logic_vector(4 downto 0);  -- 命令の OP1
 signal I_INST_OP2    : std_logic_vector(2 downto 0);  -- 命令の OP2
-signal I_INST_RD     : std_logic_vector(4 downto 0);  -- 命令の Rd
-signal I_INST_RX     : std_logic_vector(4 downto 0);  -- 命令の Rx
+signal I_INST_RD     : std_logic_vector(3 downto 0);  -- 命令の Rd
+signal I_INST_RX     : std_logic_vector(3 downto 0);  -- 命令の Rx
 
 -- 内部配線
 signal I_ADDR        : Word;                          -- アドレス出力
