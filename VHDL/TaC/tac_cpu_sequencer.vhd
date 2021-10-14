@@ -33,7 +33,7 @@ entity TAC_CPU_SEQUENCER is
   P_CLK         : in std_logic;
   P_RESET       : in std_logic;
   P_STOP        : in std_logic;
-  P_INTR        : in std_logic;
+  P_INTR        : in std_logic;                      -- 割り込み（負論理）
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
   P_RD          : in std_logic_vector(3 downto 0);   -- 命令の Rd
@@ -136,15 +136,19 @@ begin
     elsif (P_CLK'event and P_CLK='1') then
       case I_STATE is
         when STATE_FETCH =>
-          if (P_STOP = '0' and P_INTR = '0') then
-            I_STATE <= STATE_DEC1;
-          elsif (P_STOP = '0' and P_INTR = '1') then
-            I_STATE <= STATE_INTR1;
+          if (P_STOP = '0') then
+            if (P_TLBMISS = '1') then
+              I_STATE <= STATE_WAIT;
+            elsif (P_INTR = '0') then
+              I_STATE <= STATE_DEC1;
+            else
+              I_STATE <= STATE_INTR1;
+            end if;
           else
             I_STATE <= STATE_CON;
           end if;
         when STATE_WAIT =>
-          if (P_INTR = '0') then
+          if (P_INTR = '1') then
             I_STATE <= STATE_FETCH;
           else
             I_STATE <= STATE_WAIT;
@@ -209,8 +213,11 @@ begin
           if (P_BUSY='0') then
             I_STATE <= STATE_FETCH;
           end if;
-        when others =>
+        when STATE_ST1 | STATE_CALL | STATE_IN1 | STATE_ST2 | STATE_IN2
+            | STATE_PUSH | STATE_POP | STATE_RET | STATE_RETI3 =>
           I_STATE <= STATE_FETCH;
+        when others ==>
+          I_STATE <= STATE_FETCH; --FIXME
       end case;
     end if;
   end process;
