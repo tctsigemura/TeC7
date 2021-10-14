@@ -219,25 +219,29 @@ begin
   
   P_UPDATE_PC <=
     -- PC += 2
-    "100" when (I_STATE = STATE_DEC1 and (P_OP1 = "00000" or P_OP1 = "11111"
-                or (I_IS_INDR = '1' and P_OP1(4 downto 1) = "1011")
-                or (I_IS_SHORT = '1' and I_IS_ALU = '1')))
+    "100" when
+            (I_STATE = STATE_DEC1 and
+              (P_OP1 = "00000" or P_OP1 = "11111" -- NO, HALT
+                or (I_IS_INDR = '1' and P_OP1(4 downto 1) = "1011") -- IN, OUT
+                or I_IS_SHORT = '1')) -- レジスタ, 4ビットイミディエイト
             or I_STATE = STATE_ST2
-            or ((I_STATE = STATE_ALU2 or I_STATE = STATE_ALU3)
-              and (I_IS_MUL = '0' or I_IS_DIV = '0' or P_BUSY = '0'))
-            or I_STATE = STATE_PUSH or I_STATE = STATE_POP else
+            or (I_STATE = STATE_ALU2 and P_BUSY = '0')
+            or I_STATE = STATE_PUSH
+            or I_STATE = STATE_POP else
     -- PC += 4
-    "101" when (I_STATE = STATE_DEC2 and (P_OP1(4 downto 1) = "1011"
-                or (P_OP1 = "10110" and I_JMP_GO = '0')))
-            or (I_STATE = STATE_ALU1
-              and (I_IS_MUL = '0' or I_IS_DIV = '0' or P_BUSY = '0'))
+    "101" when
+            (I_STATE = STATE_DEC2 and
+              (P_OP1(4 downto 1) = "1011" -- IN, OUT
+                or (P_OP1 = "10110" and I_JMP_GO = '0'))) -- JMP
+            or (I_STATE = STATE_ALU1 and P_BUSY = '0')
             or I_STATE = STATE_ST1 else
     -- PC <- Din
-    "110" when I_STATE = STATE_INTR4 or I_STATE = STATE_RETI2
+    "110" when I_STATE = STATE_INTR3 or I_STATE = STATE_RETI2
             or I_STATE = STATE_RET else
     -- PC <- EA
-    "111" when I_STATE = STATE_DEC2 and (
-            (P_OP1 = "10100" and I_JMP_GO = '1') or P_OP1 = "10101") else
+    "111" when
+            (I_STATE = STATE_DEC2 and OP1 = "10100" and I_JMP_GO = '1') -- JMP
+            or I_STATE = STATE_CALL else -- CALL
     "000";
   
   P_UPDATE_SP <=

@@ -222,6 +222,7 @@ begin
     P_SELECT_W  => I_SELECT_W,
     P_SELECT_B  => I_SELECT_B,
     P_ALU_START => I_ALU_START,
+    P_ALU_ZERO  => P_ZDIV,
     P_BUSY      => I_BUSY,
     P_FLAG_V    => I_FLAG_V,
     P_FLAG_C    => I_FLAG_C,
