@@ -125,9 +125,8 @@ component TAC_CPU_SEQUENCER is
 end component;
 
 -- レジスタファイル
-type RegGR is array(0 to 11) of Word;
-signal I_REG_GR  : RegGR; -- G0-G11
-signal I_REG_FP  : Word;  -- FP (G12)
+type RegGR is array(0 to 12) of Word;
+signal I_REG_GR  : RegGR; -- G0-G11, FP (G12)
 signal I_REG_SSP : Word;  -- SSP
 signal I_REG_USP : Word;  -- USP
 
@@ -286,7 +285,7 @@ begin
   with I_INST_OP2 select
     I_EA <= I_REG_DR                when "000",
             I_REG_DR + I_RX         when "001",
-            I_REG_FP + (I_REG_DR(14 downto 0) & "0") when "011",
+            I_REG_GR(12) + (I_REG_DR(14 downto 0) & "0") when "011",
             I_RX                    when "110",
             I_RX                    when "111",
             I_RD                    when others;
@@ -294,14 +293,12 @@ begin
   -- 信号の設定
   I_SP <= I_REG_SSP when I_FLAG_P='1' else I_REG_USP;
 
-  I_RD <= I_REG_FP   when I_INST_RD="1100" else
-          I_SP       when I_INST_RD="1101" else
+  I_RD <= I_SP       when I_INST_RD="1101" else
           I_REG_USP  when I_INST_RD="1110" else
           I_FLAG     when I_INST_RD="1111" else
           I_REG_GR(conv_integer(I_INST_RD));
   
-  I_RX <= I_REG_FP   when I_INST_RX="1100" else
-          I_SP       when I_INST_RX="1101" else
+  I_RX <= I_SP       when I_INST_RX="1101" else
           I_REG_USP  when I_INST_RX="1110" else
           I_FLAG     when I_INST_RX="1111" else
           I_REG_GR(conv_integer(I_INST_RX));
@@ -314,15 +311,13 @@ begin
   process(P_CLK0, P_RESET)
   begin
     if (P_RESET='0') then
-      for i in 0 to 11 loop
+      for i in 0 to 12 loop
         I_REG_GR(i) <= (others => '0');
       end loop;
-      I_REG_FP  <= (others => '0');
       I_REG_SSP <= (others => '0');
       I_rEG_USP <= (others => '0');
     elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_GR='1') then
       case I_INST_RD is
-        when "1100" => I_REG_FP   <= I_ALU_OUT;
         when "1101" =>
           if (I_FLAG_P='1') then
             I_REG_SSP <= I_ALU_OUT;
