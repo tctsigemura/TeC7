@@ -609,7 +609,7 @@ begin
          P_LI          => i_li
   );
   
-  i_int_bit(10) <= '1' when i_vio_int = '1' or i_adr_int = '1' else '0';
+  i_int_bit(10) <= i_vio_int or i_adr_int;
 
   -- RAM
   TAC_RAM1 : TAC_RAM
