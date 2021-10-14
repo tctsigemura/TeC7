@@ -245,6 +245,11 @@ begin
   P_PR   <= I_FLAG_P;
   P_IOPR <= I_FLAG_I;
   P_PRIVIO <= '0'; --TODO: 命令で特権違反がある場合1
+  P_INVINST <=  '1' when
+                      (P_OP1 >= "01101" and P_OP1 <= "01111")
+                      or P_OP1 = "11001"
+                      or (P_OP1 >= "11011" and P_OP1 <= "11101") else
+                '0';
 
   -- マルチプレクサ
 
