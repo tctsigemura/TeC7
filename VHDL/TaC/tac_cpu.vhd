@@ -170,7 +170,6 @@ signal I_SELECT_A    : std_logic_vector(2 downto 0);  -- MUX A の選択
 signal I_SELECT_D    : std_logic_vector(2 downto 0);  -- MUX D の選択
 signal I_SELECT_W    : std_logic_vector(1 downto 0);  -- MUX W の選択
 signal I_SELECT_B    : std_logic;                     -- MUX B の選択
-signal I_BUSY        : std_logic;                     -- ALU と MMU の BUSY 信号
 signal I_ALU_B       : Word;                          -- ALU への B 信号
 signal I_ALU_START   : std_logic;                     -- ALU への START 信号
 signal I_ALU_BUSY    : std_logic;                     -- ALU からの BUSY 信号
@@ -179,7 +178,6 @@ signal I_ALU_OVERFLOW: std_logic;                     -- ALU の Over flow 出�
 signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
-signal I_TLBMISS     : std_logic;                     -- MMU の割込み
 signal I_PRIVIO      : std_logic;                     -- 特権違反
 
 begin
@@ -223,12 +221,12 @@ begin
     P_SELECT_B  => I_SELECT_B,
     P_ALU_START => I_ALU_START,
     P_ALU_ZERO  => P_ZDIV,
-    P_BUSY      => I_BUSY,
+    P_BUSY      => I_ALU_BUSY,
     P_FLAG_V    => I_FLAG_V,
     P_FLAG_C    => I_FLAG_C,
     P_FLAG_Z    => I_FLAG_Z,
     P_FLAG_S    => I_FLAG_S,
-    P_TLBMISS   => I_TLBMISS,
+    P_TLBMISS   => P_TLBMISS,
     P_MR        => P_MR,
     P_IR        => P_IR,
     P_RW        => P_RW,
@@ -308,10 +306,6 @@ begin
           I_REG_GR(conv_integer(I_INST_RX));
   
   I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
-  
-  I_BUSY <= '1' when I_ALU_BUSY = '1' else '0';
-
-  I_TLBMISS <= '1' when P_TLBMISS = '1' else '0';
   
   -- レジスタの制御
 
