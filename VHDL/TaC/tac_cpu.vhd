@@ -288,6 +288,7 @@ begin
             I_REG_DR + I_RX         when "001",
             I_REG_FP + (I_REG_DR(14 downto 0) & "0") when "011",
             I_RX                    when "110",
+            I_RX                    when "111",
             I_RD                    when others;
 
   -- 信号の設定
