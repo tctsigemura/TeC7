@@ -108,7 +108,7 @@ begin
   I_IS_INDR   <= '1' when P_OP2 = "011" or P_OP2(2 downto 1) = "11" else '0';
   I_IS_SHORT  <= '1' when P_OP2(2 downto 1) = "10" else '0';
   I_IS_MUL    <= '1' when P_OP1 = "01010" else '0';
-  I_IS_DIV    <= '1' when P_OP1(4 downto 1) = "0101" else '0';
+  I_IS_DIV    <= '1' when P_OP1 = "01011" or P_OP1 = "01100" else '0';
   I_JMP_GO    <=
     '1' when
             (P_RD = "0000" and P_FLAG_Z = '1')                          -- JZ
