@@ -502,13 +502,13 @@ begin
          P_HL       => i_hl,
          P_BT       => i_bt,
          P_PR       => i_pr,
-         P_SVC      => i_int_bit(15),
-         P_ZDIV     => i_int_bit(12),
-         P_PRIVIO   => i_int_bit(13),
-         P_INVINST  => i_int_bit(14),
+         P_SVC      => i_int_bit(14),
+         P_ZDIV     => i_int_bit(11),
+         P_PRIVIO   => i_int_bit(12),
+         P_INVINST  => i_int_bit(13),
          P_INTR     => i_intr,
          P_STOP     => i_stop,
-         P_TLBMISS  => i_int_bit(11)
+         P_TLBMISS  => i_int_bit(15)
   );
 
   i_iow       <= i_ir and i_rw and (not i_li);
@@ -600,7 +600,7 @@ begin
          P_STOP        => i_stop,
          P_VIO_INT     => i_vio_int,
          P_ADR_INT     => i_adr_int,
-         P_TLBMISS     => i_int_bit(11),
+         P_TLBMISS     => i_int_bit(15),
          P_MR          => i_mr,
          P_ADDR        => i_addr,
          P_MMU_ADDR    => i_cpu_addr,
