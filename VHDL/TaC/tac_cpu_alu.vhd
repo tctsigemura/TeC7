@@ -48,12 +48,15 @@ end TAC_CPU_ALU;
 architecture RTL of TAC_CPU_ALU is
 
 signal I_BUSY : std_logic;
+signal I_ZDIV : std_logic;
 signal I_OUT  : std_logic_vector(16 downto 0);
 
 signal I_S1   : std_logic_vector(15 downto 0);
 signal I_S3   : std_logic_vector(15 downto 0);
 signal I_S7   : std_logic_vector(15 downto 0);
 signal I_SHL  : std_logic_vector(15 downto 0);
+
+signal I_DIVMOD : std_logic;
 
 signal I_SIGN : std_logic;
 signal I_E8   : std_logic_vector(15 downto 0);
@@ -77,9 +80,9 @@ begin
 
     I_AtB <= P_A * P_B;
 
-    P_ZDIV <= '1' when  (P_OP1 = "01011" or P_OP1 = "01100")
-                    and P_B = "0000000000000000" else
-              '0';
+    P_ZDIV <= I_ZDIV;
+
+    I_DIVMOD <= '1' when P_OP1 = "01011" or P_OP1 = "01100" else '0';
 
     I_OUT  <= '0' & P_B                 when P_OP1 = "00001" else   -- LD
               ('0' & P_A) + P_B         when P_OP1 = "00011" else   -- ADD
@@ -136,7 +139,7 @@ begin
                 if (I_CNT = 15) then
                     I_BUSY <= '0';
                 end if;
-            elsif (P_START = '1' and (P_OP1 = "01011" or P_OP1 = "01100")) then
+            elsif (P_START = '1' and I_DIVMOD = '1' and I_ZDIV = '0') then
                 I_BUSY <= '1';
                 I_CNT <= "00000";
                 I_YX <= "0000000000000000" & P_A;
@@ -153,4 +156,7 @@ begin
     P_ZERO <= '1' when I_OUT(15 downto 0) = (others => '0') else '0';
     P_SIGN <= I_OUT(15);
     
+    -- ゼロ除算
+    I_ZDIV <= '1' when I_DIVMOD = '1' and P_B = (others => '0') else '0';
+
 end RTL;
