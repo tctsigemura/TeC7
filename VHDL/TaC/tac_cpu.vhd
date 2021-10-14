@@ -158,10 +158,12 @@ signal I_SP          : Word;                          -- スタックポイン�
 signal I_RD          : Word;                          -- GR[Rd]
 signal I_RX          : Word;                          -- GR[Rx]
 signal I_DR_IN       : Word;                          -- DR への入力
+signal I_SP_IN       : Word;                          -- SP への入力
 signal I_UPDATE_PC   : std_logic_vector(2 downto 0);  -- PC の更新
 signal I_UPDATE_SP   : std_logic_vector(1 downto 0);  -- SP の更新
 signal I_LOAD_IR     : std_logic;                     -- IR のロード
 signal I_LOAD_DR     : std_logic;                     -- DR のロード
+signal I_LOAD_SP     : std_logic;                     -- SP のロード
 signal I_LOAD_FLAG   : std_logic;                     -- FLAG のロード
 signal I_LOAD_TMP    : std_logic;                     -- TMP のロード
 signal I_LOAD_GR     : std_logic;                     -- 汎用レジスタのロード
@@ -314,19 +316,45 @@ begin
       for i in 0 to 12 loop
         I_REG_GR(i) <= (others => '0');
       end loop;
-      I_REG_SSP <= (others => '0');
-      I_rEG_USP <= (others => '0');
     elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_GR='1') then
-      case I_INST_RD is
-        when "1101" =>
-          if (I_FLAG_P='1') then
-            I_REG_SSP <= I_ALU_OUT;
-          else
-            I_REG_USP <= I_ALU_OUT;
-          end if;
-        when "1110" => I_REG_USP  <= I_ALU_OUT;
-        when others => I_REG_GR(conv_integer(I_INST_RD)) <= I_ALU_OUT;
-      end case;
+      if I_INST_RD <= "1100" then
+        I_REG_GR(conv_integer(I_INST_RD)) <= I_ALU_OUT;
+      end if;
+    end if;
+  end process;
+
+  -- SP の書き込み制御
+  I_SP_IN <=  I_SP + 2 when I_UPDATE_SP="01" else
+              I_SP - 2 when I_UPDATE_SP="10" else
+              I_ALU_OUT;
+  
+  I_LOAD_SP <=  '1' when (I_UPDATE_SP(1)='1' or I_UPDATE_SP(0)='0')
+                      or (I_LOAD_GR='1' and I_INST_RD="1101") else
+                '0';
+  
+  -- SSP の書き込み制御
+  process(P_CLK0, P_RESET)
+  begin
+    if (P_RESET='0') then
+      I_REG_SSP <= (others => '0');
+    elsif (P_CLK0'event and P_CLK0='1') then
+      if (I_LOAD_SP='1' and I_FLAG_P='1') then
+        I_REG_SSP <= I_SP_IN;
+      end if;
+    end if;
+  end process;
+  
+  -- USP の書き込み制御
+  process(P_CLK0, P_RESET)
+  begin
+    if (P_RESET='0') then
+      I_REG_USP <= (others => '0');
+    elsif (P_CLK0'event and P_CLK0='1') then
+      if (I_LOAD_SP='1' and I_FLAG_P='0') then
+        I_REG_USP <= I_SP_IN;
+      elsif (I_LOAD_GR='1' and I_INST_RD="1110") then
+        I_REG_USP <= I_ALU_OUT;
+      end if;
     end if;
   end process;
 
