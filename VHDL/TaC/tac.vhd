@@ -512,7 +512,7 @@ begin
   i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28‾2f
   i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30‾37
   i_en_ram    <= '1' when (i_addr(7 downto 1)="1111000")else '0'; -- f0‾f1
-  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110");           -- f2‾f7
+  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110");           -- f0‾f7
 
   
 
@@ -586,8 +586,8 @@ begin
          P_EN          => i_en_mmu,
          --P_IOR         => i_ior,  
          P_IOW         => i_iow,
-         P_RW          => i_rw;
-         P_LI          => i_li;
+         P_RW          => i_rw,
+         P_LI          => i_li,
          P_MMU_MR      => i_cpu_mr,
          P_BT          => i_bt,
          P_PR          => i_pr,

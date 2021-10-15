@@ -36,8 +36,8 @@ entity TAC_MMU is
          P_EN       : in  std_logic;
          --P_IOR      : out std_logic;                  
          P_IOW      : in  std_logic;
-         P_RW       : in  std_logic;
-         P_LI       : in  std_logic;
+         P_RW       : in  std_logic;                     -- read write
+         P_LI       : in  std_logic;                     -- instruction fetch
          P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
@@ -48,7 +48,7 @@ entity TAC_MMU is
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
          P_DIN      : in  std_logic_vector(15 downto 0); -- New TLB field
-         P_DOUT     : out std_logic_vector(7 downto 0)  -- page happend intr to cpu
+         P_DOUT     : out std_logic_vector(7 downto 0)  -- page happend intr  F7h
        );
 end TAC_MMU;
 
@@ -74,35 +74,34 @@ subtype TLB_field is std_logic_vector(23 downto 0);
 type TLB_array is array(0 to 7) of TLB_field;           --array of 24bit * 8 
 
 signal TLB : TLB_array;                                 --TLB
-signal field : TLB_field;                               --TLB field gotten with key
-signal index : std_logic_vector(3 downto 0);            --TLB index number 0~7
+--signal field : TLB_field;                             --TLB field gotten with key
+signal index : natural range 0 to 8;                    --TLB index number
 signal entry : std_logic_vector(15 downto 0);           --temporary CONTOROL & FRAME
+
 signal page : std_logic_vector(7 downto 0);
-signal offset : std_logic_vector(7 downto 0);
-signal pagemiss : std_logic;
-signal pagefault : std_logic;
-signal request : std_logic_vector(2 downto 0);          --RWX from cpu
+signal tlbmiss : std_logic;                             -- not exist page
+signal request : std_logic_vector(2 downto 0);          --RWX request from cpu
+signal perm_vio : std_logic;                            --RWX Violation
+signal pagefault : std_logic;                           --Vbit='0'
 
 begin 
 
   page <= P_MMU_ADDR(15 downto 8);
-  offset <= P_MMU_ADDR(7 downto 0);
-  request <= not P_RW & P_RW & P_LI;
+  request <= not P_RW & P_RW & P_LI;    --どれか一つが'1'
 
   -- pick up an index of TLB 
-  tlbindex<= X"0" when page=TLB(0)(23 downto 16) else
-             X"1" when page=TLB(0)(23 downto 16) else
-             X"2" when page=TLB(0)(23 downto 16) else
-             X"3" when page=TLB(0)(23 downto 16) else
-             X"4" when page=TLB(0)(23 downto 16) else
-             X"5" when page=TLB(0)(23 downto 16) else
-             X"6" when page=TLB(0)(23 downto 16) else
-             X"7" when page=TLB(0)(23 downto 16) else
-             X"8";    --page miss
-
-  pagemiss <= index and X"8";
-  field <= TLB(TO_INTEGER(index)) when pagemiss='0';
-  pagefault <= not field(15) and i_act;               --pagefault should OUT port
+  index <= 0 when page=TLB(0)(23 downto 16) else
+           1 when page=TLB(0)(23 downto 16) else
+           2 when page=TLB(0)(23 downto 16) else
+           3 when page=TLB(0)(23 downto 16) else
+           4 when page=TLB(0)(23 downto 16) else
+           5 when page=TLB(0)(23 downto 16) else
+           6 when page=TLB(0)(23 downto 16) else
+           7 when page=TLB(0)(23 downto 16) else
+           8;    --page miss
+  
+  tlbmiss <= '1' when index=8 else '0';
+  perm_vio <= '1' when (request and TLB(index)(10 downto 8))="000" else '0';
 
   --エントリ入れ替え
   process(P_CLK,P_RESET)
@@ -110,6 +109,8 @@ begin
     if (P_RESET='0') then
       i_en <= '0';
     elsif (P_CLK'event and P_CLK='1') then
+
+      --エントリ置き換え
       if (P_EN='1' and P_IOW='1') then 
         if (P_MMU_ADDR(2)='0') then    
           if (P_MMU_ADDR(1)='1') then     --01X番地
@@ -120,20 +121,37 @@ begin
         else                              --11X番地
           TLB(TO_INTEGER(unsigned(P_DIN(10 downto 8)))) <= P_DIN(7 downto 0) & entry;
         end if;
+      end if; --if (P_EN='1' and P_IOW='1')
+
+      --D,Rビットの書き換え
+      if(tlbmiss='0') then 
+        if (perm_vio='0') then
+          if(request(1)='1') then                      --Dbitは'1'にしたらそのまま
+            TLB(index)(11) <= '1';
+          end if;
+          if((request(2) or request(0))='1') then
+            TLB(index)(12) <= '1'; 
+          end if; 
+        end if;
       end if;
+
+    --P_DOUTを制御したい
+
     end if;
   end process;
 
   i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
-  i_vio <= '1' when ( (P_MMU_MR='1' and (request and field(10 downto 8) )="000") );
-  i_miss <= pagemiss and i_act; 
-  --i_mis <= not field(15) and i_act;      
-  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;  
-  P_ADDR <= field(7 downto 0) & P_MMU_ADDR(7 downto 0);
+  i_vio <= P_MMU_MR and perm_vio;
+  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;
+  i_mis <= tlbmiss and i_act;                             --TLB MISS
+  pagefault <= not TLB(index)(15) and i_act;              --PAGE FAULT
+
+  P_ADDR <= TLB(index)(7 downto 0) & P_MMU_ADDR(7 downto 0);
   P_MR <= P_MMU_MR and (not i_mis);
-  P_VIO_INT <= i_mis;               
+  P_VIO_INT <= i_mis or i_vio or pagefault;         
   P_ADR_INT <= i_adr; 
-  P_DOUT <= field(23 downto 16);
+  P_DOUT <= P_MMU_ADDR(15 downto 8); 
+  --P_IOR <= 
 
 --relocation register
 --begin
