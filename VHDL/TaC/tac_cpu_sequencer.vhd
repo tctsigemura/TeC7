@@ -216,7 +216,7 @@ begin
         when STATE_ST1 | STATE_CALL | STATE_IN1 | STATE_ST2 | STATE_IN2
             | STATE_PUSH | STATE_POP | STATE_RET | STATE_RETI3 =>
           I_STATE <= STATE_FETCH;
-        when others ==>
+        when others =>
           I_STATE <= STATE_FETCH; --FIXME
       end case;
     end if;
@@ -247,7 +247,7 @@ begin
             or I_STATE = STATE_RET else
     -- PC <- EA
     "111" when
-            (I_STATE = STATE_DEC2 and OP1 = "10100" and I_JMP_GO = '1') -- JMP
+            (I_STATE = STATE_DEC2 and P_OP1 = "10100" and I_JMP_GO = '1') -- JMP
             or I_STATE = STATE_CALL else -- CALL
     "000";
   

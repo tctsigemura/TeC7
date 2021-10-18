@@ -221,7 +221,6 @@ begin
     P_SELECT_W  => I_SELECT_W,
     P_SELECT_B  => I_SELECT_B,
     P_ALU_START => I_ALU_START,
-    P_ALU_ZERO  => P_ZDIV,
     P_BUSY      => I_ALU_BUSY,
     P_FLAG_V    => I_FLAG_V,
     P_FLAG_C    => I_FLAG_C,
@@ -245,9 +244,9 @@ begin
   P_IOPR <= I_FLAG_I;
   P_PRIVIO <= '0'; --TODO: 命令で特権違反がある場合1
   P_INVINST <=  '1' when
-                      (P_OP1 >= "01101" and P_OP1 <= "01111")
-                      or P_OP1 = "11001"
-                      or (P_OP1 >= "11011" and P_OP1 <= "11101") else
+                      (I_INST_OP1 >= "01101" and I_INST_OP1 <= "01111")
+                      or I_INST_OP1 = "11001"
+                      or (I_INST_OP1 >= "11011" and I_INST_OP1 <= "11101") else
                 '0';
 
   -- マルチプレクサ
