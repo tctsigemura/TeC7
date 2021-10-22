@@ -173,7 +173,7 @@ signal i_dout_pio       : std_logic_vector( 7 downto 0);
 signal i_dout_tmr0      : std_logic_vector(15 downto 0);
 signal i_dout_tmr1      : std_logic_vector(15 downto 0);
 signal i_dout_tec       : std_logic_vector( 7 downto 0);
-signal i_dout_mmu       : std_logic_vector( 7 downto 0);
+signal i_dout_mmu       : std_logic_vector(15 downto 0);
 
 -- address decoder
 signal i_ior            : std_logic;
@@ -407,7 +407,6 @@ component TAC_MMU is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
          P_EN       : in  std_logic;
-         --P_IOR      : out  std_logic;
          P_IOW      : in  std_logic;
          P_RW       : in  std_logic;
          P_LI       : in  std_logic;
@@ -421,7 +420,7 @@ component TAC_MMU is
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
          P_DIN      : in  std_logic_vector(15 downto 0); -- New TLB field
-         P_DOUT     : out std_logic_vector(7 downto 0)  -- page to cpu
+         P_DOUT     : out std_logic_vector(15 downto 0)  -- page to cpu
        );
 end component;
 
@@ -511,8 +510,8 @@ begin
                            i_addr(7 downto 3)="00100")  else '0'; -- 20‾27
   i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28‾2f
   i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30‾37
-  i_en_ram    <= '1' when (i_addr(7 downto 1)="1111000")else '0'; -- f0‾f1
-  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110");           -- f0‾f7
+  i_en_ram    <= '1' when (i_addr(7 downto 1)="1110000")else '0'; -- e0‾e1
+  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11100");           -- e0‾e7
 
   
 
@@ -526,7 +525,7 @@ begin
                ("00000000"&i_dout_pio) when (i_ir='1' and i_en_pio='1') else
                ("00000000"&i_dout_rn) when (i_ir='1' and i_en_rn='1') else
                ("00000000"&i_dout_tec) when (i_ir='1' and i_en_tec='1') else
-               ("00000000"&i_dout_mmu) when (i_ir='1' and i_en_mmu='1') else
+               i_dout_mmu when (i_ir='1' and i_en_mmu='1') else
                i_dout_intc when (i_vr='1') else
                "0000000000000000";
 
@@ -584,7 +583,6 @@ begin
          P_CLK         => P_CLK0,
          P_RESET       => i_reset,
          P_EN          => i_en_mmu,
-         --P_IOR         => i_ior,  
          P_IOW         => i_iow,
          P_RW          => i_rw,
          P_LI          => i_li,
