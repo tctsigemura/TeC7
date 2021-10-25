@@ -116,6 +116,7 @@ component TAC_CPU_SEQUENCER is
   P_FLAG_C      : in std_logic;
   P_FLAG_Z      : in std_logic;
   P_FLAG_S      : in std_logic;
+  P_FLAG_P      : in std_logic;
   P_TLBMISS     : in std_logic;                      -- MMU Interrupt
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
@@ -226,6 +227,7 @@ begin
     P_FLAG_C    => I_FLAG_C,
     P_FLAG_Z    => I_FLAG_Z,
     P_FLAG_S    => I_FLAG_S,
+    P_FLAG_P    => I_FLAG_P,
     P_TLBMISS   => P_TLBMISS,
     P_MR        => P_MR,
     P_IR        => P_IR,

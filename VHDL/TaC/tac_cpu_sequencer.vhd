@@ -54,11 +54,13 @@ entity TAC_CPU_SEQUENCER is
   P_FLAG_C      : in std_logic;
   P_FLAG_Z      : in std_logic;
   P_FLAG_S      : in std_logic;
+  P_FLAG_P      : in std_logic;
   P_TLBMISS     : in std_logic;                      -- TLB miss
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
   P_RW          : out std_logic;                     -- Read/Write
   P_SVC         : out std_logic                      -- Super Visor Call
+  P_PRIVIO      : out std_logic                      -- Privilege Violation
   );
 end TAC_CPU_SEQUENCER;
   
@@ -87,6 +89,10 @@ constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10010";
 constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10011";
 constant STATE_IN1   : std_logic_vector(4 downto 0) := "10100";
 constant STATE_IN2   : std_logic_vector(4 downto 0) := "11000";
+constant STATE_SVC   : std_logic_vector(4 downto 0) := "11001";
+constant STATE_INVAL : std_logic_vector(4 downto 0) := "11010";
+constant STATE_ZDIV  : std_logic_vector(4 downto 0) := "11011";
+constant STATE_PRIVIO: std_logic_vector(4 downto 0) := "11100";
 constant STATE_CON   : std_logic_vector(4 downto 0) := "11111";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
@@ -165,7 +171,10 @@ begin
           if (P_TLBMISS='1') then
             I_STATE <= STATE_WAIT;
           elsif (P_BUSY='0') then
-            if (P_OP1 = "00010" and I_IS_INDR = '1') then
+            if P_FLAG_P = '0'
+              and (P_OP1 = "11111" or P_OP1(3 downto 0) = "1011") then
+              I_STATE <= STATE_PRIVIO;
+            elsif (P_OP1 = "00010" and I_IS_INDR = '1') then
               I_STATE <= STATE_ST2;
             elsif (P_OP1 = "11000" and P_OP2(2) = '0') then
               I_STATE <= STATE_PUSH;
@@ -176,17 +185,20 @@ begin
             elsif (P_OP1 = "11010" and P_OP2(2) = '1') then
               I_STATE <= STATE_RETI1;
             elsif (P_OP1 = "11110") then
-              I_STATE <= STATE_WAIT;
+              I_STATE <= STATE_SVC;
             elsif (I_IS_INDR = '1' and I_IS_ALU = '1') then
               I_STATE <= STATE_ALU2;
             elsif (I_IS_SHORT = '1' and I_IS_DIV = '1') then
               I_STATE <= STATE_ALU3;
-            elsif (P_OP2 = "010" ) then
+            elsif (I_IS_ALU = '1' and P_OP2 = "010") then
               I_STATE <= STATE_ALU1;
             elsif (P_OP2(2 downto 1) = "00" ) then
               I_STATE <= STATE_DEC2;
-            else
+            elsif P_OP1 = "00000" 
+              or (P_OP1 = "10111" and I_IS_INDR = '1')
               I_STATE <= STATE_FETCH;
+            else
+              I_STATE <= STATE_INVAL;
             end if;
           end if;
         when STATE_DEC2 =>
@@ -199,8 +211,10 @@ begin
               I_STATE <= STATE_CALL;
             elsif (P_OP1 = "10110") then
               I_STATE <= STATE_IN1;
-            else
+            elsif (P_OP1 = "10100" or P_OP1 = "10111")
               I_STATE <= STATE_FETCH;
+            else
+              I_STATE <= STATE_INVAL;
             end if;
           end if;
         when STATE_RETI1 =>
@@ -216,6 +230,8 @@ begin
         when STATE_ST1 | STATE_CALL | STATE_IN1 | STATE_ST2 | STATE_IN2
             | STATE_PUSH | STATE_POP | STATE_RET | STATE_RETI3 =>
           I_STATE <= STATE_FETCH;
+        when STATE_SVC | STATE_INVAL | STATE_ZDIV | STATE_PRIVIO =>
+          I_STATE <= STATE_WAIT;
         when others =>
           I_STATE <= STATE_FETCH; --FIXME
       end case;
@@ -234,7 +250,8 @@ begin
             or I_STATE = STATE_ST2
             or (I_STATE = STATE_ALU2 and P_BUSY = '0')
             or I_STATE = STATE_PUSH
-            or I_STATE = STATE_POP else
+            or I_STATE = STATE_POP
+            or I_STATE = STATE_SVC else
     -- PC += 4
     "101" when
             (I_STATE = STATE_DEC2 and
@@ -268,7 +285,8 @@ begin
           or (I_STATE = STATE_DEC1 and ((P_OP2 >= "000" and P_OP2 <= "011")
             or (I_IS_INDR = '1' and (I_IS_ALU = '1' or P_OP1 = "10110"))
             or (P_OP1 = "11000" and P_OP2(2) = '1')
-            or (P_OP1 = "11010" and P_OP2(2) = '0'))) else
+            or (P_OP1 = "11010" and P_OP2(2) = '0')))
+            or (I_IS_ALU = '1' and P_OP2 = "010") else
     '0';
   
   -- ADD, SUB, ..., SHRL ではフラグが変化する
@@ -284,7 +302,8 @@ begin
     '0';
   
   P_SELECT_A <=
-    "001" when I_STATE = STATE_DEC1 and (P_OP2 = "000" or P_OP2 = "010") else
+    "001" when I_STATE = STATE_DEC1
+              and (P_OP2 = "000" or (I_IS_ALU = '1' and P_OP2 = "010")) else
     "010" when (I_STATE = STATE_DEC1 and I_IS_INDR = '1')
             or (I_STATE = STATE_DEC2 and (
               I_IS_ALU = '1'
@@ -351,7 +370,8 @@ begin
             P_OP1 = "00010" or P_OP1 = "10111" or P_OP1 = "10101")) else
     '0';
 
-  P_SVC <= '1' when I_STATE = STATE_DEC1 and P_OP1 = "11110" else '0';
+  P_SVC <= '1' when I_STATE = STATE_SVC else '0';
+  P_PRIVIO <= '1' when I_STATE = STATE_PRIVIO else '0';
             
 end RTL;
                 
