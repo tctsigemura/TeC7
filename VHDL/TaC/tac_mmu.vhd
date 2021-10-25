@@ -73,42 +73,53 @@ subtype TLB_field is std_logic_vector(23 downto 0);
 type TLB_array is array(0 to 7) of TLB_field;           --array of 24bit * 8 
 
 signal TLB : TLB_array;                                 --TLB
-signal index : natural range TLB'range;                 --TLB index number
-signal entry : std_logic_vector(15 downto 0);           --TLB entry lsb 16bit
+signal index : std_logic_vector(3 downto 0);
+signal entry : TLB_field;                               --target TLB entry 
 signal page : std_logic_vector(7 downto 0);
+signal offset : std_logic_vector(7 downto 0);
+signal v_addr : std_logic_vector(15 downto 0);
 signal tlbmiss : std_logic;                             -- not exist page
 signal request : std_logic_vector(2 downto 0);          --RWX request from cpu
 signal perm_vio : std_logic;                            --RWX Violation
 signal pagefault : std_logic;                           --Vbit='0'
 
 begin 
-
+  page <= v_addr(15 downto 8);
+  offset <= v_addr(7 downto 0);
   request <= not P_RW & P_RW & P_LI;    --RWX どれか一つが'1'
 
   --pick up an index of TLB 
-  index <= 0 when page=TLB(0)(23 downto 16) else
-           1 when page=TLB(1)(23 downto 16) else
-           2 when page=TLB(2)(23 downto 16) else
-           3 when page=TLB(3)(23 downto 16) else
-           4 when page=TLB(4)(23 downto 16) else
-           5 when page=TLB(5)(23 downto 16) else
-           6 when page=TLB(6)(23 downto 16) else
-           7 when page=TLB(7)(23 downto 16) else
-           8;    --page miss
+  --index <= "0000" when page=TLB(0)(23 downto 16) else
+          --  "0001" when page=TLB(1)(23 downto 16) else
+          --  "0010" when page=TLB(2)(23 downto 16) else
+          --  "0011" when page=TLB(3)(23 downto 16) else
+          --  "0100" when page=TLB(4)(23 downto 16) else
+          --  "0101" when page=TLB(5)(23 downto 16) else
+          --  "0110" when page=TLB(6)(23 downto 16) else
+          --  "0111" when page=TLB(7)(23 downto 16) else
+          --  "1000";    --TLB miss
 
-  tlbmiss <= '1' when index=TLB'length else '0';
-  perm_vio <= '1' when (request and TLB(index)(10 downto 8))="000" else '0';
+  
+  entry <= TLB(TO_INTEGER(unsigned(index(2 downto 0))));
+  tlbmiss <= index(3);
+  perm_vio <= '1' when (request and entry(10 downto 8))="000" else '0';
 
-  --CPUからのページ番号を保時
-  process(P_MMU_ADDR,P_MMU_MR)
+  --CPUからの仮想アドレスを保時
+  process(P_CLK,P_MMU_ADDR,P_MMU_MR)
   begin
-    if(P_MMU_ADDR'event and P_MMU_MR='1') then
-      page <= P_MMU_ADDR(15 downto 7);
+    if(P_CLK'event and P_CLK='1') then
+      if(i_act='1') then
+        v_addr <= P_MMU_ADDR;
+    
+        --PICK AN INDEX. index=TLB'length(=8) means tlbmiss happend
+        for I in 0 to TLB'length loop
+          index <= std_logic_vector(to_unsigned(I,index'length));
+          if(I<TLB'length) then
+            exit when v_addr(15 downto 8)=TLB(I)(23 downto 16);
+          end if;
+        end loop;
 
-      --PICK AN INDEX. index=TLB'length(=8) means tlbmiss happend
-      --for I in 0 to TLB'length loop
-        --index=I;
-        --exit when page=TLB(I)(23 downto 16);
+      end if;
     end if;
   end process;
 
@@ -124,24 +135,23 @@ begin
           if(P_MMU_ADDR(1)='1') then
             i_en <= P_DIN(0);
           end if;
-        elsif(P_MMU_ADDR(1)='1') then
-          entry <= P_DIN;
+        elsif(P_MMU_ADDR(1)='0') then
+          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16) <= P_DIN(7 downto 0);
         else
-          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2)))) <= P_DIN(7 downto 0) & entry;
+          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(15 downto 0) <= P_DIN;
         end if;
-      end if;
 
       --ページヒット時のD,Rビットの書き換え
-      if(tlbmiss='0') then 
+      elsif(tlbmiss='0' and i_act='1') then 
         if (perm_vio='0') then
           if(request(1)='1') then
-            TLB(index)(11) <= '1';
+            entry(11) <= '1';
           end if;
           if((request(2) or request(0))='1') then
-            TLB(index)(12) <= '1'; 
+            entry(12) <= '1'; 
           end if; 
         end if;
-      end if;
+      end if; --if(P_EN='1' and P_IOW='1')
     
     end if;
   end process;
@@ -153,7 +163,7 @@ begin
 
   --pagefault <= not TLB(index)(15) and i_mis and i_act;    --PAGE FAULT
 
-  P_ADDR <= TLB(index)(7 downto 0) & P_MMU_ADDR(7 downto 0) when(i_mis='0' and i_act='1') else
+  P_ADDR <= entry(7 downto 0) & offset when(i_mis='0' and i_act='1') else
             P_MMU_ADDR;
 
   P_MR <= P_MMU_MR and (not i_vio) and (not i_mis);
@@ -165,10 +175,10 @@ begin
             when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5)='0') else     
             TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(15 downto 0)                  --TLBの下位16ビット
             when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='0') else      
-            page when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5)='1') else            --E4h ページ番号
+            "00000000" & page when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5)='1') else            --E4h ページ番号
             "0000000000000000" when i_adr='1' else                           --E2h 奇数アドレス
-            "0000000000000001" when i_vio='1';                               --E2h RWX違反                                                
-
+            "0000000000000001" when i_vio='1' else                           --E2h RWX違反                                                
+            "XXXXXXXXXXXXXXXX";
 
 --relocation register
 --begin
