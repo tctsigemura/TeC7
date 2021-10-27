@@ -153,10 +153,10 @@ begin
                           and (I_OUT(15) = '1' xor P_A(15) = '1')) else
                   '0';
     P_CARRY <= I_OUT(16);
-    P_ZERO <= '1' when I_OUT(15 downto 0) = (others => '0') else '0';
+    P_ZERO <= '1' when I_OUT(15 downto 0) = (15 downto 0 => '0') else '0';
     P_SIGN <= I_OUT(15);
     
     -- ゼロ除算
-    I_ZDIV <= '1' when I_DIVMOD = '1' and P_B = (others => '0') else '0';
+    I_ZDIV <= '1' when I_DIVMOD = '1' and P_B = (15 downto 0 => '0') else '0';
 
 end RTL;
