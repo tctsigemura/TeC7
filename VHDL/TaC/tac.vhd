@@ -155,6 +155,7 @@ signal i_pr             : std_logic;
 signal i_cpu_mr         : std_logic;
 signal i_adr_int        : std_logic;
 signal i_vio_int        : std_logic;
+signal i_ei             : std_logic;
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
@@ -204,6 +205,7 @@ component TAC_INTC is
 
          P_DOUT     : out std_logic_vector(15 downto 0);
          P_VR       : in  std_logic;
+         P_EI       : in  std_logic;
          P_INTR     : out std_logic;
 
          P_INT_BIT  : in  std_logic_vector(15 downto 0)
@@ -458,6 +460,9 @@ begin
   -- CNT16 (1kHz のパルスを発生する)
   i_1kHz <= '1' when (i_cnt16=49151) else '0';
 
+  -- 割込み許可信号
+  i_ei <= '1'; --TODO: 設定する
+
   process(P_CLK0, P_RESET)
     begin
       if (P_RESET='0') then
@@ -479,6 +484,7 @@ begin
 
          P_DOUT     => i_dout_intc,
          P_VR       => i_vr,
+         P_EI       => i_ei,
          P_INTR     => i_intr,
          P_INT_BIT  => i_int_bit
       );
