@@ -59,7 +59,7 @@ entity TAC_CPU_SEQUENCER is
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
   P_RW          : out std_logic;                     -- Read/Write
-  P_SVC         : out std_logic                      -- Super Visor Call
+  P_SVC         : out std_logic;                     -- Super Visor Call
   P_PRIVIO      : out std_logic                      -- Privilege Violation
   );
 end TAC_CPU_SEQUENCER;
@@ -195,7 +195,7 @@ begin
             elsif (P_OP2(2 downto 1) = "00" ) then
               I_STATE <= STATE_DEC2;
             elsif P_OP1 = "00000" 
-              or (P_OP1 = "10111" and I_IS_INDR = '1')
+              or (P_OP1 = "10111" and I_IS_INDR = '1') then
               I_STATE <= STATE_FETCH;
             else
               I_STATE <= STATE_INVAL;
@@ -211,7 +211,7 @@ begin
               I_STATE <= STATE_CALL;
             elsif (P_OP1 = "10110") then
               I_STATE <= STATE_IN1;
-            elsif (P_OP1 = "10100" or P_OP1 = "10111")
+            elsif (P_OP1 = "10100" or P_OP1 = "10111") then
               I_STATE <= STATE_FETCH;
             else
               I_STATE <= STATE_INVAL;
