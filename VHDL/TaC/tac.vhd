@@ -511,9 +511,9 @@ begin
   i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28‾2f
   i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30‾37
   i_en_ram    <= '1' when (i_addr(7 downto 1)="1110000")else '0'; -- e0‾e1
-  i_en_mmu    <= '1' when (i_addr(7 downto 5)="110" or            -- c0‾df
-                           i_addr(7 downto 2)="111000" or         -- e0‾e3
-                           i_addr(7 downto 0)="11100100";         -- e4
+  i_en_mmu    <= '1' when (i_addr(7 downto 4)="1101" or           -- d0‾df
+                           i_addr(7 downto 4)="1110" or           -- e0‾ef
+                           i_addr(7 downto 3)="11110";            -- f0-f7
 
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
                i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
