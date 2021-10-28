@@ -121,7 +121,9 @@ component TAC_CPU_SEQUENCER is
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
   P_RW          : out std_logic;                     -- Read/Write
-  P_SVC         : out std_logic                      -- Super Visor Call
+  P_SVC         : out std_logic;                     -- Super Visor Call
+  P_PRIVIO      : out std_logic;                     -- Privilege Violation
+  P_VR          : out std_logic                      -- Vector Fetch
   );
 end component;
 
@@ -180,7 +182,6 @@ signal I_ALU_OVERFLOW: std_logic;                     -- ALU の Over flow 出�
 signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
-signal I_PRIVIO      : std_logic;                     -- 特権違反
 
 begin
   
@@ -232,7 +233,9 @@ begin
     P_MR        => P_MR,
     P_IR        => P_IR,
     P_RW        => P_RW,
-    P_SVC       => P_SVC
+    P_SVC       => P_SVC,
+    P_PRIVIO    => P_PRIVIO,
+    P_VR        => P_VR
   );
 
   -- ポート
@@ -244,7 +247,6 @@ begin
   P_BT   <= '0'; -- TODO
   P_PR   <= I_FLAG_P;
   P_IOPR <= I_FLAG_I;
-  P_PRIVIO <= '0'; --TODO: 命令で特権違反がある場合1
   P_INVINST <=  '1' when
                       (I_INST_OP1 >= "01101" and I_INST_OP1 <= "01111")
                       or I_INST_OP1 = "11001"
@@ -403,13 +405,17 @@ begin
     if (P_RESET='0') then
       I_REG_PC <= (others => '0');
     elsif (P_CLK0'event and P_CLK0='1') then
-      case I_UPDATE_PC is
-        when "100" => I_REG_PC <= I_REG_PC + 2;
-        when "101" => I_REG_PC <= I_REG_PC + 4;
-        when "110" => I_REG_PC <= P_DIN;
-        when "111" => I_REG_PC <= I_EA;
-        when others => NULL;
-      end case;
+      if (P_VR='1') then
+        I_REG_PC <= P_DIN;  -- 割込みベクタのアドレス
+      else
+        case I_UPDATE_PC is
+          when "100" => I_REG_PC <= I_REG_PC + 2;
+          when "101" => I_REG_PC <= I_REG_PC + 4;
+          when "110" => I_REG_PC <= P_DIN;
+          when "111" => I_REG_PC <= I_EA;
+          when others => NULL;
+        end case;
+      end if;
     end if;
   end process;
 
