@@ -420,7 +420,6 @@ component TAC_MMU is
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
          P_STOP     : in  std_logic;                     -- Panel RUN F/F
-         P_BUSY     : out std_logic;                     -- Busy
          P_VIO_INT  : out std_logic;                     -- Segment Violation
          P_ADR_INT  : out std_logic;                     -- Bad Address
          P_TLBMISS  : out std_logic;                     -- TLB miss

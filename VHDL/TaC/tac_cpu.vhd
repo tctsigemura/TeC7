@@ -278,7 +278,7 @@ begin
   --- MUX W
   with I_SELECT_W select
     I_DR_IN <= P_DIN                                    when "00",
-               (others => P_DIN(3)) & P_DIN(3 downto 0) when "01",
+               (11 downto 0 => P_DIN(3)) & P_DIN(3 downto 0) when "01",
                "00000000" & P_DIN(7 downto 0)           when "10",
                "00000000" & P_DIN(15 downto 8)          when others;
   

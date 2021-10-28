@@ -349,7 +349,7 @@ begin
           or I_STATE = STATE_INTR4
           or (I_STATE = STATE_DEC1 and P_OP1 /= "00000" and P_OP1 /= "11111"
             and P_OP2 /= "100" and P_OP2 /= "101"
-            and (P_OP2 /= "111" or P_OP2(4 downto 1) /= "1011"))
+            and (P_OP2 /= "111" or P_OP1(4 downto 1) /= "1011"))
           or (I_STATE = STATE_DEC2 and P_OP1 /= "10100"
             and P_OP1(4 downto 1) /= "1011")
           or I_STATE = STATE_RET
