@@ -182,6 +182,7 @@ signal I_ALU_OVERFLOW: std_logic;                     -- ALU の Over flow 出�
 signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
+signal I_VR          : std_logic;                     -- Vector Fetch
 
 begin
   
@@ -235,14 +236,14 @@ begin
     P_RW        => P_RW,
     P_SVC       => P_SVC,
     P_PRIVIO    => P_PRIVIO,
-    P_VR        => P_VR
+    P_VR        => I_VR
   );
 
   -- ポート
   P_ADDR <= I_ADDR;
   P_DOUT <= I_DOUT;
   P_LI   <= I_LOAD_IR;
-  P_VR   <= '0'; -- TODO
+  P_VR   <= I_VR;
   P_HL   <= '0'; -- TODO
   P_BT   <= '0'; -- TODO
   P_PR   <= I_FLAG_P;
@@ -405,7 +406,7 @@ begin
     if (P_RESET='0') then
       I_REG_PC <= (others => '0');
     elsif (P_CLK0'event and P_CLK0='1') then
-      if (P_VR='1') then
+      if (I_VR='1') then
         I_REG_PC <= P_DIN;  -- 割込みベクタのアドレス
       else
         case I_UPDATE_PC is
