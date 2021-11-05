@@ -174,47 +174,50 @@ begin
           if (P_TLBMISS='1') then
             I_STATE <= STATE_WAIT;
           elsif (P_BUSY='0') then
-            if P_FLAG_P = '0'
+            if P_FLAG_P = '0' -- 非特権モードで HALT, IN, OUT => 特権違反
               and (P_OP1 = "11111" or P_OP1(3 downto 0) = "1011") then
               I_STATE <= STATE_PRIVIO;
-            elsif (P_OP1 = "00010" and I_IS_INDR = '1') then
-              I_STATE <= STATE_ST2;
-            elsif (P_OP1 = "11000" and P_OP2(2) = '0') then
-              I_STATE <= STATE_PUSH;
-            elsif (P_OP1 = "11000" and P_OP2(2) = '1') then
-              I_STATE <= STATE_POP;
-            elsif (P_OP1 = "11010" and P_OP2(2) = '0') then
-              I_STATE <= STATE_RET;
-            elsif (P_OP1 = "11010" and P_OP2(2) = '1') then
-              I_STATE <= STATE_RETI1;
-            elsif (P_OP1 = "11110") then
-              I_STATE <= STATE_SVC;
-            elsif (I_IS_INDR = '1' and I_IS_ALU = '1') then
-              I_STATE <= STATE_ALU2;
-            elsif (I_IS_SHORT = '1' and I_IS_DIV = '1') then
-              I_STATE <= STATE_ALU3;
-            elsif (I_IS_ALU = '1' and P_OP2 = "010") then
-              I_STATE <= STATE_ALU1;
-            elsif (P_OP2(2 downto 1) = "00" ) then
-              I_STATE <= STATE_DEC2;
-            elsif P_OP1 = "00000" 
-              or (P_OP1 = "10111" and I_IS_INDR = '1') then
+            elsif (P_OP1 = "00000" or P_OP1 = "11111") then -- NO, HALT
               I_STATE <= STATE_FETCH;
+            elsif (P_OP1 = "00010" and I_IS_INDR = '1') then -- ST && INDR
+              I_STATE <= STATE_ST2;
+            elsif (P_OP1 = "11000" and P_OP2(2) = '0') then -- PUSH
+              I_STATE <= STATE_PUSH;
+            elsif (P_OP1 = "11000" and P_OP2(2) = '1') then -- POP
+              I_STATE <= STATE_POP;
+            elsif (P_OP1 = "11010" and P_OP2(2) = '0') then -- RET
+              I_STATE <= STATE_RET;
+            elsif (P_OP1 = "11010" and P_OP2(2) = '1') then -- RETI
+              I_STATE <= STATE_RETI1;
+            elsif (P_OP1 = "11110") then -- SVC
+              I_STATE <= STATE_SVC;
+            elsif (I_IS_ALU = '1' and I_IS_SHORT = '1') then -- ALU && Short
+              I_STATE <= STATE_ALU2;
+            elsif (I_IS_ALU = '1' and I_IS_INDR = '1') then -- ALU && Indr
+              I_STATE <= STATE_ALU2;
+            elsif (I_IS_ALU = '1' and P_OP2 = "010") then -- ALU && Imm
+              I_STATE <= STATE_ALU1;
+            elsif (P_OP1 = "10110" and I_IS_INDR = '1') then -- IN && INDR
+              I_STATE <= STATE_IN2;
+            elsif (P_OP1 = "10111" and I_IS_INDR = '1') then -- OUT && INDR
+              I_STATE <= STATE_FETCH;
+            elsif (P_OP2(2 downto 1) = "00") then -- Drct, Idx
+              I_STATE <= STATE_DEC2;
             else
               I_STATE <= STATE_INVAL;
             end if;
           end if;
         when STATE_DEC2 =>
           if (P_BUSY='0') then
-            if (I_IS_ALU = '1') then
+            if (I_IS_ALU = '1') then -- ALU
               I_STATE <= STATE_ALU1;
-            elsif (P_OP1 = "00010") then
+            elsif (P_OP1 = "00010") then -- ST
               I_STATE <= STATE_ST1;
-            elsif (P_OP1 = "10101") then
+            elsif (P_OP1 = "10101") then -- CALL
               I_STATE <= STATE_CALL;
-            elsif (P_OP1 = "10110") then
+            elsif (P_OP1 = "10110") then -- IN
               I_STATE <= STATE_IN1;
-            elsif (P_OP1 = "10100" or P_OP1 = "10111") then
+            elsif (P_OP1 = "10100" or P_OP1 = "10111") then -- JMP, OUT
               I_STATE <= STATE_FETCH;
             else
               I_STATE <= STATE_INVAL;
