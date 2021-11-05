@@ -166,6 +166,8 @@ begin
           I_STATE <= STATE_INTR3;
         when STATE_INTR3 =>
           I_STATE <= STATE_INTR4;
+        when STATE_INTR4 =>
+          I_STATE <= STATE_FETCH;
         when STATE_DEC1 =>
           -- TLB miss の時は復元するため、内部状態が書き換わってはいけない
           -- 一足先に STATE_WAIT へ飛ぶ
