@@ -47,7 +47,7 @@ entity TAC_MMU is
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
          P_DIN      : in  std_logic_vector(15 downto 0); -- data from cpu
-         P_DOUT     : out std_logic_vector(15 downto 0)   -- page happend intr  F7h
+         P_DOUT     : out std_logic_vector(15 downto 0)  -- 
        );
 end TAC_MMU;
 
@@ -118,14 +118,14 @@ begin
     elsif (P_CLK'event and P_CLK='1') then
 
       if(P_EN='1' and P_IOW='1') then
-        if(P_MMU_ADDR(5)='1') then
+        if(P_MMU_ADDR(5 downto 4)='11') then
           if(P_MMU_ADDR(1)='1') then
             i_en <= P_DIN(0);
           end if;
         elsif(P_MMU_ADDR(1)='0') then
-          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16) <= P_DIN(7 downto 0);
+          TLB(TO_INTEGER(unsigned(not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))(23 downto 16) <= P_DIN(7 downto 0);
         else
-          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(15 downto 0) <= P_DIN;
+          TLB(TO_INTEGER(unsigned(not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))(15 downto 0) <= P_DIN;
         end if;
 
       --ページヒット時のD,Rビットの書き換え
@@ -145,22 +145,27 @@ begin
 
   i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
   i_vio <= i_act and perm_vio;
-  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;            --P_MMU_ADDR(0)はオフセットのLSB
+  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;           
   i_mis <= i_act and tlbmiss;                               --TLB MISS
 
-  P_ADDR <= entry(7 downto 0) & offset when(i_mis='0' and i_act='1') else
+  P_ADDR <= entry(7 downto 0) & offset when (i_act='1') else
             P_MMU_ADDR;
 
   P_MR <= P_MMU_MR and (not i_vio) and (not i_mis);
-  P_VIO_INT <= i_mis or i_vio;                              -- or pagefault     
+  P_VIO_INT <= i_mis or i_vio;                            
   P_ADR_INT <= i_adr; 
   
   --割り込み時の出力
-  P_DOUT <= "00000000" & TLB(TO_INTEGER(unsigned(not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))(23 downto 16)   --TLBの上位8ビット
-            when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5 downto 4)<"11") else     
-            TLB(TO_INTEGER(unsigned(not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))(15 downto 0)                  --TLBの下位16ビット
-            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5 downto 4)<"11") else      
-            "00000000" & page when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5 downto 4)="11") else            --F4h ページ番号
+  P_DOUT <= "00000000" & TLB(TO_INTEGER(unsigned                             --TLBの上位8ビット
+            (not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))(23 downto 16)   
+            when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5 downto 4)<"11") else
+
+            TLB(TO_INTEGER(unsigned                                          --TLBの下位16ビット
+            (not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))(15 downto 0)                  
+            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5 downto 4)<"11") else
+            
+            "00000000" & page                                                --F4h ページ番号
+            when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5 downto 4)="11") else            
             "0000000000000000" when i_adr='1' else                           --F2h 奇数アドレス
             "0000000000000001" when i_vio='1' else                           --F2h RWX違反                                                
             "XXXXXXXXXXXXXXXX";
