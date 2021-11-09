@@ -41,8 +41,8 @@ entity TAC_MMU is
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
          P_STOP     : in  std_logic;                     -- Panel RUN F/F
-         P_VIO_INT  : out std_logic;                     -- Memory Vio inter
-         P_ADR_INT  : out std_logic;                     -- Bad Address inter
+         P_VIO_INT  : out std_logic;                     -- Mem Vio bad adr inter
+         P_TLB_INT  : out std_logic;                     -- TLB miss inter
          P_MR       : out std_logic;                     -- Memory Request
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
@@ -123,9 +123,11 @@ begin
             i_en <= P_DIN(0);
           end if;
         elsif(P_MMU_ADDR(1)='0') then
-          TLB(TO_INTEGER(unsigned(not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))(23 downto 16) <= P_DIN(7 downto 0);
+          TLB(TO_INTEGER(unsigned(not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))
+            (23 downto 16) <= P_DIN(7 downto 0);
         else
-          TLB(TO_INTEGER(unsigned(not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))(15 downto 0) <= P_DIN;
+          TLB(TO_INTEGER(unsigned(not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))
+            (15 downto 0) <= P_DIN;
         end if;
 
       --ページヒット時のD,Rビットの書き換え
@@ -152,8 +154,10 @@ begin
             P_MMU_ADDR;
 
   P_MR <= P_MMU_MR and (not i_vio) and (not i_mis);
-  P_VIO_INT <= i_mis or i_vio;                            
-  P_ADR_INT <= i_adr; 
+  P_VIO_INT <= i_adr or i_vio;    
+  P_TLB_INT <= i_mis;                        
+  --P_ADR_INT <= i_adr; 
+
   
   --割り込み時の出力
   P_DOUT <= "00000000" & TLB(TO_INTEGER(unsigned                             --TLBの上位8ビット
