@@ -73,7 +73,7 @@ subtype TLB_field is std_logic_vector(23 downto 0);
 type TLB_array is array(0 to 7) of TLB_field;           --array of 24bit * 8 
 
 signal TLB : TLB_array;                                 --TLB
-signal index : natural range TLB'range;                 -- range TLB = 0 to 7
+signal index : std_logic_vector(4 downto 0);            
 signal entry : TLB_field;                               --target TLB entry 
 signal page : std_logic_vector(7 downto 0);
 signal offset : std_logic_vector(7 downto 0);
@@ -87,9 +87,19 @@ begin
   offset <= v_addr(7 downto 0);
   request <= not P_RW & P_RW & P_LI;    --RWX どれか一つが'1'
   
-  entry <= TLB(index);
-  tlbmiss <= '0' when v_addr(15 downto 8) & '1'=TLB(index)(23 downto 15) else '1'; 
+  entry <= TLB(TO_INTEGER(unsigned (index(3 downto 0))));
+  tlbmiss <= index(4);
   perm_vio <= '1' when (request and entry(10 downto 8))="000" else '0';
+
+  index <= X"0" when page & '1'=TLB(0)(23 downto 15) else
+           X"1" when page & '1'=TLB(1)(23 downto 15) else
+           X"2" when page & '1'=TLB(2)(23 downto 15) else
+           X"3" when page & '1'=TLB(3)(23 downto 15) else
+           X"4" when page & '1'=TLB(4)(23 downto 15) else
+           X"5" when page & '1'=TLB(5)(23 downto 15) else
+           X"6" when page & '1'=TLB(6)(23 downto 15) else
+           X"7" when page & '1'=TLB(6)(23 downto 15) else
+           X"8";
 
   --register CPUからの仮想アドレスを保時
   process(P_CLK,P_MMU_MR)
@@ -98,15 +108,6 @@ begin
       if(i_act='1') then
         v_addr <= P_MMU_ADDR;
       end if;
-
-      --index
-      for I in TLB'range loop
-        if(v_addr(15 downto 8) & '1'=TLB(I)(23 downto 15)) then 
-          index <= I;
-          exit;
-        end if;
-      end loop;
-
     end if;
   end process;
 
@@ -134,10 +135,10 @@ begin
       elsif(tlbmiss='0' and i_act='1') then 
         if (perm_vio='0') then
           if(request(1)='1') then
-            TLB(index)(11) <= '1';
+            TLB(TO_INTEGER(unsigned (index(3 downto 0))))(11) <= '1';
           end if;
           if((request(2) or request(0))='1') then
-            TLB(index)(12) <= '1'; 
+            TLB(TO_INTEGER(unsigned (index(3 downto 0))))(12) <= '1'; 
           end if; 
         end if;
       end if; --if(P_EN='1' and P_IOW='1')
@@ -155,9 +156,7 @@ begin
 
   P_MR <= P_MMU_MR and (not i_vio) and (not i_mis);
   P_VIO_INT <= i_adr or i_vio;    
-  P_TLB_INT <= i_mis;                        
-  --P_ADR_INT <= i_adr; 
-
+  P_TLB_INT <= i_mis;                       
   
   --割り込み時の出力
   P_DOUT <= "00000000" & TLB(TO_INTEGER(unsigned                             --TLBの上位8ビット
