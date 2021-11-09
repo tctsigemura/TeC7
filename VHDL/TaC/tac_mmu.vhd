@@ -73,7 +73,7 @@ subtype TLB_field is std_logic_vector(23 downto 0);
 type TLB_array is array(0 to 7) of TLB_field;           --array of 24bit * 8 
 
 signal TLB : TLB_array;                                 --TLB
-signal index : std_logic_vector(4 downto 0);            
+signal index : std_logic_vector(3 downto 0);            
 signal entry : TLB_field;                               --target TLB entry 
 signal page : std_logic_vector(7 downto 0);
 signal offset : std_logic_vector(7 downto 0);
@@ -87,8 +87,8 @@ begin
   offset <= v_addr(7 downto 0);
   request <= not P_RW & P_RW & P_LI;    --RWX どれか一つが'1'
   
-  entry <= TLB(TO_INTEGER(unsigned (index(3 downto 0))));
-  tlbmiss <= index(4);
+  entry <= TLB(TO_INTEGER(unsigned (index(2 downto 0))));
+  tlbmiss <= index(3);
   perm_vio <= '1' when (request and entry(10 downto 8))="000" else '0';
 
   index <= X"0" when page & '1'=TLB(0)(23 downto 15) else
@@ -135,10 +135,10 @@ begin
       elsif(tlbmiss='0' and i_act='1') then 
         if (perm_vio='0') then
           if(request(1)='1') then
-            TLB(TO_INTEGER(unsigned (index(3 downto 0))))(11) <= '1';
+            TLB(TO_INTEGER(unsigned (index(2 downto 0))))(11) <= '1';
           end if;
           if((request(2) or request(0))='1') then
-            TLB(TO_INTEGER(unsigned (index(3 downto 0))))(12) <= '1'; 
+            TLB(TO_INTEGER(unsigned (index(2 downto 0))))(12) <= '1'; 
           end if; 
         end if;
       end if; --if(P_EN='1' and P_IOW='1')
