@@ -61,6 +61,8 @@ entity TAC_CPU_SEQUENCER is
   P_RW          : out std_logic;                     -- Read/Write
   P_SVC         : out std_logic;                     -- Super Visor Call
   P_PRIVIO      : out std_logic;                     -- Privilege Violation
+  P_ZDIV        : out std_logic;                     -- Zero Division
+  P_INVINST     : out std_logic;                     -- Invalid Instruction
   P_VR          : out std_logic                      -- Vector Fetch
   );
 end TAC_CPU_SEQUENCER;
@@ -69,31 +71,32 @@ architecture RTL of TAC_CPU_SEQUENCER is
 
 -- ステート
 constant STATE_FETCH : std_logic_vector(4 downto 0) := "00000";
-constant STATE_WAIT  : std_logic_vector(4 downto 0) := "00001";
-constant STATE_INTR1 : std_logic_vector(4 downto 0) := "00010";
-constant STATE_INTR2 : std_logic_vector(4 downto 0) := "00011";
-constant STATE_INTR3 : std_logic_vector(4 downto 0) := "00100";
-constant STATE_INTR4 : std_logic_vector(4 downto 0) := "00101";
-constant STATE_DEC1  : std_logic_vector(4 downto 0) := "00110";
-constant STATE_DEC2  : std_logic_vector(4 downto 0) := "00111";
-constant STATE_ALU1  : std_logic_vector(4 downto 0) := "01000";
-constant STATE_ALU2  : std_logic_vector(4 downto 0) := "01001";
-constant STATE_ALU3  : std_logic_vector(4 downto 0) := "01010";
-constant STATE_ST1   : std_logic_vector(4 downto 0) := "01011";
-constant STATE_ST2   : std_logic_vector(4 downto 0) := "01100";
-constant STATE_PUSH  : std_logic_vector(4 downto 0) := "01101";
-constant STATE_POP   : std_logic_vector(4 downto 0) := "01110";
-constant STATE_CALL  : std_logic_vector(4 downto 0) := "01111";
-constant STATE_RET   : std_logic_vector(4 downto 0) := "10000";
-constant STATE_RETI1 : std_logic_vector(4 downto 0) := "10001";
-constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10010";
-constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10011";
-constant STATE_IN1   : std_logic_vector(4 downto 0) := "10100";
-constant STATE_IN2   : std_logic_vector(4 downto 0) := "11000";
-constant STATE_SVC   : std_logic_vector(4 downto 0) := "11001";
-constant STATE_INVAL : std_logic_vector(4 downto 0) := "11010";
-constant STATE_ZDIV  : std_logic_vector(4 downto 0) := "11011";
-constant STATE_PRIVIO: std_logic_vector(4 downto 0) := "11100";
+constant STATE_WAIT1 : std_logic_vector(4 downto 0) := "00001";
+constant STATE_WAIT2 : std_logic_vector(4 downto 0) := "00010";
+constant STATE_INTR1 : std_logic_vector(4 downto 0) := "00011";
+constant STATE_INTR2 : std_logic_vector(4 downto 0) := "00100";
+constant STATE_INTR3 : std_logic_vector(4 downto 0) := "00101";
+constant STATE_INTR4 : std_logic_vector(4 downto 0) := "00110";
+constant STATE_DEC1  : std_logic_vector(4 downto 0) := "00111";
+constant STATE_DEC2  : std_logic_vector(4 downto 0) := "01000";
+constant STATE_ALU1  : std_logic_vector(4 downto 0) := "01001";
+constant STATE_ALU2  : std_logic_vector(4 downto 0) := "01010";
+constant STATE_ALU3  : std_logic_vector(4 downto 0) := "01011";
+constant STATE_ST1   : std_logic_vector(4 downto 0) := "01100";
+constant STATE_ST2   : std_logic_vector(4 downto 0) := "01101";
+constant STATE_PUSH  : std_logic_vector(4 downto 0) := "01110";
+constant STATE_POP   : std_logic_vector(4 downto 0) := "01111";
+constant STATE_CALL  : std_logic_vector(4 downto 0) := "10000";
+constant STATE_RET   : std_logic_vector(4 downto 0) := "10001";
+constant STATE_RETI1 : std_logic_vector(4 downto 0) := "10010";
+constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10011";
+constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10100";
+constant STATE_IN1   : std_logic_vector(4 downto 0) := "11000";
+constant STATE_IN2   : std_logic_vector(4 downto 0) := "11001";
+constant STATE_SVC   : std_logic_vector(4 downto 0) := "11010";
+constant STATE_INVAL : std_logic_vector(4 downto 0) := "11011";
+constant STATE_ZDIV  : std_logic_vector(4 downto 0) := "11100";
+constant STATE_PRIVIO: std_logic_vector(4 downto 0) := "11101";
 constant STATE_CON   : std_logic_vector(4 downto 0) := "11111";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
@@ -106,9 +109,6 @@ signal   I_IS_MUL    : std_logic; -- MUL
 signal   I_IS_DIV    : std_logic; -- DIV, MOD
 
 begin
-  
-  -- TODO
-  -- - MMU待ちをどうやって処理するか
   
   -- LD, ADD, SUB, CMP, AND, OR, XOR, ADDS, MUL, DIV, MOD, MULL, DIVL, SHLA, SHLL, SHRA, SHRL
   I_IS_ALU    <= '1' when P_OP1 /= "00000" and P_OP1 /= "00010" and P_OP1(4 downto 2) <= "100" else '0';
@@ -145,7 +145,7 @@ begin
         when STATE_FETCH =>
           if (P_STOP = '0') then
             if (P_TLBMISS = '1') then
-              I_STATE <= STATE_WAIT;
+              I_STATE <= STATE_WAIT1;
             elsif (P_INTR = '0') then
               I_STATE <= STATE_DEC1;
             else
@@ -154,12 +154,10 @@ begin
           else
             I_STATE <= STATE_CON;
           end if;
-        when STATE_WAIT =>
-          if (P_INTR = '1') then
-            I_STATE <= STATE_FETCH;
-          else
-            I_STATE <= STATE_WAIT;
-          end if;
+        when STATE_WAIT1 =>
+          I_STATE <= STATE_WAIT2;
+        when STATE_WAIT2 =>
+          I_STATE <= STATE_FETCH;
         when STATE_INTR1 =>
           I_STATE <= STATE_INTR2;
         when STATE_INTR2 =>
