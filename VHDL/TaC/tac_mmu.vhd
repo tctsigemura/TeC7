@@ -77,20 +77,14 @@ signal index : std_logic_vector(3 downto 0);
 signal entry : TLB_field;                               --target TLB entry 
 signal page : std_logic_vector(7 downto 0);
 signal offset : std_logic_vector(7 downto 0);
-signal v_addr : std_logic_vector(15 downto 0);
 signal tlbmiss : std_logic;                             -- not exist page
 signal request : std_logic_vector(2 downto 0);          --RWX request from cpu
 signal perm_vio : std_logic;                            --RWX Violation
 
 begin 
-  page <= v_addr(15 downto 8);
-  offset <= v_addr(7 downto 0);
-  request <= not P_RW & P_RW & P_LI;    --RWX どれか一つが'1'
+  page <= P_MMU_ADDR(15 downto 8);
+  offset <= P_MMU_ADDR(7 downto 0);
   
-  entry <= TLB(TO_INTEGER(unsigned (index(2 downto 0))));
-  tlbmiss <= index(3);
-  perm_vio <= '1' when (request and entry(10 downto 8))="000" else '0';
-
   index <= X"0" when page & '1'=TLB(0)(23 downto 15) else
            X"1" when page & '1'=TLB(1)(23 downto 15) else
            X"2" when page & '1'=TLB(2)(23 downto 15) else
@@ -101,15 +95,32 @@ begin
            X"7" when page & '1'=TLB(6)(23 downto 15) else
            X"8";
 
-  --register CPUからの仮想アドレスを保時
-  process(P_CLK,P_MMU_MR)
+  tlbmiss <= index(3);
+  entry <= TLB(TO_INTEGER(unsigned (index(2 downto 0))));
+  request <= not P_RW & P_RW & P_LI;
+
+  process(request,entry)
   begin
-    if(P_CLK'event and P_CLK='1') then
-      if(i_act='1') then
-        v_addr <= P_MMU_ADDR;
+    if(request="010") then    --write signal
+      if(entry(9)='1') then
+        perm_vio <= '0';
+      else 
+        perm_vio <= '1';
+      end if;
+    elsif(request="100") then --read signal
+      if(entry(10)='1') then
+        perm_vio <= '0';
+      else
+        perm_vio <= '1';
+      end if;
+    elsif(request="101") then --fetch signal
+      if(entry(10 downto 8)="1-1") then
+        perm_vio <= '0';
+      else
+        perm_vio <='1';
       end if;
     end if;
-  end process;
+    end process;
 
   --TLB操作
   process(P_CLK,P_RESET)
@@ -119,26 +130,26 @@ begin
     elsif (P_CLK'event and P_CLK='1') then
 
       if(P_EN='1' and P_IOW='1') then
-        if(P_MMU_ADDR(5 downto 4)='11') then
-          if(P_MMU_ADDR(1)='1') then
+        if(P_MMU_ADDR(5 downto 4)="10") then
+          if(P_MMU_ADDR(3 downto 1)="001") then
             i_en <= P_DIN(0);
           end if;
         elsif(P_MMU_ADDR(1)='0') then
-          TLB(TO_INTEGER(unsigned(not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))
-            (23 downto 16) <= P_DIN(7 downto 0);
+          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16)
+            <= P_DIN(7 downto 0);
         else
-          TLB(TO_INTEGER(unsigned(not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))
-            (15 downto 0) <= P_DIN;
+          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(15 downto 0)
+            <= P_DIN;
         end if;
 
       --ページヒット時のD,Rビットの書き換え
       elsif(tlbmiss='0' and i_act='1') then 
         if (perm_vio='0') then
           if(request(1)='1') then
-            TLB(TO_INTEGER(unsigned (index(2 downto 0))))(11) <= '1';
+            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <= '1';
           end if;
           if((request(2) or request(0))='1') then
-            TLB(TO_INTEGER(unsigned (index(2 downto 0))))(12) <= '1'; 
+            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= '1'; 
           end if; 
         end if;
       end if; --if(P_EN='1' and P_IOW='1')
@@ -160,17 +171,17 @@ begin
   
   --割り込み時の出力
   P_DOUT <= "00000000" & TLB(TO_INTEGER(unsigned                             --TLBの上位8ビット
-            (not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))(23 downto 16)   
-            when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5 downto 4)<"11") else
+            (P_MMU_ADDR(4 downto 2))))(23 downto 16)   
+            when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5 downto 4)<"10") else
 
             TLB(TO_INTEGER(unsigned                                          --TLBの下位16ビット
-            (not P_MMU_ADDR(4) & P_MMU_ADDR(3 downto 2))))(15 downto 0)                  
-            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5 downto 4)<"11") else
+            (P_MMU_ADDR(4 downto 2))))(15 downto 0)                  
+            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5 downto 4)<"10") else
             
-            "00000000" & page                                                --F4h ページ番号
-            when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5 downto 4)="11") else            
-            "0000000000000000" when i_adr='1' else                           --F2h 奇数アドレス
-            "0000000000000001" when i_vio='1' else                           --F2h RWX違反                                                
+            "00000000" & page                                                --A6h ページ番号
+            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5 downto 4)="10") else            
+            "0000000000000000" when i_adr='1' else                           --F4h 奇数アドレス
+            "0000000000000001" when i_vio='1' else                           --F4h RWX違反                                                
             "XXXXXXXXXXXXXXXX";
 
 --relocation register

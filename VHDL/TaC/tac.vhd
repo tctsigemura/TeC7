@@ -414,8 +414,8 @@ component TAC_MMU is
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
          P_STOP     : in  std_logic;                     -- Panel RUN F/F
-         P_VIO_INT  : out std_logic;                     -- Memory Vio inter
-         P_ADR_INT  : out std_logic;                     -- Bad Address inter
+         P_VIO_INT  : out std_logic;                     -- Mem Add Vio inter
+         P_TLB_INT  : out std_logic;                     -- TLB miss inter
          P_MR       : out std_logic;                     -- Memory Request
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
@@ -511,9 +511,9 @@ begin
   i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28‾2f
   i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30‾37
   i_en_ram    <= '1' when (i_addr(7 downto 1)="1110000")else '0'; -- e0‾e1
-  i_en_mmu    <= '1' when (i_addr(7 downto 4)="1101" or           -- d0‾df
-                           i_addr(7 downto 4)="1110" or           -- e0‾ef
-                           i_addr(7 downto 3)="11110";            -- f0-f7
+  i_en_mmu    <= '1' when  i_addr(7 downto 5)="100" or            -- 80‾9f
+                           i_addr(7 downto 3)="10100";            -- a0‾a7
+                           
 
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
                i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
@@ -591,7 +591,7 @@ begin
          P_PR          => i_pr,
          P_STOP        => i_stop,
          P_VIO_INT     => i_int_bit(11),
-         P_ADR_INT     => i_int_bit(10),
+         P_TLB_INT     => i_int_bit(10),
          P_MR          => i_mr,
          P_ADDR        => i_addr,
          P_MMU_ADDR    => i_cpu_addr,
