@@ -49,6 +49,7 @@ entity TAC_CPU_SEQUENCER is
   P_SELECT_W    : out std_logic_vector(1 downto 0);  -- DR への入力の選択
   P_SELECT_B    : out std_logic;                     -- ALU B への入力の選択
   P_ALU_START   : out std_logic;
+  P_ALU_ZDIV    : in std_logic;
   P_BUSY        : in std_logic;
   P_FLAG_V      : in std_logic;
   P_FLAG_C      : in std_logic;
@@ -81,22 +82,21 @@ constant STATE_DEC1  : std_logic_vector(4 downto 0) := "00111";
 constant STATE_DEC2  : std_logic_vector(4 downto 0) := "01000";
 constant STATE_ALU1  : std_logic_vector(4 downto 0) := "01001";
 constant STATE_ALU2  : std_logic_vector(4 downto 0) := "01010";
-constant STATE_ALU3  : std_logic_vector(4 downto 0) := "01011";
-constant STATE_ST1   : std_logic_vector(4 downto 0) := "01100";
-constant STATE_ST2   : std_logic_vector(4 downto 0) := "01101";
-constant STATE_PUSH  : std_logic_vector(4 downto 0) := "01110";
-constant STATE_POP   : std_logic_vector(4 downto 0) := "01111";
-constant STATE_CALL  : std_logic_vector(4 downto 0) := "10000";
-constant STATE_RET   : std_logic_vector(4 downto 0) := "10001";
-constant STATE_RETI1 : std_logic_vector(4 downto 0) := "10010";
-constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10011";
-constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10100";
-constant STATE_IN1   : std_logic_vector(4 downto 0) := "11000";
-constant STATE_IN2   : std_logic_vector(4 downto 0) := "11001";
-constant STATE_SVC   : std_logic_vector(4 downto 0) := "11010";
-constant STATE_INVAL : std_logic_vector(4 downto 0) := "11011";
-constant STATE_ZDIV  : std_logic_vector(4 downto 0) := "11100";
-constant STATE_PRIVIO: std_logic_vector(4 downto 0) := "11101";
+constant STATE_ST1   : std_logic_vector(4 downto 0) := "01011";
+constant STATE_ST2   : std_logic_vector(4 downto 0) := "01100";
+constant STATE_PUSH  : std_logic_vector(4 downto 0) := "01101";
+constant STATE_POP   : std_logic_vector(4 downto 0) := "01110";
+constant STATE_CALL  : std_logic_vector(4 downto 0) := "01111";
+constant STATE_RET   : std_logic_vector(4 downto 0) := "10000";
+constant STATE_RETI1 : std_logic_vector(4 downto 0) := "10001";
+constant STATE_RETI2 : std_logic_vector(4 downto 0) := "10010";
+constant STATE_RETI3 : std_logic_vector(4 downto 0) := "10011";
+constant STATE_IN1   : std_logic_vector(4 downto 0) := "10100";
+constant STATE_IN2   : std_logic_vector(4 downto 0) := "11000";
+constant STATE_SVC   : std_logic_vector(4 downto 0) := "11001";
+constant STATE_INVAL : std_logic_vector(4 downto 0) := "11010";
+constant STATE_ZDIV  : std_logic_vector(4 downto 0) := "11011";
+constant STATE_PRIVIO: std_logic_vector(4 downto 0) := "11100";
 constant STATE_CON   : std_logic_vector(4 downto 0) := "11111";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
@@ -227,14 +227,19 @@ begin
           end if;
         when STATE_RETI2 =>
           I_STATE <= STATE_RETI3;
-        when STATE_ALU1 | STATE_ALU2 | STATE_ALU3 =>
+        when STATE_ALU1 | STATE_ALU2 =>
           if (P_BUSY='0') then
-            I_STATE <= STATE_FETCH;
+            if (P_ALU_ZDIV = '1') then
+              I_STATE <= STATE_ZDIV;
+            else
+              I_STATE <= STATE_FETCH;
+            end if;
           end if;
         when STATE_ST1 | STATE_CALL | STATE_IN1 | STATE_ST2 | STATE_IN2
             | STATE_PUSH | STATE_POP | STATE_RET | STATE_RETI3 =>
           I_STATE <= STATE_FETCH;
-        when STATE_SVC | STATE_INVAL | STATE_ZDIV | STATE_PRIVIO =>
+        when STATE_SVC | STATE_INVAL | STATE_ZDIV | STATE_PRIVIO
+            | STATE_ZDIV | STATE_INVAL =>
           I_STATE <= STATE_WAIT;
         when others =>
           I_STATE <= STATE_FETCH; --FIXME
@@ -300,7 +305,7 @@ begin
   
   P_LOAD_GR <=
     '1' when (I_STATE = STATE_DEC1 and I_IS_SHORT = '1' and I_IS_ALU = '1')
-          or I_STATE = STATE_ALU2 or I_STATE = STATE_ALU3
+          or I_STATE = STATE_ALU2
           or I_STATE = STATE_IN1 or I_STATE = STATE_IN2
           or I_STATE = STATE_RETI3 else
     '0';
@@ -376,6 +381,8 @@ begin
 
   P_SVC <= '1' when I_STATE = STATE_SVC else '0';
   P_PRIVIO <= '1' when I_STATE = STATE_PRIVIO else '0';
+  P_ZDIV <= '1' when I_STATE = STATE_ZDIV else '0';
+  P_INVINST <= '1' when I_STATE = STATE_INVAL else '0';
 
   P_VR <= '1' when I_STATE = STATE_INTR3 else '0';
             
