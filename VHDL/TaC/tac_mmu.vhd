@@ -76,15 +76,16 @@ signal TLB : TLB_array;                                 --TLB
 signal index : std_logic_vector(3 downto 0);            
 signal entry : TLB_field;                               --target TLB entry 
 signal page : std_logic_vector(7 downto 0);
-signal offset : std_logic_vector(7 downto 0);
 signal tlbmiss : std_logic;                             -- not exist page
 signal request : std_logic_vector(2 downto 0);          --RWX request from cpu
 signal perm_vio : std_logic;                            --RWX Violation
+signal intr_page : std_logic_vector(7 downto 0);
+signal intr_cause : std_logic_vector(15 downto 0);
 
 begin 
+
   page <= P_MMU_ADDR(15 downto 8);
-  offset <= P_MMU_ADDR(7 downto 0);
-  
+
   index <= X"0" when page & '1'=TLB(0)(23 downto 15) else
            X"1" when page & '1'=TLB(1)(23 downto 15) else
            X"2" when page & '1'=TLB(2)(23 downto 15) else
@@ -99,27 +100,31 @@ begin
   entry <= TLB(TO_INTEGER(unsigned (index(2 downto 0))));
   request <= not P_RW & P_RW & P_LI;
 
+  --メモリ違反検出
   process(request,entry)
+    variable vio : std_logic := '0';
   begin
-    if(request="010") then    --write signal
+    if(request="010") then                --write signal
       if(entry(9)='1') then
-        perm_vio <= '0';
+        vio := '0';
       else 
-        perm_vio <= '1';
+        vio := '1';
       end if;
-    elsif(request="100") then --read signal
+    elsif(request="100") then             --read signal
       if(entry(10)='1') then
-        perm_vio <= '0';
+        vio := '0';
       else
-        perm_vio <= '1';
+        vio := '1';
       end if;
-    elsif(request="101") then --fetch signal
+    elsif(request="101") then             --fetch signal
       if(entry(10 downto 8)="1-1") then
-        perm_vio <= '0';
+        vio := '0';
       else
-        perm_vio <='1';
+        vio :='1';
       end if;
+    else vio :='1';
     end if;
+    perm_vio <= vio;
     end process;
 
   --TLB操作
@@ -135,7 +140,7 @@ begin
             i_en <= P_DIN(0);
           end if;
         elsif(P_MMU_ADDR(1)='0') then
-          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16)
+          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16) 
             <= P_DIN(7 downto 0);
         else
           TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(15 downto 0)
@@ -145,15 +150,28 @@ begin
       --ページヒット時のD,Rビットの書き換え
       elsif(tlbmiss='0' and i_act='1') then 
         if (perm_vio='0') then
-          if(request(1)='1') then
-            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <= '1';
-          end if;
-          if((request(2) or request(0))='1') then
-            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= '1'; 
-          end if; 
+            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <= request(1);  --dirty
+            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= 
+                                    request(2) or request(1) or request(0);  --reference
         end if;
       end if; --if(P_EN='1' and P_IOW='1')
-    
+    end if;
+  end process;
+
+  --割り込み原因
+  process(P_CLK,P_MMU_ADDR,i_act,i_adr,i_vio)
+  variable cause : std_logic_vector(15 downto 0) := X"FFFF";
+  begin
+    if(P_CLK'event and P_CLK='1') then
+      if(i_act='1') then
+        intr_page <= P_MMU_ADDR(15 downto 8);
+        if(i_adr='1')then
+          cause := X"0000";
+        elsif(i_vio='1')then
+          cause := X"0001";
+        end if;
+        intr_cause <= cause;
+      end if;
     end if;
   end process;
 
@@ -162,28 +180,26 @@ begin
   i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;           
   i_mis <= i_act and tlbmiss;                               --TLB MISS
 
-  P_ADDR <= entry(7 downto 0) & offset when (i_act='1') else
-            P_MMU_ADDR;
+  P_ADDR(15 downto 8) <= entry(7 downto 0) when (i_act='1') else page;
+  P_ADDR(7 downto 0) <= P_MMU_ADDR(7 downto 0);
 
   P_MR <= P_MMU_MR and (not i_vio) and (not i_mis);
   P_VIO_INT <= i_adr or i_vio;    
   P_TLB_INT <= i_mis;                       
   
-  --割り込み時の出力
+  --割り込み時の出力 (=P_PR='1')
   P_DOUT <= "00000000" & TLB(TO_INTEGER(unsigned                             --TLBの上位8ビット
             (P_MMU_ADDR(4 downto 2))))(23 downto 16)   
-            when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5 downto 4)<"10") else
+            when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5)='0') else
 
             TLB(TO_INTEGER(unsigned                                          --TLBの下位16ビット
             (P_MMU_ADDR(4 downto 2))))(15 downto 0)                  
-            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5 downto 4)<"10") else
+            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='0') else
             
-            "00000000" & page                                                --A6h ページ番号
-            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5 downto 4)="10") else            
-            "0000000000000000" when i_adr='1' else                           --F4h 奇数アドレス
-            "0000000000000001" when i_vio='1' else                           --F4h RWX違反                                                
-            "XXXXXXXXXXXXXXXX";
+            "00000000" & intr_page                                           --A6h ページ番号
+            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='1') else      
 
+            intr_cause;                                                      --A4h 割り込み原因
 --relocation register
 --begin
   --process(P_RESET, P_CLK)
