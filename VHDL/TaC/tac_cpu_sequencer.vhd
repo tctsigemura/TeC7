@@ -168,10 +168,10 @@ begin
           I_STATE <= STATE_FETCH;
         when STATE_DEC1 =>
           -- TLB miss の時は復元するため、内部状態が書き換わってはいけない
-          -- 一足先に STATE_WAIT へ飛ぶ
+          -- 一足先に STATE_WAIT1 へ飛ぶ
           if (P_TLBMISS='1') then
-            I_STATE <= STATE_WAIT;
-          elsif (P_BUSY='0') then
+            I_STATE <= STATE_WAIT1;
+          else
             if P_FLAG_P = '0' -- 非特権モードで HALT, IN, OUT => 特権違反
               and (P_OP1 = "11111" or P_OP1(3 downto 0) = "1011") then
               I_STATE <= STATE_PRIVIO;
@@ -206,7 +206,9 @@ begin
             end if;
           end if;
         when STATE_DEC2 =>
-          if (P_BUSY='0') then
+          if (P_TLBMISS='1') then
+            I_STATE <= STATE_WAIT1;
+          else
             if (I_IS_ALU = '1') then -- ALU
               I_STATE <= STATE_ALU1;
             elsif (P_OP1 = "00010") then -- ST
@@ -222,9 +224,7 @@ begin
             end if;
           end if;
         when STATE_RETI1 =>
-          if (P_BUSY='0') then
-            I_STATE <= STATE_RETI2;
-          end if;
+          I_STATE <= STATE_RETI2;
         when STATE_RETI2 =>
           I_STATE <= STATE_RETI3;
         when STATE_ALU1 | STATE_ALU2 =>
@@ -240,7 +240,7 @@ begin
           I_STATE <= STATE_FETCH;
         when STATE_SVC | STATE_INVAL | STATE_ZDIV | STATE_PRIVIO
             | STATE_ZDIV | STATE_INVAL =>
-          I_STATE <= STATE_WAIT;
+          I_STATE <= STATE_WAIT1;
         when others =>
           I_STATE <= STATE_FETCH; --FIXME
       end case;
