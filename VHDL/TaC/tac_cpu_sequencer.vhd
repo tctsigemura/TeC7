@@ -224,7 +224,11 @@ begin
             end if;
           end if;
         when STATE_RETI1 =>
-          I_STATE <= STATE_RETI2;
+          if (P_TLBMISS='1') then
+            I_STATE <= STATE_WAIT1;
+          else
+            I_STATE <= STATE_RETI2;
+          end if;
         when STATE_RETI2 =>
           I_STATE <= STATE_RETI3;
         when STATE_ALU1 | STATE_ALU2 =>
