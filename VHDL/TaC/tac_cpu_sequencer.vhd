@@ -173,7 +173,7 @@ begin
             I_STATE <= STATE_WAIT1;
           else
             if P_FLAG_P = '0' -- 非特権モードで HALT, IN, OUT => 特権違反
-              and (P_OP1 = "11111" or P_OP1(3 downto 0) = "1011") then
+              and (P_OP1 = "11111" or P_OP1(4 downto 1) = "1011") then
               I_STATE <= STATE_PRIVIO;
             elsif (P_OP1 = "00000" or P_OP1 = "11111") then -- NO, HALT
               I_STATE <= STATE_FETCH;
