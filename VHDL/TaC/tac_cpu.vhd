@@ -184,6 +184,7 @@ signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
 signal I_VR          : std_logic;                     -- Vector Fetch
+signal I_ZDIV        : std_logic;                     -- Zero Division
 
 begin
   
@@ -196,7 +197,7 @@ begin
     P_A         => I_RD,
     P_B         => I_ALU_B,
     P_BUSY      => I_ALU_BUSY,
-    P_ZDIV      => P_ZDIV,
+    P_ZDIV      => I_ZDIV,
     P_OUT       => I_ALU_OUT,
     P_OVERFLOW  => I_ALU_OVERFLOW,
     P_CARRY     => I_ALU_CARRY,
@@ -225,7 +226,7 @@ begin
     P_SELECT_W  => I_SELECT_W,
     P_SELECT_B  => I_SELECT_B,
     P_ALU_START => I_ALU_START,
-    P_ALU_ZDIV  => P_ZDIV,
+    P_ALU_ZDIV  => I_ZDIV,
     P_BUSY      => I_ALU_BUSY,
     P_FLAG_V    => I_FLAG_V,
     P_FLAG_C    => I_FLAG_C,
