@@ -242,8 +242,7 @@ begin
         when STATE_ST1 | STATE_CALL | STATE_IN1 | STATE_ST2 | STATE_IN2
             | STATE_PUSH | STATE_POP | STATE_RET | STATE_RETI3 =>
           I_STATE <= STATE_FETCH;
-        when STATE_SVC | STATE_INVAL | STATE_ZDIV | STATE_PRIVIO
-            | STATE_ZDIV | STATE_INVAL =>
+        when STATE_SVC | STATE_INVAL | STATE_ZDIV | STATE_PRIVIO =>
           I_STATE <= STATE_WAIT1;
         when others =>
           I_STATE <= STATE_FETCH; --FIXME
