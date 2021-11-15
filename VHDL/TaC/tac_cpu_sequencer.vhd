@@ -117,9 +117,10 @@ begin
   I_IS_SHORT  <= '1' when P_OP2(2 downto 1) = "10" else '0';
   I_IS_MUL    <= '1' when P_OP1 = "01010" else '0';
   I_IS_DIV    <= '1' when P_OP1 = "01011" or P_OP1 = "01100" else '0';
+  -- JMP 命令のとき、 JMP するか
   I_JMP_GO    <=
-    '1' when
-            (P_RD = "0000" and P_FLAG_Z = '1')                          -- JZ
+    '1' when P_OP1 = "10100"
+      and  ((P_RD = "0000" and P_FLAG_Z = '1')                          -- JZ
         or  (P_RD = "0001" and P_FLAG_C = '1')                          -- JC
         or  (P_RD = "0010" and P_FLAG_S = '1')                          -- JM
         or  (P_RD = "0011" and P_FLAG_V = '1')                          -- JO
@@ -133,7 +134,7 @@ begin
         or  (P_RD = "1011" and P_FLAG_V = '0')                          -- JNO
         or  (P_RD = "1100" and P_FLAG_Z = '0' and P_FLAG_C = '0')       -- JHI
         or  (P_RD = "1110" and (P_FLAG_Z = '1' or P_FLAG_C = '1'))      -- JLS
-        or  P_RD = "1111" else                                          -- JMP
+        or  P_RD = "1111") else                                         -- JMP
     '0';
 
   -- ステート遷移を決める組み合わせ回路
@@ -153,8 +154,11 @@ begin
     S_DEC2    when I_STATE = S_DEC1 and P_OP2(2 downto 1) = "00" else
     S_ALU1    when
       (I_STATE = S_DEC1 and I_IS_ALU = '1' and P_OP2 = "010")
-      or (I_STATE = S_DEC2 and I_IS_ALU = '1') else
-    S_ALU2    when I_IS_ALU = '1' and (I_IS_IDNR or I_IS_SHORT) = '1' else
+      or (I_STATE = S_DEC2 and I_IS_ALU = '1')
+      or (I_STATE = S_ALU1 and P_BUSY = '1') else
+    S_ALU2    when
+      (I_IS_ALU = '1' and (I_IS_IDNR or I_IS_SHORT) = '1')
+      or (I_STATE = S_ALU2 and P_BUSY = '1') else
     S_ST1     when I_STATE = S_DEC2 and P_OP1 = "00010" else
     S_ST2     when I_STATE = S_DEC1 and P_OP1 = "00010" and I_IS_INDR = '1' else
     S_PUSH    when I_STATE = S_DEC1 and P_OP1 = "11000" and P_OP2(2) = '0' else
@@ -191,28 +195,20 @@ begin
   P_UPDATE_PC <=
     -- PC += 2
     "100" when
-            (I_STATE = S_DEC1 and
-              (P_OP1 = "00000" or P_OP1 = "11111" -- NO, HALT
-                or (I_IS_INDR = '1' and P_OP1(4 downto 1) = "1011") -- IN, OUT
-                or I_IS_SHORT = '1')) -- レジスタ, 4ビットイミディエイト
-            or I_STATE = S_ST2
-            or (I_STATE = S_ALU2 and P_BUSY = '0')
-            or I_STATE = S_PUSH
-            or I_STATE = S_POP
+            (I_STATE = S_DEC1 and (I_NEXT = S_FETCH or I_NEXT = S_IN2))
+            or I_STATE = S_ALU2 or I_STATE = S_ST2
+            or I_STATE = S_PUSH or I_STATE = S_POP
             or I_STATE = S_SVC else
     -- PC += 4
     "101" when
-            (I_STATE = S_DEC2 and
-              (P_OP1(4 downto 1) = "1011" -- IN, OUT
-                or (P_OP1 = "10110" and I_JMP_GO = '0'))) -- JMP
-            or (I_STATE = S_ALU1 and P_BUSY = '0')
-            or I_STATE = S_ST1 else
+            (I_STATE = S_DEC2 and ((I_NEXT = S_FETCH and I_JMP_GO = '0')
+              or I_NEXT = S_CALL or I_NEXT = S_IN1))
+            or I_STATE = S_ALU1 or I_STATE = S_ST1 else
     -- PC <- Din
-    "110" when I_STATE = S_INTR3 or I_STATE = S_RETI2
-            or I_STATE = S_RET else
+    "110" when I_STATE = S_INTR3 or I_STATE = S_RETI2 or I_STATE = S_RET else
     -- PC <- EA
     "111" when
-            (I_STATE = S_DEC2 and P_OP1 = "10100" and I_JMP_GO = '1') -- JMP
+            (I_STATE = S_DEC2 and I_JMP_GO = '1') -- JMP
             or I_STATE = S_CALL else -- CALL
     "000";
   
@@ -225,16 +221,13 @@ begin
             or I_STATE = S_CALL  or I_STATE = S_PUSH else
     "00";
   
-  P_LOAD_IR <= '1' when I_STATE = S_FETCH and P_INTR = '0' and P_STOP = '0'
-          else '0';
+  P_LOAD_IR <= '1' when I_NEXT = S_DEC1 else '0';
 
   P_LOAD_DR <=
-    '1' when (I_STATE = S_FETCH and P_STOP = '0' and P_INTR = '0')
-          or (I_STATE = S_DEC1 and ((P_OP2 >= "000" and P_OP2 <= "011")
-            or (I_IS_INDR = '1' and (I_IS_ALU = '1' or P_OP1 = "10110"))
-            or (P_OP1 = "11000" and P_OP2(2) = '1')
-            or (P_OP1 = "11010" and P_OP2(2) = '0')))
-            or (I_IS_ALU = '1' and P_OP2 = "010") else
+    '1' when I_NEXT = S_DEC1 or I_NEXT = S_DEC2
+          or I_NEXT = S_ALU1 or (I_NEXT = S_ALU2 and I_IS_INDR = '1') or
+          or I_NEXT = S_IN1 or I_NEXT = S_IN2
+          or I_NEXT = S_POP or I_NEXT = S_RET or I_NEXT = S_RETI2 else
     '0';
   
   -- ADD, SUB, ..., SHRL ではフラグが変化する
