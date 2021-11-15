@@ -79,8 +79,8 @@ signal page : std_logic_vector(7 downto 0);
 signal tlbmiss : std_logic;                             -- not exist page
 signal request : std_logic_vector(2 downto 0);          --RWX request from cpu
 signal perm_vio : std_logic;                            --RWX Violation
-signal intr_page : std_logic_vector(7 downto 0);
-signal intr_cause : std_logic_vector(15 downto 0);
+signal intr_page : std_logic_vector(7 downto 0);        --割り込みページ
+signal intr_cause : std_logic_vector(15 downto 0);      --割り込み原因
 
 begin 
 
@@ -93,7 +93,7 @@ begin
            X"4" when page & '1'=TLB(4)(23 downto 15) else
            X"5" when page & '1'=TLB(5)(23 downto 15) else
            X"6" when page & '1'=TLB(6)(23 downto 15) else
-           X"7" when page & '1'=TLB(6)(23 downto 15) else
+           X"7" when page & '1'=TLB(7)(23 downto 15) else
            X"8";
 
   tlbmiss <= index(3);
@@ -154,23 +154,23 @@ begin
             TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= 
                                     request(2) or request(1) or request(0);  --reference
         end if;
-      end if; --if(P_EN='1' and P_IOW='1')
+      end if;
     end if;
   end process;
 
-  --割り込み原因
+  --割り込みページとその原因のレジスタ
   process(P_CLK,P_MMU_ADDR,i_act,i_adr,i_vio)
-  variable cause : std_logic_vector(15 downto 0) := X"FFFF";
   begin
     if(P_CLK'event and P_CLK='1') then
       if(i_act='1') then
         intr_page <= P_MMU_ADDR(15 downto 8);
         if(i_adr='1')then
-          cause := X"0000";
+          intr_cause <= X"0000";
         elsif(i_vio='1')then
-          cause := X"0001";
+          intr_cause <= X"0001";
+        else 
+          intr_cause <= "XXXXXXXXXXXXXXXX";
         end if;
-        intr_cause <= cause;
       end if;
     end if;
   end process;
@@ -187,7 +187,7 @@ begin
   P_VIO_INT <= i_adr or i_vio;    
   P_TLB_INT <= i_mis;                       
   
-  --割り込み時の出力 (=P_PR='1')
+  --割り込み時の出力 (P_PR='1')
   P_DOUT <= "00000000" & TLB(TO_INTEGER(unsigned                             --TLBの上位8ビット
             (P_MMU_ADDR(4 downto 2))))(23 downto 16)   
             when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5)='0') else
@@ -200,6 +200,8 @@ begin
             when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='1') else      
 
             intr_cause;                                                      --A4h 割り込み原因
+
+
 --relocation register
 --begin
   --process(P_RESET, P_CLK)
