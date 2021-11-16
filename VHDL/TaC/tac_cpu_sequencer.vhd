@@ -234,9 +234,15 @@ begin
     '0';
   
   -- ADD, SUB, ..., SHRL ではフラグが変化する
-  P_LOAD_FLAG <= '1' when P_OP1 >= "00011" and P_OP1 <= "10011" else '0';
+  P_LOAD_FLAG <=
+    '1' when
+      P_OP1 >= "00011" and P_OP1 <= "10011" and P_STOP = '0' else
+    '0';
   
-  P_LOAD_TMP <= '1' when I_STATE = S_FETCH and P_INTR = '1' else '0';
+  P_LOAD_TMP <=
+    '1' when
+      I_STATE = S_FETCH and P_INTR = '1' and P_STOP = '0' else
+    '0';
   
   P_LOAD_GR <=
     '1' when (I_STATE = S_DEC1 and I_IS_SHORT = '1' and I_IS_ALU = '1')
