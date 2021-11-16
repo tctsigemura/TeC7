@@ -163,7 +163,8 @@ begin
                 or (I_STATE = S_DEC2 and I_IS_ALU = '1')
                 or (I_STATE = S_ALU1 and P_BUSY = '1') else
     S_ALU2    when
-                (I_IS_ALU = '1' and (I_IS_IDNR or I_IS_SHORT) = '1')
+                (I_STATE = S_DEC1 and I_IS_ALU = '1' and P_OP2 = "010")
+                or (I_STATE = S_DEC2 and I_IS_ALU = '1')
                 or (I_STATE = S_ALU2 and P_BUSY = '1') else
     S_ST1     when I_STATE = S_DEC2 and P_OP1 = "00010" else
     S_ST2     when I_STATE = S_DEC1 and P_OP1 = "00010" and I_IS_INDR = '1' else
