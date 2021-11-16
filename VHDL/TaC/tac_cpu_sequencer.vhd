@@ -236,7 +236,7 @@ begin
   -- ADD, SUB, ..., SHRL ではフラグが変化する
   P_LOAD_FLAG <=
     '1' when
-      P_OP1 >= "00011" and P_OP1 <= "10011" and P_STOP = '0' else
+      (I_STATE = S_ALU1 or I_STATE = S_ALU2) and P_OP1 /= "00001" else
     '0';
   
   P_LOAD_TMP <=
