@@ -220,7 +220,7 @@ begin
     -- SP += 2
     "01"  when I_STATE = S_POP or I_STATE = S_RET
             or I_STATE = S_RETI2 or I_STATE = S_RETI3 else
-    -- SP -= 1
+    -- SP -= 2
     "10"  when I_STATE = S_INTR1 or I_STATE = S_INTR2
             or I_STATE = S_CALL  or I_STATE = S_PUSH else
     "00";
