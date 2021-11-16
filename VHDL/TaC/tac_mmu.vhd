@@ -76,13 +76,15 @@ signal TLB : TLB_array;                                 --TLB
 signal index : std_logic_vector(3 downto 0);            
 signal entry : TLB_field;                               --target TLB entry 
 signal page : std_logic_vector(7 downto 0);
-signal tlbmiss : std_logic;                             -- not exist page
 signal request : std_logic_vector(2 downto 0);          --RWX request from cpu
 signal perm_vio : std_logic;                            --RWX Violation
 signal intr_page : std_logic_vector(7 downto 0);        --割り込みページ
-signal intr_cause : std_logic_vector(15 downto 0);      --割り込み原因
+signal intr_cause : std_logic_vector(1 downto 0);      --割り込み原因
 
 begin 
+
+  i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
+  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;
 
   page <= P_MMU_ADDR(15 downto 8);
 
@@ -96,89 +98,58 @@ begin
            X"7" when page & '1'=TLB(7)(23 downto 15) else
            X"8";
 
-  tlbmiss <= index(3);
+  i_mis <= index(3) and i_act;
   entry <= TLB(TO_INTEGER(unsigned (index(2 downto 0))));
-  request <= not P_RW & P_RW & P_LI;
+  request <= (not P_RW) & P_RW & P_LI;
 
-  --メモリ違反検出
-  process(request,entry)
-    variable vio : std_logic := '0';
-  begin
-    if(request="010") then                --write signal
-      if(entry(9)='1') then
-        vio := '0';
-      else 
-        vio := '1';
-      end if;
-    elsif(request="100") then             --read signal
-      if(entry(10)='1') then
-        vio := '0';
-      else
-        vio := '1';
-      end if;
-    elsif(request="101") then             --fetch signal
-      if(entry(10 downto 8)="1-1") then
-        vio := '0';
-      else
-        vio :='1';
-      end if;
-    else vio :='1';
-    end if;
-    perm_vio <= vio;
-    end process;
-
+  perm_vio <= not entry(9) when request="010" else    --write
+              not entry(10) when request="100" else   --read
+              not (entry(10) and entry(8));           --fetch
+  i_vio <= i_act and perm_vio;
+  
   --TLB操作
   process(P_CLK,P_RESET)
   begin 
     if (P_RESET='0') then
       i_en <= '0';
     elsif (P_CLK'event and P_CLK='1') then
-
-      if(P_EN='1' and P_IOW='1') then
-        if(P_MMU_ADDR(5 downto 4)="10") then
-          if(P_MMU_ADDR(3 downto 1)="001") then
+      if(P_EN='1' and P_IOW='1') then                                          -- 80h <= P_MMU_ADDR <=A7h
+        if(P_MMU_ADDR(5 downto 4)="10") then                                   -- A-h
+          if(P_MMU_ADDR(2 downto 1)="01") then                                 -- A2 or A3h
             i_en <= P_DIN(0);
           end if;
-        elsif(P_MMU_ADDR(1)='0') then
+        elsif(P_MMU_ADDR(1)='0') then                                          -- 8-h or 9-h
           TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16) 
             <= P_DIN(7 downto 0);
         else
-          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(15 downto 0)
+          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(15 downto 0)      
             <= P_DIN;
         end if;
 
       --ページヒット時のD,Rビットの書き換え
-      elsif(tlbmiss='0' and i_act='1') then 
-        if (perm_vio='0') then
-            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <= request(1);  --dirty
-            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= 
-                                    request(2) or request(1) or request(0);  --reference
-        end if;
+      elsif(i_mis='0' and i_vio='0') then 
+          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <= request(1);     --dirty
+          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= '1';            --reference
       end if;
     end if;
   end process;
 
   --割り込みページとその原因のレジスタ
-  process(P_CLK,P_MMU_ADDR,i_act,i_adr,i_vio)
+  process(P_CLK,P_RESET,P_MMU_ADDR,i_mis,i_adr,i_vio)
   begin
-    if(P_CLK'event and P_CLK='1') then
-      if(i_act='1') then
+    if(P_RESET='1') then
+      intr_cause <= "00";
+    elsif(P_CLK'event and P_CLK='1') then
+      if(i_mis='1') then
         intr_page <= P_MMU_ADDR(15 downto 8);
-        if(i_adr='1')then
-          intr_cause <= X"0000";
-        elsif(i_vio='1')then
-          intr_cause <= X"0001";
-        else 
-          intr_cause <= "XXXXXXXXXXXXXXXX";
-        end if;
+      end if;
+      if(i_adr='1' or i_vio='1') then
+        intr_cause <= i_adr & i_vio;
+      elsif(P_EN='1' and P_IOW='0' and P_MMU_ADDR(5 downto 1)="10010") then   --A4h
+        intr_cause <= "00";
       end if;
     end if;
   end process;
-
-  i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
-  i_vio <= i_act and perm_vio;
-  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;           
-  i_mis <= i_act and tlbmiss;                               --TLB MISS
 
   P_ADDR(15 downto 8) <= entry(7 downto 0) when (i_act='1') else page;
   P_ADDR(7 downto 0) <= P_MMU_ADDR(7 downto 0);
@@ -199,7 +170,7 @@ begin
             "00000000" & intr_page                                           --A6h ページ番号
             when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='1') else      
 
-            intr_cause;                                                      --A4h 割り込み原因
+            "00000000000000" & intr_cause;                                   --A4h 割り込み原因
 
 
 --relocation register

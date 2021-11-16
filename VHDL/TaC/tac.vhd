@@ -510,7 +510,7 @@ begin
                            i_addr(7 downto 3)="00100")  else '0'; -- 20‾27
   i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28‾2f
   i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30‾37
-  i_en_ram    <= '1' when (i_addr(7 downto 1)="1110000")else '0'; -- e0‾e1
+  i_en_ram    <= '1' when (i_addr(7 downto 1)="1010000")else '0'; -- a0‾a1
   i_en_mmu    <= '1' when  i_addr(7 downto 5)="100" or            -- 80‾9f
                            i_addr(7 downto 3)="10100";            -- a0‾a7
                            
