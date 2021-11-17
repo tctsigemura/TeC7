@@ -230,9 +230,9 @@ begin
   P_LOAD_IR <= '1' when I_STATE = S_FETCH else '0';
 
   P_LOAD_DR <=
-    '1' when I_STATE = S_FETCH
-          or (I_STATE = S_DEC1 and P_OP2 /= "011" and P_OP2 /= "101")
-          or I_STATE = S_DEC2 else
+    '1' when I_NEXT = S_DEC1
+          or (I_STATE = S_DEC1 and I_OP2 /= "010") -- 4bit 定数以外ならロード/破壊
+          or I_STATE = S_DEC2 or I_STATE = S_RETI1 else
     '0'; -- 保持
   
   -- ADD, SUB, ..., SHRL ではフラグが変化する
