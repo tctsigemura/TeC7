@@ -37,6 +37,7 @@ entity TAC_CPU_SEQUENCER is
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
   P_RD          : in std_logic_vector(3 downto 0);   -- 命令の Rd
+  P_ADDR        : in std_logic_vector(15 downto 0);  -- アドレス
   P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
   P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
   P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -47,7 +48,6 @@ entity TAC_CPU_SEQUENCER is
   P_SELECT_A    : out std_logic_vector(2 downto 0);  -- アドレス出力の選択
   P_SELECT_D    : out std_logic_vector(2 downto 0);  -- データ出力の選択
   P_SELECT_W    : out std_logic_vector(1 downto 0);  -- DR への入力の選択
-  P_SELECT_B    : out std_logic;                     -- ALU B への入力の選択
   P_ALU_START   : out std_logic;
   P_ALU_ZDIV    : in std_logic;
   P_BUSY        : in std_logic;
@@ -254,11 +254,10 @@ begin
   
   -- AOUT
   P_SELECT_A <=
+    -- PC
+    "000" when I_NEXT = S_DEC1 else
     -- PC+2
     "001" when I_STATE = S_DEC1 and (I_NEXT = S_DEC2 or I_NEXT = S_ALU1) else
-    -- EA
-    "010" when (I_STATE = S_DEC1 and I_IS_INDR = '1')
-            or (I_STATE = S_DEC2 and I_NEXT /= S_CALL) else
     -- SP
     "100" when I_NEXT = S_POP or I_NEXT = S_RET
             or I_STATE = S_RET or I_STATE = S_RETI2 else
@@ -267,8 +266,8 @@ begin
     -- SP-2
     "110" when I_STATE = S_INTR1 or I_STATE = S_INTR2
             or I_NEXT = S_PUSH or I_NEXT = S_CALL else
-    -- PC
-    "000";
+    -- EA
+    "010";
   
   -- DOUT
   P_SELECT_D <=
@@ -277,6 +276,8 @@ begin
     -- GR[Rd]
     "100" when ((I_STATE = S_DEC1 or I_STATE = S_DEC2) and I_NEXT = S_FETCH)
             or I_NEXT = S_ST1 or I_NEXT = S_ST2 else
+    -- GR[Rd]>>>8
+    "101" when P_OP2 = "111" and P_ADDR(0) = '0' else
     -- TMP
     "111" when I_STATE = S_INTR2 else
     -- PC
@@ -286,16 +287,12 @@ begin
   P_SELECT_W <=
     -- S4
     "01" when I_STATE = S_FETCH else
+    -- L8
+    "10" when P_OP2 = "111" and P_ADDR(0) = '1' else
+    -- H8
+    "11" when P_OP2 = "111" and P_ADDR(0) = '1' else
     -- 16
     "00";
-  
-  -- ALU の入力 B
-  P_SELECT_B <=
-    -- GR[Rs]
-    '1' when I_STATE = S_IN1 or I_STATE = S_IN2
-          or I_STATE = S_POP or I_STATE = S_RETI3 else
-    -- DR
-    '0';
   
   P_ALU_START <=
     '1' when I_NEXT = S_ALU1 or I_NEXT = S_ALU2 else '0';

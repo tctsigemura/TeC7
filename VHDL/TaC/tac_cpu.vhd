@@ -99,6 +99,7 @@ component TAC_CPU_SEQUENCER is
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
   P_RD          : in std_logic_vector(3 downto 0);
+  P_ADDR        : in std_logic_vector(15 downto 0);  -- アドレス
   P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
   P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
   P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -109,7 +110,6 @@ component TAC_CPU_SEQUENCER is
   P_SELECT_A    : out std_logic_vector(2 downto 0);  -- アドレス出力の選択
   P_SELECT_D    : out std_logic_vector(2 downto 0);  -- データ出力の選択
   P_SELECT_W    : out std_logic_vector(1 downto 0);  -- DR への入力の選択
-  P_SELECT_B    : out std_logic;                     -- ALU B への入力の選択
   P_ALU_START   : out std_logic;
   P_ALU_ZDIV    : in std_logic;
   P_BUSY        : in std_logic;
@@ -174,7 +174,6 @@ signal I_LOAD_GR     : std_logic;                     -- 汎用レジスタの�
 signal I_SELECT_A    : std_logic_vector(2 downto 0);  -- MUX A の選択
 signal I_SELECT_D    : std_logic_vector(2 downto 0);  -- MUX D の選択
 signal I_SELECT_W    : std_logic_vector(1 downto 0);  -- MUX W の選択
-signal I_SELECT_B    : std_logic;                     -- MUX B の選択
 signal I_ALU_B       : Word;                          -- ALU への B 信号
 signal I_ALU_START   : std_logic;                     -- ALU への START 信号
 signal I_ALU_BUSY    : std_logic;                     -- ALU からの BUSY 信号
@@ -214,6 +213,7 @@ begin
     P_OP1       => I_INST_OP1,
     P_OP2       => I_INST_OP2,
     P_RD        => I_INST_RD,
+    P_ADDR      => I_ADDR,
     P_UPDATE_PC => I_UPDATE_PC,
     P_UPDATE_SP => I_UPDATE_SP,
     P_LOAD_IR   => I_LOAD_IR,
@@ -224,7 +224,6 @@ begin
     P_SELECT_A  => I_SELECT_A,
     P_SELECT_D  => I_SELECT_D,
     P_SELECT_W  => I_SELECT_W,
-    P_SELECT_B  => I_SELECT_B,
     P_ALU_START => I_ALU_START,
     P_ALU_ZDIV  => I_ZDIV,
     P_BUSY      => I_ALU_BUSY,
@@ -286,9 +285,9 @@ begin
                "00000000" & P_DIN(15 downto 8)          when others;
   
   --- MUX B
-  with I_SELECT_B select
-    I_ALU_B <= I_REG_DR        when '0',
-               I_RX            when others;
+  with I_INST_OP2 select
+    I_ALU_B <= I_RX         when "100",
+               I_REG_DR     when others;
 
   --- EA
   with I_INST_OP2 select
