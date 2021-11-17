@@ -210,12 +210,13 @@ begin
               or I_NEXT = S_CALL or I_NEXT = S_IN1))
             or I_STATE = S_ALU1 or I_STATE = S_ST1 else
     -- PC <- Din
-    "110" when I_STATE = S_INTR3 or I_STATE = S_RETI2 or I_STATE = S_RET else
+    "110" when I_STATE = S_INTR3 or I_STATE = S_INTR4
+            or I_STATE = S_RETI2 or I_STATE = S_RET else
     -- PC <- EA
     "111" when
             (I_STATE = S_DEC2 and I_JMP_GO = '1') -- JMP
             or I_STATE = S_CALL else -- CALL
-    "000";
+    "000"; -- 保持
   
   P_UPDATE_SP <=
     -- SP += 2
@@ -224,7 +225,7 @@ begin
     -- SP -= 2
     "10"  when I_STATE = S_INTR1 or I_STATE = S_INTR2
             or I_STATE = S_CALL  or I_STATE = S_PUSH else
-    "00";
+    "00"; -- 保持
   
   P_LOAD_IR <= '1' when I_STATE = S_FETCH else '0';
 
@@ -232,25 +233,25 @@ begin
     '1' when I_STATE = S_FETCH
           or (I_STATE = S_DEC1 and P_OP2 /= "011" and P_OP2 /= "101")
           or I_STATE = S_DEC2 else
-    '0';
+    '0'; -- 保持
   
   -- ADD, SUB, ..., SHRL ではフラグが変化する
   P_LOAD_FLAG <=
     '1' when
       (I_STATE = S_ALU1 or I_STATE = S_ALU2) and P_OP1 /= "00001" else
-    '0';
+    '0'; -- 保持
   
   P_LOAD_TMP <=
     '1' when
       I_STATE = S_FETCH and P_INTR = '1' and P_STOP = '0' else
-    '0';
+    '0'; -- 保持
   
   P_LOAD_GR <=
     '1' when (I_STATE = S_DEC1 and I_IS_SHORT = '1' and I_IS_ALU = '1')
           or I_STATE = S_ALU2
           or I_STATE = S_IN1 or I_STATE = S_IN2
           or I_STATE = S_RETI3 else
-    '0';
+    '0'; -- 保持
   
   -- AOUT
   P_SELECT_A <=
