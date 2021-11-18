@@ -124,7 +124,8 @@ component TAC_CPU_SEQUENCER is
   P_RW          : out std_logic;                     -- Read/Write
   P_SVC         : out std_logic;                     -- Super Visor Call
   P_PRIVIO      : out std_logic;                     -- Privilege Violation
-  P_VR          : out std_logic                      -- Vector Fetch
+  P_VR          : out std_logic;                     -- Vector Fetch
+  P_CON         : out std_logic_vector(1 downto 0)   -- Console
   );
 end component;
 
@@ -184,6 +185,7 @@ signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
 signal I_VR          : std_logic;                     -- Vector Fetch
 signal I_ZDIV        : std_logic;                     -- Zero Division
+signal I_CON         : std_logic_vector(1 downto 0);  -- Console
 
 begin
   
@@ -238,7 +240,8 @@ begin
     P_RW        => P_RW,
     P_SVC       => P_SVC,
     P_PRIVIO    => P_PRIVIO,
-    P_VR        => I_VR
+    P_VR        => I_VR,
+    P_CON       => I_CON
   );
 
   -- ポート
