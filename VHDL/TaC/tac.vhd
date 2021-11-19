@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011-2019 by
+-- Copyright (C) 2011-2021 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2021.11.19 : TaC-CPU V3 対応
 -- 2019.12.19 : CPU停止時（コンソール動作時）はアドレス変換禁止
 -- 2019.08.27 : PIO からの割込み機能追加
 -- 2019.08.26 : SPI機能の追加のため，PIOのアドレスを18h-1Fhから18h-27hに変更
@@ -156,6 +157,7 @@ signal i_cpu_mr         : std_logic;
 signal i_adr_int        : std_logic;
 signal i_vio_int        : std_logic;
 signal i_ei             : std_logic;
+signal i_con            : std_logic_vector(1 downto 0);
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
@@ -191,12 +193,24 @@ signal i_en_tec         : std_logic;
 signal i_en_mmu         : std_logic;
 signal i_en_ram         : std_logic;
 
--- bus for DMA
-signal i_addr_dma       : std_logic_vector(14 downto 0);
-signal i_dout_dma       : std_logic_vector(15 downto 0);
+-- ram dma bus
+signal i_ain_ram_dma    : std_logic_vector(14 downto 0);
 signal i_dout_ram_dma   : std_logic_vector(15 downto 0);
-signal i_rw_dma         : std_logic;
-signal i_mr_dma         : std_logic;
+signal i_din_ram_dma    : std_logic_vector(15 downto 0);
+signal i_rw_ram_dma     : std_logic;
+signal i_mr_ram_dma     : std_logic;
+
+-- panel dma bus
+signal i_aout_panel_dma : std_logic_vector(14 downto 0);
+signal i_dout_panel_dma : std_logic_vector(15 downto 0);
+signal i_rw_panel_dma   : std_logic;
+
+-- spi dma bus
+signal i_aout_spi_dma   : std_logic_vector(14 downto 0);
+signal i_dout_spi_dma   : std_logic_vector(15 downto 0);
+signal i_rw_spi_dma     : std_logic;
+signal i_mr_spi_dma     : std_logic;
+signal i_idle_spi_dma   : std_logic;
 
 component TAC_INTC is
   port (
@@ -233,7 +247,8 @@ component TAC_CPU
          P_SVC      : out std_logic;                       -- Super Visor Call
          P_ZDIV     : out std_logic;                       -- Zero Division
          P_PRIVIO   : out std_logic;                       -- Privilege Vio.
-         P_INVINST  : out std_logic;                       -- 
+         P_INVINST  : out std_logic;                       -- Invalid Inst.
+         P_CON      : out std_logic_vector(1 downto 0);    -- Console access
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic;                       -- Bus Request
          P_TLBMISS  : in  std_logic                        -- MMU TLB miss
@@ -255,8 +270,15 @@ component TAC_PANEL
          P_MR       : in  std_logic;                       -- memory req.
          P_LI       : in  std_logic;                       -- load instruction
          P_HL       : in  std_logic;                       -- halt instruction
+         P_CON      : in  std_logic_vector(1 downto 0);    -- Console access
          P_STOP     : out std_logic;                       -- stop the cpu
          P_RESET    : out std_logic;                       -- reset [OUTPUT]
+
+         -- DMA BUS
+         P_AOUT_DMA : out std_logic_vector(14 downto 0);
+         P_DIN_DMA  : in  std_logic_vector(15 downto 0);
+         P_DOUT_DMA : out std_logic_vector(15 downto 0);
+         P_RW_DMA   : out std_logic;
 
          -- console switchs(inputs)
          P_DATA_SW  : in std_logic_vector(7 downto 0);     -- data sw.
@@ -335,15 +357,16 @@ component TAC_SPI
          P_IOR     : in  STD_LOGIC;
          P_IOW     : in  STD_LOGIC;
          P_INT     : out std_logic;
-         P_ADDR : in  std_logic_vector (1 downto 0);
-         P_DIN : in  std_logic_vector (15 downto 0);
-         P_DOUT : out  std_logic_vector (15 downto 0);
+         P_ADDR    : in  std_logic_vector (1 downto 0);
+         P_DIN     : in  std_logic_vector (15 downto 0);
+         P_DOUT    : out std_logic_vector (15 downto 0);
 
-         P_ADDR_DMA : out  std_logic_vector (14 downto 0);
+         P_ADDR_DMA : out std_logic_vector (14 downto 0);
          P_DIN_DMA  : in  std_logic_vector (15 downto 0);
          P_DOUT_DMA : out std_logic_vector (15 downto 0);
          P_RW_DMA   : out std_logic;
          P_MR_DMA   : out std_logic;
+         P_IDLE_DMA : out std_logic;
 
          P_SCLK     : out STD_LOGIC;
          P_DI       : in  STD_LOGIC;
@@ -511,6 +534,7 @@ begin
          P_ZDIV     => i_int_bit(11),
          P_PRIVIO   => i_int_bit(12),
          P_INVINST  => i_int_bit(13),
+         P_CON      => i_con,
          P_INTR     => i_intr,
          P_STOP     => i_stop,
          P_TLBMISS  => i_int_bit(15)
@@ -532,7 +556,8 @@ begin
                       (i_addr(2)='1' or i_addr(1)='1')) else '0'; -- f2‾f7
 
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
-               i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
+               i_dout_panel when ((i_ir='1' and i_addr(7 downto 3)="11111")
+                                 or (i_con/="00")) else
                i_dout_tmr0  when (i_ir='1' and i_en_tmr0='1') else
                i_dout_tmr1  when (i_ir='1' and i_en_tmr1='1') else
                ("00000000"&i_dout_sio1) when (i_ir='1' and i_en_sio1='1') else
@@ -560,8 +585,15 @@ begin
          P_MR       => i_mr,
          P_LI       => i_li,
          P_HL       => i_hl,
+         P_CON      => i_con,
          P_STOP     => i_stop,
          P_RESET    => i_reset,
+
+         -- DMA BUS
+         P_AOUT_DMA => i_aout_panel_dma,
+         P_DIN_DMA  => i_dout_ram_dma,
+         P_DOUT_DMA => i_dout_panel_dma,
+         P_RW_DMA   => i_rw_panel_dma,
 
          -- console switchs(inputs)
          P_DATA_SW  => P_DATA_SW,
@@ -629,12 +661,21 @@ begin
          P_RW1      => i_rw,
          P_MR1      => i_mr,
          P_BT       => i_bt,
-         P_AIN2     => i_addr_dma,
-         P_DIN2     => i_dout_dma,
+         P_AIN2     => i_ain_ram_dma,
+         P_DIN2     => i_din_ram_dma,
          P_DOUT2    => i_dout_ram_dma,
-         P_RW2      => i_rw_dma,
-         P_MR2      => i_mr_dma
+         P_RW2      => i_rw_ram_dma,
+         P_MR2      => i_mr_ram_dma
   );
+
+  i_ain_ram_dma <= i_aout_spi_dma when i_idle_spi_dma='0' else
+                   i_aout_panel_dma;
+  i_din_ram_dma <= i_dout_spi_dma when i_idle_spi_dma='0' else
+                   i_dout_panel_dma;
+  i_rw_ram_dma  <= i_rw_spi_dma   when i_idle_spi_dma='0' else
+                   i_rw_panel_dma;
+  i_mr_ram_dma  <= i_mr_spi_dma   when i_idle_spi_dma='0' else
+                   '1';
 
   -- I/O
   TAC_SIO1 : TAC_SIO                    -- FT232RL
@@ -702,11 +743,12 @@ begin
          P_DIN      => i_dout_cpu(15 downto 0),
          P_DOUT     => i_dout_spi,
 
-         P_ADDR_DMA => i_addr_dma,
+         P_ADDR_DMA => i_aout_spi_dma,
          P_DIN_DMA  => i_dout_ram_dma,
-         P_DOUT_DMA => i_dout_dma,
-         P_RW_DMA   => i_rw_dma,
-         P_MR_DMA   => i_mr_dma,
+         P_DOUT_DMA => i_dout_spi_dma,
+         P_RW_DMA   => i_rw_spi_dma,
+         P_MR_DMA   => i_mr_spi_dma,
+         P_IDLE_DMA => i_idle_spi_dma,
 
          P_SCLK     => P_SPI_SCLK,
          P_DI       => P_SPI_DIN,
