@@ -61,10 +61,11 @@ entity TAC_CPU is
          P_SVC      : out std_logic;                        -- Super Visor Call
          P_ZDIV     : out std_logic;                        -- Zero Division
          P_PRIVIO   : out std_logic;                        -- Privilege Vio.
-         P_INVINST  : out std_logic;                        -- 
+         P_INVINST  : out std_logic;                        -- Invalid Inst.
+         P_CON      : out std_logic_vector(1 downto 0);     -- Console access
          P_INTR     : in  std_logic;                        -- Intrrupt
          P_STOP     : in  std_logic;                        -- Panel RUN F/F
-         P_TLBMISS  : in std_logic                        -- TLB miss
+         P_TLBMISS  : in std_logic                          -- TLB miss
         );
 end TAC_CPU;
 
@@ -188,7 +189,9 @@ signal I_ZDIV        : std_logic;                     -- Zero Division
 signal I_CON         : std_logic_vector(1 downto 0);  -- Console
 
 begin
-  
+
+  P_CON <= "00";         -- 暫定的な措置
+ 
   ALU : TAC_CPU_ALU
   port map (
     P_CLK       => P_CLK0,

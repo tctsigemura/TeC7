@@ -243,7 +243,7 @@ begin
 
   P_LOAD_DR <=
     '1' when I_NEXT = S_DEC1
-          or (I_STATE = S_DEC1 and I_OP2 /= "010") -- 4bit 定数以外ならロード/破壊
+          or (I_STATE = S_DEC1 and P_OP2 /= "010") -- 4bit 定数以外ならロード/破壊
           or I_STATE = S_DEC2 or I_STATE = S_RETI1
           or I_STATE = S_DEC2 else
     '0'; -- 保持
@@ -316,7 +316,7 @@ begin
   -- Memory Request
   P_MR <=
     '1' when I_NEXT = S_DEC1 or I_NEXT = S_DEC2
-          or I_NEXT = S_ALU1 or (I_NEXT = S_ALU2 and I_INDR = '1')
+          or I_NEXT = S_ALU1 or (I_NEXT = S_ALU2 and I_IS_INDR = '1')
           or I_NEXT = S_ST1 or I_NEXT = S_ST2
           or I_NEXT = S_PUSH or I_NEXT = S_POP
           or I_NEXT = S_CALL or I_NEXT = S_RET or I_STATE = S_RET

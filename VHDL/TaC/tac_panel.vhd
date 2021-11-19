@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2019 by
+-- Copyright (C) 2002-2021 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac_panel.vhd : TaC Console Panel
 --
+-- 2021.11.19 : TaC-CPU V3 対応
 -- 2019.08.30 : 命令フェッチだけでなくデータのアクセスでもBREAKする
 -- 2019.08.30 : MA 選択時も WRITE ができるように変更
 -- 2019.08.05 : パワーオン時に「プ」音を鳴らすために，起動後にリセットし直す
@@ -56,8 +57,15 @@ entity TAC_PANEL is
          P_MR       : in  std_logic;                     -- memory req.
          P_LI       : in  std_logic;                     -- load instruction
          P_HL       : in  std_logic;                     -- halt instruction
+         P_CON      : in  std_logic_vector(1 downto 0);  -- Console access
          P_STOP     : out std_logic;                     -- stop the cpu
          P_RESET    : out std_logic;                     -- reset [OUTPUT]
+
+         -- DMA BUS
+         P_AOUT_DMA : out std_logic_vector(14 downto 0);
+         P_DIN_DMA  : in  std_logic_vector(15 downto 0);
+         P_DOUT_DMA : out std_logic_vector(15 downto 0);
+         P_RW_DMA   : out std_logic;
 
          -- console switchs(inputs)
          P_DATA_SW  : in std_logic_vector(7 downto 0);   -- data sw.
@@ -122,7 +130,11 @@ architecture RTL of TAC_PANEL is
   signal RptCnt2: std_logic_vector(2 downto 0);   -- リピート間隔タイマ
   -- ロータリースイッチの位置表示LEDの点灯パターン
   signal i_leds     : std_logic_vector( 8 downto 0); -- LED
-  
+  -- (address, data LED) に表示する内容
+  signal i_disp     : std_logic_vector(15 downto 0); -- 16bitの表示内容
+  -- CPUに送るレジスタ番号
+  signal i_cpu_pos  : std_logic_vector(4 downto 0);
+
 begin  -- RTL
   -- スイッチのサンプリング用 32ms 周期パルスと 500Hz 方形波を作る
   process(P_CLK)
@@ -297,6 +309,8 @@ begin  -- RTL
         WriteFF <= '1';
       elsif (P_AIN(7 downto 1)="1111111" and P_IR='1' and P_RW='0') then
         WriteFF <= '0';                     -- i/o read FEH
+      elsif (P_CON="01") then
+        WriteFF <= '0';                     -- console
       end if;
     end if;
   end process;
@@ -344,8 +358,14 @@ begin  -- RTL
   end process;
 
   -- (address, data) LED
-  P_A_LED <= DatReg(15 downto 8);
-  P_D_LED <= DatReg( 7 downto 0);
+  i_disp  <= DatReg    when Run='1'     else   -- CPU 実行時は表示機
+             AdrReg    when Pos="10001" else   -- MA  選択時
+             P_DIN_DMA when Pos="10000" else   -- MD  選択時
+             P_DIN;                            -- G0 〜 PC, FLAG 選択時
+  P_A_LED <= i_disp(15 downto 8);
+  P_D_LED <= i_disp( 7 downto 0);
+
+  -- DatReg
   process(Reset, P_CLK)
   begin
     if (Reset='0') then
@@ -358,10 +378,22 @@ begin  -- RTL
   end process;
 
   -- DOUT
+  i_cpu_pos <= "10000" when pos(3 downto 0)="1110" else  -- PC
+               pos(4 downto 0);                          -- G0..FLAG
+
   P_DOUT <=
-    ("000000000000" & FncReg         ) when (P_AIN(2 downto 1)="11") else
-    ("000000000000" & Pos(3 downto 0)) when (P_AIN(2 downto 1)="10") else
-    ( AdrReg(15 downto 1) & '0'      ) when (P_AIN(2 downto 1)="01") else
-    ("00000000" & P_DATA_SW          );  -- (P_AIN(2 downto 1)="00") 
+    ("0000000000" & (WriteFF and not pos(4)) & i_cpu_pos)
+                                         when (P_CON="01")             else
+    (P_DIN(7 downto 0) & P_DATA_SW)      when (P_CON(1)='1')           else
+    ("000000000000" & FncReg         )   when (P_AIN(2 downto 1)="11") else
+    ("000000000000" & Pos(3 downto 0))   when (P_AIN(2 downto 1)="10") else
+    ( AdrReg(15 downto 1) & '0'      )   when (P_AIN(2 downto 1)="01") else
+    ("00000000" & P_DATA_SW          );    -- (P_AIN(2 downto 1)="00") 
   
+  -- DMA
+  P_AOUT_DMA <= AdrReg(15 downto 1);
+  P_DOUT_DMA <= P_DIN_DMA(7 downto 0) & P_DATA_SW;
+  P_RW_DMA   <= '1' when P_CON="01" and WriteFF='1' else '0';
+
 end RTL;
+

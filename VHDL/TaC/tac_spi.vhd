@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011 - 2019 by
+-- Copyright (C) 2011 - 2021 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac_spi.vhd : TaC SPI
 --
+-- 2021.11.18 : Idle を外部に引き出す
 -- 2019.08.07 : レジスタ長が長すぎて使用していないビットの警告を消す
 -- 2019.02.16 : 前回の変更箇所で P_CD をセンシビリティリストに追加忘れ訂正
 -- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
@@ -40,21 +41,22 @@ use IEEE.std_logic_UNSIGNED.ALL;
 
 entity TAC_SPI is
   Port ( P_CLK    : in  std_logic;
-         P_RESET    : in  std_logic;
-         P_EN      : in  std_logic;
+         P_RESET  : in  std_logic;
+         P_EN     : in  std_logic;
          P_IOR    : in  std_logic;
          P_IOW    : in  std_logic;
          P_INT    : out std_logic;
-         P_ADDR    : in  std_logic_vector( 1 downto 0);
+         P_ADDR   : in  std_logic_vector( 1 downto 0);
          P_DIN    : in  std_logic_vector(15 downto 0);  -- from CPU
-         P_DOUT    : out std_logic_vector(15 downto 0);  -- to CPU
+         P_DOUT   : out std_logic_vector(15 downto 0);  -- to CPU
        
          -- DMA関連
          P_ADDR_DMA  : out std_logic_vector(14 downto 0);
-         P_DIN_DMA  : in  std_logic_vector(15 downto 0);
+         P_DIN_DMA   : in  std_logic_vector(15 downto 0);
          P_DOUT_DMA  : out std_logic_vector(15 downto 0);
          P_RW_DMA    : out std_logic;
          P_MR_DMA    : out std_logic;
+         P_IDLE_DMA  : out std_logic;
        
          -- uSD端子
          P_SCLK    : out std_logic;
@@ -179,6 +181,7 @@ begin
 
   -- アイドル
   Idle <= (not Processing) and (not Error);
+  P_IDLE_DMA <= Idle;                                -- DMA を使用していない
 
   -- 割込み(エッジトリガー、１パルス出力)
 --P_INT <= (Idle or Error) and Int_Ena;
