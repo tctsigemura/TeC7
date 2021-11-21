@@ -185,12 +185,8 @@ signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
 signal I_VR          : std_logic;                     -- Vector Fetch
 signal I_ZDIV        : std_logic;                     -- Zero Division
-signal I_CON         : std_logic_vector(1 downto 0);  -- Console
 
 begin
-
-  P_CON <= "00";         -- 暫定的な措置
- 
   ALU : TAC_CPU_ALU
   port map (
     P_CLK       => P_CLK,
@@ -243,7 +239,7 @@ begin
     P_SVC       => P_SVC,
     P_PRIVIO    => P_PRIVIO,
     P_VR        => I_VR,
-    P_CON       => I_CON
+    P_CON       => P_CON
   );
 
   -- ポート
