@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2019 by
+-- Copyright (C) 2002-2021 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -19,6 +19,7 @@
 --
 -- tec7.vhd : TeC7 Top Level
 --
+-- 2021.11.20 : 90度遅れの49.152MHzを廃止
 -- 2019.07.26 : IBUFG の警告を消す
 -- 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
 -- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
@@ -106,8 +107,7 @@ signal i_mode        : std_logic_vector (2 downto 0);  -- mode
 signal i_locked      : std_logic;
 signal i_2_4576MHz   : std_logic;
 signal i_9_8304MHz   : std_logic;
-signal i_49_152MHz0  : std_logic;
-signal i_49_152MHz90 : std_logic;
+signal i_49_152MHz   : std_logic;
 
 signal i_in          : std_logic_vector(27 downto 1);
 signal i_in_tec      : std_logic_vector(27 downto 1);
@@ -142,8 +142,7 @@ signal i_tec_ena     : std_logic;
 
 component DCM
     Port ( P_CLK_IN      : in    std_logic;  -- 9.8304MHz
-           P_49_152MHz0  : out   std_logic;
-           P_49_152MHz90 : out   std_logic;
+           P_49_152MHz   : out   std_logic;
            P_2_4576MHz   : out   std_logic;
            P_LOCKED      : out   std_logic
          );
@@ -205,8 +204,7 @@ component TEC
 end component;
 
 component TAC
-    Port ( P_CLK0     : in std_logic;                         -- 49.152MHz 0'
-           P_CLK90    : in std_logic;                         -- 49.152MHz 90'
+    Port ( P_CLK      : in std_logic;                         -- 49.152MHz
            P_MODE     : in std_logic_vector(2 downto 0);      -- 0:TeC,1:TaC,
            P_RESET    : in std_logic;                         -- 2,3:Demo1,2
 
@@ -286,11 +284,10 @@ begin
     port map ( O => i_9_8304MHz, I => CLK_IN );
      
   DCM1 : DCM
-    port map ( P_CLK_IN      => i_9_8304MHz,
-               P_49_152MHz0  => i_49_152MHz0,
-               P_49_152MHz90 => i_49_152MHz90,
-               P_2_4576MHz   => i_2_4576MHz,
-               P_LOCKED      => i_locked
+    port map ( P_CLK_IN    => i_9_8304MHz,
+               P_49_152MHz => i_49_152MHz,
+               P_2_4576MHz => i_2_4576MHz,
+               P_LOCKED    => i_locked
              );
 
   -- Determin TeC/TaC/DEMO1/DEMO2/RESET mode
@@ -303,9 +300,9 @@ begin
              );
 
   -- Synchronize TaC reset with TaC clock
-  process(i_49_152MHz0)
+  process(i_49_152MHz)
     begin
-      if (i_49_152MHz0'event and i_49_152MHz0='1') then
+      if (i_49_152MHz'event and i_49_152MHz='1') then
         i_reset_tac <= i_reset_tec;
       end if;
     end process;
@@ -411,8 +408,7 @@ begin
 
   TAC1 : TAC
     port map (
-         P_CLK0     => i_49_152MHz0,                        -- 49.152MHz 0'
-         P_CLK90    => i_49_152MHz90,                       -- 49.152MHz 90'
+         P_CLK      => i_49_152MHz,                         -- 49.152MHz
          P_MODE     => i_mode,                              -- 0:TeC 1:TaC
          P_RESET    => i_reset_tac,
 

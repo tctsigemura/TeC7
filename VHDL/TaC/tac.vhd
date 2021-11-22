@@ -21,6 +21,7 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2021.11.20 : 90度遅れの49.152MHzを廃止
 -- 2021.11.19 : TaC-CPU V3 対応
 -- 2019.12.19 : CPU停止時（コンソール動作時）はアドレス変換禁止
 -- 2019.08.27 : PIO からの割込み機能追加
@@ -57,8 +58,7 @@ use UNISIM.vcomponents.all;
 
 entity TAC is
   port (
-         P_CLK0       : in   std_logic;                      -- 49.1520MHz 0'
-         P_CLK90      : in   std_logic;                      -- 49.1520MHz 90'
+         P_CLK        : in   std_logic;                      -- 49.1520MHz
          P_MODE       : in   std_logic_vector(2 downto 0);   -- 0:TeC,1:TaC
          P_RESET      : in   std_logic;                      --   2,3:DEMO1,2
 
@@ -228,8 +228,7 @@ end component;
 
 component TAC_CPU
   port (
-         P_CLK0     : in  std_logic;                       -- Clock
-         P_CLK90    : in  std_logic;
+         P_CLK      : in  std_logic;                       -- Clock
          P_RESET    : in  std_logic;                       -- Reset
 
          P_ADDR     : out std_logic_vector(15 downto 0);   -- ADDRESS BUS
@@ -485,11 +484,11 @@ begin
   -- 割込み許可信号
   i_ei <= '1'; --TODO: 設定する
 
-  process(P_CLK0, P_RESET)
+  process(P_CLK, P_RESET)
     begin
       if (P_RESET='0') then
         i_cnt16 <= "0000000000000000";
-      elsif (P_CLK0'event and P_CLK0='1') then
+      elsif (P_CLK'event and P_CLK='1') then
         if (i_1kHz='1') then
           i_cnt16 <= "0000000000000000";
         else
@@ -501,7 +500,7 @@ begin
   -- Interrupt controller
   TAC_INTC1 : TAC_INTC
     port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
 
          P_DOUT     => i_dout_intc,
@@ -514,8 +513,7 @@ begin
   -- TaC CPU
   TAC_CPU1 : TAC_CPU
   port map (
-         P_CLK0     => P_CLK0,
-         P_CLK90    => P_CLK90,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
 
          P_ADDR     => i_cpu_addr,
@@ -572,7 +570,7 @@ begin
   -- TaC PANEL
   TAC_PANEL1 : TAC_PANEL
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET_IN => P_RESET,
          P_1kHz     => i_1kHz,
 
@@ -627,7 +625,7 @@ begin
 
   TAC_MMU1: TAC_MMU
   port map (
-         P_CLK         => P_CLK0,
+         P_CLK         => P_CLK,
          P_RESET       => i_reset,
          P_EN          => i_en_mmu,
          P_IOW         => i_iow,
@@ -651,7 +649,7 @@ begin
   -- RAM
   TAC_RAM1 : TAC_RAM
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_IOE      => i_en_ram,
          P_IOW      => i_iow,
@@ -680,7 +678,7 @@ begin
   -- I/O
   TAC_SIO1 : TAC_SIO                    -- FT232RL
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_IOW      => i_iow,
          P_IOR      => i_ior,
@@ -696,7 +694,7 @@ begin
 
   TAC_SIO2 : TAC_SIO                    -- TeC
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_IOW      => i_iow,
          P_IOR      => i_ior,
@@ -712,7 +710,7 @@ begin
 
   TAC_RN1 : TAC_RN4020                    -- Bluetooth
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_IOW      => i_iow,
          P_IOR      => i_ior,
@@ -733,7 +731,7 @@ begin
 
   TAC_SPI1 : TAC_SPI
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_EN       => i_en_spi,
          P_IOR      => i_ior,
@@ -760,7 +758,7 @@ begin
 
   TAC_PIO1 : TAC_PIO
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_EN       => i_en_pio,
 --       P_IOR      => i_ior,
@@ -779,7 +777,7 @@ begin
 
   TAC_TIMER0: TAC_TIMER
   port map (
-      P_CLK         => P_CLK0,
+      P_CLK         => P_CLK,
       P_RESET       => i_reset,
       P_EN          => i_en_tmr0,
       P_IOR         => i_ior,
@@ -794,7 +792,7 @@ begin
 
   TAC_TIMER1: TAC_TIMER
   port map (
-      P_CLK         => P_CLK0,
+      P_CLK         => P_CLK,
       P_RESET       => i_reset,
       P_EN          => i_en_tmr1,
       P_IOR         => i_ior,
@@ -809,7 +807,7 @@ begin
 
   TAC_TEC1: TAC_TEC
   port map (
-      P_CLK         => P_CLK0,
+      P_CLK         => P_CLK,
       P_RESET       => i_reset,
       P_EN          => i_en_tec,
 --    P_IOR         => i_ior,

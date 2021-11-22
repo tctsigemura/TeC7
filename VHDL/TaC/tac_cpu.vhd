@@ -41,8 +41,7 @@ use IEEE.std_logic_unsigned.all;
 library work;
 
 entity TAC_CPU is
-  port ( P_CLK0     : in  std_logic;                        -- Clock
-         P_CLK90    : in  std_logic;
+  port ( P_CLK      : in  std_logic;                        -- Clock
          P_RESET    : in  std_logic;                        -- Reset
 
          P_ADDR     : out std_logic_vector(15 downto 0);    -- ADDRESS BUS
@@ -186,15 +185,11 @@ signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
 signal I_VR          : std_logic;                     -- Vector Fetch
 signal I_ZDIV        : std_logic;                     -- Zero Division
-signal I_CON         : std_logic_vector(1 downto 0);  -- Console
 
 begin
-
-  P_CON <= "00";         -- 暫定的な措置
- 
   ALU : TAC_CPU_ALU
   port map (
-    P_CLK       => P_CLK0,
+    P_CLK       => P_CLK,
     P_RESET     => P_RESET,
     P_START     => I_ALU_START,
     P_OP1       => I_INST_OP1,
@@ -211,7 +206,7 @@ begin
 
   SEQUENCER : TAC_CPU_SEQUENCER
   port map (
-    P_CLK       => P_CLK0,
+    P_CLK       => P_CLK,
     P_RESET     => P_RESET,
     P_STOP      => P_STOP,
     P_INTR      => P_INTR,
@@ -244,7 +239,7 @@ begin
     P_SVC       => P_SVC,
     P_PRIVIO    => P_PRIVIO,
     P_VR        => I_VR,
-    P_CON       => I_CON
+    P_CON       => P_CON
   );
 
   -- ポート
@@ -300,9 +295,7 @@ begin
     I_EA <= I_REG_DR                when "000",
             I_REG_DR + I_RX         when "001",
             I_REG_GR(12) + (I_REG_DR(14 downto 0) & "0") when "011",
-            I_RX                    when "110",
-            I_RX                    when "111",
-            I_RD                    when others;
+            I_RX                    when others;
 
   -- 信号の設定
   I_SP <= I_REG_SSP when I_FLAG_P='1' else I_REG_USP;
@@ -322,13 +315,13 @@ begin
   -- レジスタの制御
 
   --- GR の書き込み制御
-  process(P_CLK0, P_RESET)
+  process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
       for i in 0 to 12 loop
         I_REG_GR(i) <= (others => '0');
       end loop;
-    elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_GR='1') then
+    elsif (P_CLK' event and P_CLK='1' and I_LOAD_GR='1') then
       if I_INST_RD <= "1100" then
         I_REG_GR(conv_integer(I_INST_RD)) <= I_ALU_OUT;
       end if;
@@ -345,11 +338,11 @@ begin
                 '0';
   
   -- SSP の書き込み制御
-  process(P_CLK0, P_RESET)
+  process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
       I_REG_SSP <= (others => '0');
-    elsif (P_CLK0'event and P_CLK0='1') then
+    elsif (P_CLK'event and P_CLK='1') then
       if (I_LOAD_SP='1' and I_FLAG_P='1') then
         I_REG_SSP <= I_SP_IN;
       end if;
@@ -357,11 +350,11 @@ begin
   end process;
   
   -- USP の書き込み制御
-  process(P_CLK0, P_RESET)
+  process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
       I_REG_USP <= (others => '0');
-    elsif (P_CLK0'event and P_CLK0='1') then
+    elsif (P_CLK'event and P_CLK='1') then
       if (I_LOAD_SP='1' and I_FLAG_P='0') then
         I_REG_USP <= I_SP_IN;
       elsif (I_LOAD_GR='1' and I_INST_RD="1110") then
@@ -371,16 +364,16 @@ begin
   end process;
 
   --- DR の書き込み制御
-  process(P_CLK0, P_RESET) begin
+  process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
       I_REG_DR <= (others => '0');
-    elsif (P_CLK0' event and P_CLK0='1' and I_LOAD_DR='1') then
+    elsif (P_CLK' event and P_CLK='1' and I_LOAD_DR='1') then
       I_REG_DR <= I_DR_IN;
     end if;
   end process;
       
   --- FLAG の書き込み制御
-  process(P_CLK0, P_RESET) begin
+  process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
       I_FLAG_E <= '0';
       I_FLAG_P <= '1';
@@ -389,7 +382,7 @@ begin
       I_FLAG_C <= '0';
       I_FLAG_S <= '0';
       I_FLAG_Z <= '0';
-    elsif (P_CLK0'event and P_CLK0='1') then
+    elsif (P_CLK'event and P_CLK='1') then
       if (I_LOAD_GR='1' and I_INST_RD="1111") then
         if (I_FLAG_P='1') then
           I_FLAG_E <= I_ALU_OUT(7);
@@ -410,10 +403,10 @@ begin
   end process;
   
   -- PC の書き込み制御
-  process(P_CLK0, P_RESET) begin
+  process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
       I_REG_PC <= (others => '0');
-    elsif (P_CLK0'event and P_CLK0='1') then
+    elsif (P_CLK'event and P_CLK='1') then
       if (I_VR='1') then
         I_REG_PC <= P_DIN;  -- 割込みベクタのアドレス
       else
@@ -429,10 +422,10 @@ begin
   end process;
 
   -- TMP の書き込み制御
-  process(P_CLK0, P_RESET) begin
+  process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
       I_REG_TMP <= (others => '0');
-    elsif (P_CLK0'event and P_CLK0='1') then
+    elsif (P_CLK'event and P_CLK='1') then
       if (I_LOAD_TMP='1') then
         I_REG_TMP <= I_FLAG;
       end if;
@@ -440,13 +433,13 @@ begin
   end process;
 
   -- IR の書き込み制御
-  process(P_CLK0, P_RESET) begin
+  process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
       I_INST_OP1 <= "00000";
       I_INST_OP2 <= "000";
       I_INST_RD <= "0000";
       I_INST_RX <= "0000";
-    elsif (P_CLK0'event and P_CLK0='1') then
+    elsif (P_CLK'event and P_CLK='1') then
       if (I_LOAD_IR='1') then
         I_INST_OP1 <= P_DIN(15 downto 11);
         I_INST_OP2 <= P_DIN(10 downto 8);
