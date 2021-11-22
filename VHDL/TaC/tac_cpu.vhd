@@ -295,9 +295,7 @@ begin
     I_EA <= I_REG_DR                when "000",
             I_REG_DR + I_RX         when "001",
             I_REG_GR(12) + (I_REG_DR(14 downto 0) & "0") when "011",
-            I_RX                    when "110",
-            I_RX                    when "111",
-            I_RD                    when others;
+            I_RX                    when others;
 
   -- 信号の設定
   I_SP <= I_REG_SSP when I_FLAG_P='1' else I_REG_USP;
