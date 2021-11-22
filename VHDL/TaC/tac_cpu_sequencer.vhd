@@ -104,6 +104,7 @@ constant S_CON3  : std_logic_vector(4 downto 0) := "11111";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
 signal   I_NEXT      : std_logic_vector(4 downto 0);
+signal   I_WAIT      : std_logic; -- MR, IR が出た時、 1 クロック分待つため
 
 signal   I_IS_INDR   : std_logic; -- アドレッシングモードがFP相対か（バイト）レジスタインダイレクト
 signal   I_IS_SHORT  : std_logic; -- アドレッシングモードがレジスタレジスタかショートイミディエイト
@@ -195,10 +196,25 @@ begin
   begin
     if (P_RESET='0') then
       I_STATE <= S_FETCH;
-    elsif (P_CLK'event and P_CLK='1') then
+    elsif (P_CLK'event and P_CLK='1' and I_WAIT='0') then
       I_STATE <= I_NEXT;
     end if;
   end process;
+
+  -- I_WAIT の制御
+  process (P_CLK, P_RESET)
+  begin
+    if (P_RESET='0') then
+      I_WAIT <= '0';
+    elsif (P_CLK'event and P_CLK='1') then
+      if (I_WAIT = '0' and (P_IR = '1' or P_MR = '1')) then
+        I_WAIT <= '1';
+      else
+        I_WAIT <= '0';
+      end if;
+    end if;
+  end process;
+
   
   -- 信号に出力する内容をステートによって決める
 

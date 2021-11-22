@@ -158,6 +158,8 @@ signal I_INST_RX     : std_logic_vector(3 downto 0);  -- 命令の Rx
 -- 内部配線
 signal I_ADDR        : Word;                          -- アドレス出力
 signal I_DOUT        : Word;                          -- データ出力
+signal I_REG_ADDR    : Word;                          -- アドレス出力
+signal I_REG_DOUT    : Word;                          -- データ出力
 signal I_EA          : Word;                          -- 実効アドレス
 signal I_SP          : Word;                          -- スタックポインタ (カーネルモードとユーザーモードで切り替える)
 signal I_RD          : Word;                          -- GR[Rd]
@@ -243,8 +245,8 @@ begin
   );
 
   -- ポート
-  P_ADDR <= I_ADDR;
-  P_DOUT <= I_DOUT;
+  P_ADDR <= I_REG_ADDR;
+  P_DOUT <= I_REG_DOUT;
   P_LI   <= I_LOAD_IR;
   P_VR   <= I_VR;
   P_HL   <= '0'; -- TODO
@@ -313,6 +315,24 @@ begin
   I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
   
   -- レジスタの制御
+
+  --- ADDR の書き込み制御
+  process(P_CLK, P_RESET) begin
+    if (P_RESET='0') then
+      I_REG_ADDR <= (others => '0');
+    elsif (P_CLK' event and P_CLK='1') then
+      I_REG_ADDR <= I_ADDR;
+    end if;
+  end process;
+
+  --- DOUT の書き込み制御
+  process(P_CLK, P_RESET) begin
+    if (P_RESET='0') then
+      I_REG_DOUT <= (others => '0');
+    elsif (P_CLK' event and P_CLK='1') then
+      I_REG_DOUT <= I_DOUT;
+    end if;
+  end process;
 
   --- GR の書き込み制御
   process(P_CLK, P_RESET)
