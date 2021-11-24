@@ -57,7 +57,7 @@ entity TAC_PANEL is
          P_MR       : in  std_logic;                     -- memory req.
          P_LI       : in  std_logic;                     -- load instruction
          P_HL       : in  std_logic;                     -- halt instruction
-         P_CON      : in  std_logic_vector(1 downto 0);  -- Console access
+         P_CON      : in  std_logic_vector(2 downto 0);  -- Console access
          P_STOP     : out std_logic;                     -- stop the cpu
          P_RESET    : out std_logic;                     -- reset [OUTPUT]
 
@@ -309,7 +309,7 @@ begin  -- RTL
         WriteFF <= '1';
       elsif (P_AIN(7 downto 1)="1111111" and P_IR='1' and P_RW='0') then
         WriteFF <= '0';                     -- i/o read FEH
-      elsif (P_CON="01") then
+      elsif (P_CON="111") then
         WriteFF <= '0';                     -- console
       end if;
     end if;
@@ -383,7 +383,7 @@ begin  -- RTL
 
   P_DOUT <=
     ("0000000000" & (WriteFF and not pos(4)) & i_cpu_pos)
-                                         when (P_CON="01")             else
+                                         when (P_CON="100")            else
     (P_DIN(7 downto 0) & P_DATA_SW)      when (P_CON(1)='1')           else
     ("000000000000" & FncReg         )   when (P_AIN(2 downto 1)="11") else
     ("000000000000" & Pos(3 downto 0))   when (P_AIN(2 downto 1)="10") else
@@ -393,7 +393,7 @@ begin  -- RTL
   -- DMA
   P_AOUT_DMA <= AdrReg(15 downto 1);
   P_DOUT_DMA <= P_DIN_DMA(7 downto 0) & P_DATA_SW;
-  P_RW_DMA   <= '1' when P_CON="01" and WriteFF='1' else '0';
+  P_RW_DMA   <= '1' when P_CON="111" and WriteFF='1' else '0';
 
 end RTL;
 

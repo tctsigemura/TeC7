@@ -61,7 +61,7 @@ entity TAC_CPU is
          P_ZDIV     : out std_logic;                        -- Zero Division
          P_PRIVIO   : out std_logic;                        -- Privilege Vio.
          P_INVINST  : out std_logic;                        -- Invalid Inst.
-         P_CON      : out std_logic_vector(1 downto 0);     -- Console access
+         P_CON      : out std_logic_vector(2 downto 0);     -- Console access
          P_INTR     : in  std_logic;                        -- Intrrupt
          P_STOP     : in  std_logic;                        -- Panel RUN F/F
          P_TLBMISS  : in std_logic                          -- TLB miss
@@ -125,7 +125,7 @@ component TAC_CPU_SEQUENCER is
   P_SVC         : out std_logic;                     -- Super Visor Call
   P_PRIVIO      : out std_logic;                     -- Privilege Violation
   P_VR          : out std_logic;                     -- Vector Fetch
-  P_CON         : out std_logic_vector(1 downto 0)   -- Console
+  P_CON         : out std_logic_vector(2 downto 0)   -- Console
   );
 end component;
 
@@ -155,13 +155,21 @@ signal I_INST_OP2    : std_logic_vector(2 downto 0);  -- 命令の OP2
 signal I_INST_RD     : std_logic_vector(3 downto 0);  -- 命令の Rd
 signal I_INST_RX     : std_logic_vector(3 downto 0);  -- 命令の Rx
 
+-- 外部バスへの出力を保持するレジスタ
+signal I_REG_ADDR    : Word;                          -- アドレス
+signal I_REG_DOUT    : Word;                          -- データ
+signal I_REG_MR      : std_logic;                     -- MR
+signal I_REG_IR      : std_logic;                     -- IR
+signal I_REG_RW      : std_logic;                     -- RW
+
 -- 内部配線
-signal I_ADDR        : Word;                          -- アドレス出力
-signal I_DOUT        : Word;                          -- データ出力
-signal I_REG_ADDR    : Word;                          -- アドレス出力
-signal I_REG_DOUT    : Word;                          -- データ出力
+signal I_ADDR        : Word;                          -- アドレス
+signal I_DOUT        : Word;                          -- データ
+signal I_MR          : std_logic;                     -- MR
+signal I_IR          : std_logic;                     -- IR
+signal I_RW          : std_logic;                     -- RW
 signal I_EA          : Word;                          -- 実効アドレス
-signal I_SP          : Word;                          -- スタックポインタ (カーネルモードとユーザーモードで切り替える)
+signal I_SP          : Word;                          -- 現在のSPの値
 signal I_RD          : Word;                          -- GR[Rd]
 signal I_RX          : Word;                          -- GR[Rx]
 signal I_DR_IN       : Word;                          -- DR への入力
@@ -235,9 +243,9 @@ begin
     P_FLAG_S    => I_FLAG_S,
     P_FLAG_P    => I_FLAG_P,
     P_TLBMISS   => P_TLBMISS,
-    P_MR        => P_MR,
-    P_IR        => P_IR,
-    P_RW        => P_RW,
+    P_MR        => I_MR,
+    P_IR        => I_IR,
+    P_RW        => I_RW,
     P_SVC       => P_SVC,
     P_PRIVIO    => P_PRIVIO,
     P_VR        => I_VR,
@@ -247,6 +255,9 @@ begin
   -- ポート
   P_ADDR <= I_REG_ADDR;
   P_DOUT <= I_REG_DOUT;
+  P_MR   <= I_REG_MR;
+  P_IR   <= I_REG_IR;
+  P_RW   <= I_REG_RW;
   P_LI   <= I_LOAD_IR;
   P_VR   <= I_VR;
   P_HL   <= '0'; -- TODO
@@ -312,25 +323,25 @@ begin
           I_FLAG     when I_INST_RX="1111" else
           I_REG_GR(conv_integer(I_INST_RX));
   
-  I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
+  I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0'
+                       & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
   
   -- レジスタの制御
 
-  --- ADDR の書き込み制御
+  --- 外部バスへの出力
   process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
       I_REG_ADDR <= (others => '0');
+      I_REG_DOUT <= (others => '0');
+      I_REG_MR       <= '0';
+      I_REG_IR       <= '0';
+      I_REG_RW       <= '0';
     elsif (P_CLK' event and P_CLK='1') then
       I_REG_ADDR <= I_ADDR;
-    end if;
-  end process;
-
-  --- DOUT の書き込み制御
-  process(P_CLK, P_RESET) begin
-    if (P_RESET='0') then
-      I_REG_DOUT <= (others => '0');
-    elsif (P_CLK' event and P_CLK='1') then
       I_REG_DOUT <= I_DOUT;
+      I_REG_MR   <= I_MR;
+      I_REG_IR   <= I_IR;
+      I_REG_RW   <= I_RW;
     end if;
   end process;
 
