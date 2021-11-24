@@ -106,6 +106,9 @@ signal   I_STATE     : std_logic_vector(4 downto 0);
 signal   I_NEXT      : std_logic_vector(4 downto 0);
 signal   I_WAIT      : std_logic; -- MR, IR が出た時、 1 クロック分待つため
 
+signal   I_IR        : std_logic;
+signal   I_MR        : std_logic;
+
 signal   I_IS_INDR   : std_logic; -- アドレッシングモードがFP相対か（バイト）レジスタインダイレクト
 signal   I_IS_SHORT  : std_logic; -- アドレッシングモードがレジスタレジスタかショートイミディエイト
 signal   I_IS_ALU    : std_logic; -- LD~SHRL (ST以外)
@@ -207,7 +210,7 @@ begin
     if (P_RESET='0') then
       I_WAIT <= '0';
     elsif (P_CLK'event and P_CLK='1') then
-      if (I_WAIT = '0' and (P_IR = '1' or P_MR = '1')) then
+      if (I_WAIT = '0' and (I_IR = '1' or I_MR = '1')) then
         I_WAIT <= '1';
       else
         I_WAIT <= '0';
@@ -330,7 +333,8 @@ begin
     '1' when I_NEXT = S_ALU1 or I_NEXT = S_ALU2 else '0';
 
   -- Memory Request
-  P_MR <=
+  P_MR <= I_MR;
+  I_MR <=
     '1' when I_NEXT = S_DEC1 or I_NEXT = S_DEC2
           or I_NEXT = S_ALU1 or (I_NEXT = S_ALU2 and I_IS_INDR = '1')
           or I_NEXT = S_ST1 or I_NEXT = S_ST2
@@ -341,7 +345,8 @@ begin
     '0';
 
   -- I/O Request
-  P_IR <=
+  P_IR <= I_IR;
+  I_IR <=
     '1' when I_NEXT = S_IN1 or I_NEXT = S_IN2
           or ((I_STATE = S_DEC1 or I_STATE = S_DEC2)
             and I_NEXT = S_FETCH and P_OP1 = "10111") else
