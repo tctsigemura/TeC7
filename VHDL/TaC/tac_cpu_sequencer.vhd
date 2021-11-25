@@ -37,7 +37,7 @@ entity TAC_CPU_SEQUENCER is
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
   P_RD          : in std_logic_vector(3 downto 0);   -- 命令の Rd
-  P_ADDR        : in std_logic_vector(15 downto 0);  -- アドレス
+  P_ADDR0       : in std_logic;                      -- アドレスの最下位
   P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
   P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
   P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -114,17 +114,15 @@ signal   I_IS_INDR   : std_logic; -- アドレッシングモードがFP相対�
 signal   I_IS_SHORT  : std_logic; -- アドレッシングモードがレジスタレジスタかショートイミディエイト
 signal   I_IS_ALU    : std_logic; -- LD~SHRL (ST以外)
 signal   I_JMP_GO    : std_logic; -- JMP, CALL が成立するとき
-signal   I_IS_MUL    : std_logic; -- MUL
-signal   I_IS_DIV    : std_logic; -- DIV, MOD
 
 begin
   
-  -- LD, ADD, SUB, CMP, AND, OR, XOR, ADDS, MUL, DIV, MOD, MULL, DIVL, SHLA, SHLL, SHRA, SHRL
-  I_IS_ALU    <= '1' when P_OP1 /= "00000" and P_OP1 /= "00010" and P_OP1(4 downto 2) <= "100" else '0';
+  -- LD,ADD,SUB,CMP,AND,OR,XOR,ADDS,MUL,DIV,MOD,SHLA,SHLL,SHRA,SHRL
+  I_IS_ALU    <= '1' when P_OP1 /= "00000" and P_OP1 /= "00010"
+                          and P_OP1(4 downto 2) <= "100" else '0';
   I_IS_INDR   <= '1' when P_OP2 = "011" or P_OP2(2 downto 1) = "11" else '0';
   I_IS_SHORT  <= '1' when P_OP2(2 downto 1) = "10" else '0';
-  I_IS_MUL    <= '1' when P_OP1 = "01010" else '0';
-  I_IS_DIV    <= '1' when P_OP1 = "01011" or P_OP1 = "01100" else '0';
+
   -- JMP 命令のとき、 JMP するか
   I_JMP_GO    <=
     '1' when P_OP1 = "10100"
@@ -201,8 +199,10 @@ begin
   begin
     if (P_RESET='0') then
       I_STATE <= S_FETCH;
-    elsif (P_CLK'event and P_CLK='1' and I_WAIT='0') then
-      I_STATE <= I_NEXT;
+    elsif (P_CLK'event and P_CLK='1') then
+      if (I_WAIT='0') then
+        I_STATE <= I_NEXT;
+      end if;
     end if;
   end process;
 
@@ -267,7 +267,7 @@ begin
     '1' when I_NEXT = S_DEC1
           or (I_STATE = S_DEC1 and P_OP2 /= "010") -- 4bit 定数以外ならロード/破壊
           or I_STATE = S_DEC2 or I_STATE = S_RETI1
-          or I_STATE = S_DEC2 else
+          or I_STATE = S_DEC2 or I_STATE = S_CON3  else
     '0'; -- 保持
   
   -- ADD, SUB, ..., SHRL ではフラグが変化する
@@ -315,7 +315,7 @@ begin
             or I_NEXT = S_ST1 or I_NEXT = S_ST2
             or I_STATE = S_CON2 else
     -- GR[Rd]>>>8
-    "101" when P_OP2 = "111" and P_ADDR(0) = '0' else
+    "101" when P_OP2 = "111" and P_ADDR0 = '0' else
     -- TMP
     "111" when I_STATE = S_INTR2 else
     -- PC
@@ -326,9 +326,9 @@ begin
     -- S4
     "01" when I_STATE = S_FETCH else
     -- L8
-    "10" when P_OP2 = "111" and P_ADDR(0) = '1' else
+    "10" when P_OP2 = "111" and P_ADDR0 = '1' else
     -- H8
-    "11" when P_OP2 = "111" and P_ADDR(0) = '1' else
+    "11" when P_OP2 = "111" and P_ADDR0 = '1' else
     -- 16
     "00";
   
