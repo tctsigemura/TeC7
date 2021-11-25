@@ -61,7 +61,7 @@ entity TAC_CPU is
          P_ZDIV     : out std_logic;                        -- Zero Division
          P_PRIVIO   : out std_logic;                        -- Privilege Vio.
          P_INVINST  : out std_logic;                        -- Invalid Inst.
-         P_CON      : out std_logic_vector(1 downto 0);     -- Console access
+         P_CON      : out std_logic_vector(2 downto 0);     -- Console access
          P_INTR     : in  std_logic;                        -- Intrrupt
          P_STOP     : in  std_logic;                        -- Panel RUN F/F
          P_TLBMISS  : in std_logic                          -- TLB miss
@@ -99,7 +99,7 @@ component TAC_CPU_SEQUENCER is
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
   P_RD          : in std_logic_vector(3 downto 0);
-  P_ADDR        : in std_logic_vector(15 downto 0);  -- アドレス
+  P_ADDR0       : in std_logic;                      -- アドレスの最下位
   P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
   P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
   P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -125,13 +125,24 @@ component TAC_CPU_SEQUENCER is
   P_SVC         : out std_logic;                     -- Super Visor Call
   P_PRIVIO      : out std_logic;                     -- Privilege Violation
   P_VR          : out std_logic;                     -- Vector Fetch
-  P_CON         : out std_logic_vector(1 downto 0)   -- Console
+  P_CON         : out std_logic_vector(2 downto 0)   -- Console
   );
 end component;
 
 -- レジスタファイル
-type RegGR is array(0 to 12) of Word;
-signal I_REG_GR  : RegGR; -- G0-G11, FP (G12)
+signal I_REG_G0  : Word;  -- G0
+signal I_REG_G1  : Word;  -- G1
+signal I_REG_G2  : Word;  -- G2
+signal I_REG_G3  : Word;  -- G3
+signal I_REG_G4  : Word;  -- G4
+signal I_REG_G5  : Word;  -- G5
+signal I_REG_G6  : Word;  -- G6
+signal I_REG_G7  : Word;  -- G7
+signal I_REG_G8  : Word;  -- G8
+signal I_REG_G9  : Word;  -- G9
+signal I_REG_G10 : Word;  -- G10
+signal I_REG_G11 : Word;  -- G11
+signal I_REG_G12 : Word;  -- G12(FP)
 signal I_REG_SSP : Word;  -- SSP
 signal I_REG_USP : Word;  -- USP
 
@@ -155,13 +166,21 @@ signal I_INST_OP2    : std_logic_vector(2 downto 0);  -- 命令の OP2
 signal I_INST_RD     : std_logic_vector(3 downto 0);  -- 命令の Rd
 signal I_INST_RX     : std_logic_vector(3 downto 0);  -- 命令の Rx
 
+-- 外部バスへの出力を保持するレジスタ
+signal I_REG_ADDR    : Word;                          -- アドレス
+signal I_REG_DOUT    : Word;                          -- データ
+signal I_REG_MR      : std_logic;                     -- MR
+signal I_REG_IR      : std_logic;                     -- IR
+signal I_REG_RW      : std_logic;                     -- RW
+
 -- 内部配線
-signal I_ADDR        : Word;                          -- アドレス出力
-signal I_DOUT        : Word;                          -- データ出力
-signal I_REG_ADDR    : Word;                          -- アドレス出力
-signal I_REG_DOUT    : Word;                          -- データ出力
+signal I_ADDR        : Word;                          -- アドレス
+signal I_DOUT        : Word;                          -- データ
+signal I_MR          : std_logic;                     -- MR
+signal I_IR          : std_logic;                     -- IR
+signal I_RW          : std_logic;                     -- RW
 signal I_EA          : Word;                          -- 実効アドレス
-signal I_SP          : Word;                          -- スタックポインタ (カーネルモードとユーザーモードで切り替える)
+signal I_SP          : Word;                          -- 現在のSPの値
 signal I_RD          : Word;                          -- GR[Rd]
 signal I_RX          : Word;                          -- GR[Rx]
 signal I_DR_IN       : Word;                          -- DR への入力
@@ -187,6 +206,7 @@ signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
 signal I_VR          : std_logic;                     -- Vector Fetch
 signal I_ZDIV        : std_logic;                     -- Zero Division
+signal I_CON         : std_logic_vector(2 downto 0);  -- コンソール動作中
 
 begin
   ALU : TAC_CPU_ALU
@@ -215,7 +235,7 @@ begin
     P_OP1       => I_INST_OP1,
     P_OP2       => I_INST_OP2,
     P_RD        => I_INST_RD,
-    P_ADDR      => I_ADDR,
+    P_ADDR0     => I_ADDR(0),
     P_UPDATE_PC => I_UPDATE_PC,
     P_UPDATE_SP => I_UPDATE_SP,
     P_LOAD_IR   => I_LOAD_IR,
@@ -235,18 +255,21 @@ begin
     P_FLAG_S    => I_FLAG_S,
     P_FLAG_P    => I_FLAG_P,
     P_TLBMISS   => P_TLBMISS,
-    P_MR        => P_MR,
-    P_IR        => P_IR,
-    P_RW        => P_RW,
+    P_MR        => I_MR,
+    P_IR        => I_IR,
+    P_RW        => I_RW,
     P_SVC       => P_SVC,
     P_PRIVIO    => P_PRIVIO,
     P_VR        => I_VR,
-    P_CON       => P_CON
+    P_CON       => I_CON
   );
 
   -- ポート
   P_ADDR <= I_REG_ADDR;
   P_DOUT <= I_REG_DOUT;
+  P_MR   <= I_REG_MR;
+  P_IR   <= I_REG_IR;
+  P_RW   <= I_REG_RW;
   P_LI   <= I_LOAD_IR;
   P_VR   <= I_VR;
   P_HL   <= '0'; -- TODO
@@ -254,13 +277,13 @@ begin
   P_PR   <= I_FLAG_P;
   P_IOPR <= I_FLAG_I;
   P_INVINST <=  '1' when
-                      (I_INST_OP1 >= "01101" and I_INST_OP1 <= "01111")
+                      ("01101" <= I_INST_OP1 and I_INST_OP1 <= "01111")
                       or I_INST_OP1 = "11001"
                       or (I_INST_OP1 >= "11011" and I_INST_OP1 <= "11101") else
                 '0';
+  P_CON  <= I_CON;
 
   -- マルチプレクサ
-
   --- MUX A
   with I_SELECT_A select
     I_ADDR <= I_REG_PC          when "000",
@@ -296,41 +319,68 @@ begin
   with I_INST_OP2 select
     I_EA <= I_REG_DR                when "000",
             I_REG_DR + I_RX         when "001",
-            I_REG_GR(12) + (I_REG_DR(14 downto 0) & "0") when "011",
+            I_REG_G12 + (I_REG_DR(14 downto 0) & "0") when "011",
             I_RX                    when others;
 
-  -- 信号の設定
+  -- 現在のSP
   I_SP <= I_REG_SSP when I_FLAG_P='1' else I_REG_USP;
 
-  I_RD <= I_SP       when I_INST_RD="1101" else
-          I_REG_USP  when I_INST_RD="1110" else
-          I_FLAG     when I_INST_RD="1111" else
-          I_REG_GR(conv_integer(I_INST_RD));
-  
-  I_RX <= I_SP       when I_INST_RX="1101" else
-          I_REG_USP  when I_INST_RX="1110" else
-          I_FLAG     when I_INST_RX="1111" else
-          I_REG_GR(conv_integer(I_INST_RX));
-  
-  I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0' & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
-  
-  -- レジスタの制御
+  -- FLAGを16bitにまとめる
+  I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0'
+                       & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
 
-  --- ADDR の書き込み制御
+  -- GR[Rd]
+  with I_INST_RD select
+    I_RD <= I_REG_G0  when "0000",
+            I_REG_G1  when "0001",
+            I_REG_G2  when "0010",
+            I_REG_G3  when "0011",
+            I_REG_G4  when "0100",
+            I_REG_G5  when "0101",
+            I_REG_G6  when "0110",
+            I_REG_G7  when "0111",
+            I_REG_G8  when "1000",
+            I_REG_G9  when "1001",
+            I_REG_G10 when "1010",
+            I_REG_G11 when "1011",
+            I_REG_G12 when "1100",
+            I_SP      when "1101",
+            I_REG_USP when "1110",
+            I_FLAG    when others;
+
+  -- GR[Rx]
+  with I_INST_RX select
+    I_RX <= I_REG_G0  when "0000",
+            I_REG_G1  when "0001",
+            I_REG_G2  when "0010",
+            I_REG_G3  when "0011",
+            I_REG_G4  when "0100",
+            I_REG_G5  when "0101",
+            I_REG_G6  when "0110",
+            I_REG_G7  when "0111",
+            I_REG_G8  when "1000",
+            I_REG_G9  when "1001",
+            I_REG_G10 when "1010",
+            I_REG_G11 when "1011",
+            I_REG_G12 when "1100",
+            I_SP      when "1101",
+            I_REG_USP when "1110",
+            I_FLAG    when others;
+  
+  --- 外部バスへの出力
   process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
       I_REG_ADDR <= (others => '0');
+      I_REG_DOUT <= (others => '0');
+      I_REG_MR       <= '0';
+      I_REG_IR       <= '0';
+      I_REG_RW       <= '0';
     elsif (P_CLK' event and P_CLK='1') then
       I_REG_ADDR <= I_ADDR;
-    end if;
-  end process;
-
-  --- DOUT の書き込み制御
-  process(P_CLK, P_RESET) begin
-    if (P_RESET='0') then
-      I_REG_DOUT <= (others => '0');
-    elsif (P_CLK' event and P_CLK='1') then
       I_REG_DOUT <= I_DOUT;
+      I_REG_MR   <= I_MR;
+      I_REG_IR   <= I_IR;
+      I_REG_RW   <= I_RW;
     end if;
   end process;
 
@@ -338,12 +388,37 @@ begin
   process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
-      for i in 0 to 12 loop
-        I_REG_GR(i) <= (others => '0');
-      end loop;
-    elsif (P_CLK' event and P_CLK='1' and I_LOAD_GR='1') then
-      if I_INST_RD <= "1100" then
-        I_REG_GR(conv_integer(I_INST_RD)) <= I_ALU_OUT;
+      I_REG_G0  <= (others => '0');
+      I_REG_G1  <= (others => '0');
+      I_REG_G2  <= (others => '0');
+      I_REG_G3  <= (others => '0');
+      I_REG_G4  <= (others => '0');
+      I_REG_G5  <= (others => '0');
+      I_REG_G6  <= (others => '0');
+      I_REG_G7  <= (others => '0');
+      I_REG_G8  <= (others => '0');
+      I_REG_G9  <= (others => '0');
+      I_REG_G10 <= (others => '0');
+      I_REG_G11 <= (others => '0');
+      I_REG_G12 <= (others => '0');
+    elsif (P_CLK' event and P_CLK='1') then
+      if I_LOAD_GR='1' then
+        case I_INST_RD is
+          when "0000" => I_REG_G0  <= I_ALU_OUT;
+          when "0001" => I_REG_G1  <= I_ALU_OUT;
+          when "0010" => I_REG_G2  <= I_ALU_OUT;
+          when "0011" => I_REG_G3  <= I_ALU_OUT;
+          when "0100" => I_REG_G4  <= I_ALU_OUT;
+          when "0101" => I_REG_G5  <= I_ALU_OUT;
+          when "0110" => I_REG_G6  <= I_ALU_OUT;
+          when "0111" => I_REG_G7  <= I_ALU_OUT;
+          when "1000" => I_REG_G8  <= I_ALU_OUT;
+          when "1001" => I_REG_G9  <= I_ALU_OUT;
+          when "1010" => I_REG_G10 <= I_ALU_OUT;
+          when "1011" => I_REG_G11 <= I_ALU_OUT;
+          when "1100" => I_REG_G12 <= I_ALU_OUT;
+          when others => NULL;
+        end case;
       end if;
     end if;
   end process;
@@ -353,7 +428,7 @@ begin
               I_SP - 2 when I_UPDATE_SP="10" else
               I_ALU_OUT;
   
-  I_LOAD_SP <=  '1' when (I_UPDATE_SP(1)='1' or I_UPDATE_SP(0)='0')
+  I_LOAD_SP <=  '1' when (I_UPDATE_SP(1)='1' or I_UPDATE_SP(0)='1')
                       or (I_LOAD_GR='1' and I_INST_RD="1101") else
                 '0';
   
@@ -387,11 +462,13 @@ begin
   process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
       I_REG_DR <= (others => '0');
-    elsif (P_CLK' event and P_CLK='1' and I_LOAD_DR='1') then
-      I_REG_DR <= I_DR_IN;
+    elsif (P_CLK' event and P_CLK='1') then
+      if (I_LOAD_DR='1') then
+        I_REG_DR <= I_DR_IN;
+      end if;
     end if;
   end process;
-      
+
   --- FLAG の書き込み制御
   process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
@@ -404,7 +481,7 @@ begin
       I_FLAG_Z <= '0';
     elsif (P_CLK'event and P_CLK='1') then
       if (I_LOAD_GR='1' and I_INST_RD="1111") then
-        if (I_FLAG_P='1') then
+        if (I_FLAG_P='1' or I_CON(2)='1') then      -- 特権モード or コンソール
           I_FLAG_E <= I_ALU_OUT(7);
           I_FLAG_P <= I_ALU_OUT(6);
           I_FLAG_I <= I_ALU_OUT(5);

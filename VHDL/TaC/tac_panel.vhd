@@ -57,7 +57,7 @@ entity TAC_PANEL is
          P_MR       : in  std_logic;                     -- memory req.
          P_LI       : in  std_logic;                     -- load instruction
          P_HL       : in  std_logic;                     -- halt instruction
-         P_CON      : in  std_logic_vector(1 downto 0);  -- Console access
+         P_CON      : in  std_logic_vector(2 downto 0);  -- Console access
          P_STOP     : out std_logic;                     -- stop the cpu
          P_RESET    : out std_logic;                     -- reset [OUTPUT]
 
@@ -308,9 +308,9 @@ begin  -- RTL
       if (BtnDbnc(0)='1') then              -- Btn0(WRITE)
         WriteFF <= '1';
       elsif (P_AIN(7 downto 1)="1111111" and P_IR='1' and P_RW='0') then
-        WriteFF <= '0';                     -- i/o read FEH
-      elsif (P_CON="01") then
-        WriteFF <= '0';                     -- console
+        WriteFF <= '0';                     -- 実行中に i/o read FEH でクリア
+      elsif (P_CON="100") then
+        WriteFF <= '0';                     -- 停止中にIRに渡したらクリア
       end if;
     end if;
   end process;
@@ -358,10 +358,9 @@ begin  -- RTL
   end process;
 
   -- (address, data) LED
-  i_disp  <= DatReg    when Run='1'     else   -- CPU 実行時は表示機
-             AdrReg    when Pos="10001" else   -- MA  選択時
-             P_DIN_DMA when Pos="10000" else   -- MD  選択時
-             P_DIN;                            -- G0 〜 PC, FLAG 選択時
+  i_disp  <= AdrReg(15 downto 1) & '0'  when Pos="10001" else   -- MA  選択時
+             P_DIN_DMA when Pos="10000" else                    -- MD  選択時
+             DatReg;                           -- 他を選択時，または，実行中
   P_A_LED <= i_disp(15 downto 8);
   P_D_LED <= i_disp( 7 downto 0);
 
@@ -371,19 +370,21 @@ begin  -- RTL
     if (Reset='0') then
       DatReg <= "0000000000000000";
     elsif (P_CLK'event and P_CLK='1') then
-      if (P_AIN(7 downto 0)="11111000" and P_IR='1' and P_RW='1') then
+      if ((P_AIN(7 downto 0)="11111000" and P_IR='1' and P_RW='1') -- 実行中
+          or (P_CON="110" and (Pos<="01101" or Pos="01111"))       -- GR[Pos]
+          or (P_CON="111" and Pos="01110"))  then                  -- PC
         DatReg <= P_DIN;
       end if;
     end if;
   end process;
 
   -- DOUT
-  i_cpu_pos <= "10000" when pos(3 downto 0)="1110" else  -- PC
-               pos(4 downto 0);                          -- G0..FLAG
+  i_cpu_pos <= "10000" when Pos="01110" else     -- PC
+                Pos;                             -- G0..FLAG
 
   P_DOUT <=
-    ("0000000000" & (WriteFF and not pos(4)) & i_cpu_pos)
-                                         when (P_CON="01")             else
+    ("000010" & (WriteFF and not Pos(4)) & i_cpu_pos & "0000")
+                                         when (P_CON="100")            else
     (P_DIN(7 downto 0) & P_DATA_SW)      when (P_CON(1)='1')           else
     ("000000000000" & FncReg         )   when (P_AIN(2 downto 1)="11") else
     ("000000000000" & Pos(3 downto 0))   when (P_AIN(2 downto 1)="10") else
@@ -393,7 +394,7 @@ begin  -- RTL
   -- DMA
   P_AOUT_DMA <= AdrReg(15 downto 1);
   P_DOUT_DMA <= P_DIN_DMA(7 downto 0) & P_DATA_SW;
-  P_RW_DMA   <= '1' when P_CON="01" and WriteFF='1' else '0';
+  P_RW_DMA   <= '1' when P_CON="100" and Pos(4)='1' and WriteFF='1' else '0';
 
 end RTL;
 

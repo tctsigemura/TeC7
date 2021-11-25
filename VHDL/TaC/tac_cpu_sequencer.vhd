@@ -37,7 +37,7 @@ entity TAC_CPU_SEQUENCER is
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
   P_RD          : in std_logic_vector(3 downto 0);   -- 命令の Rd
-  P_ADDR        : in std_logic_vector(15 downto 0);  -- アドレス
+  P_ADDR0       : in std_logic;                      -- アドレスの最下位
   P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
   P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
   P_LOAD_IR     : out std_logic;                     -- IR のロード
@@ -65,7 +65,7 @@ entity TAC_CPU_SEQUENCER is
   P_ZDIV        : out std_logic;                     -- Zero Division
   P_INVINST     : out std_logic;                     -- Invalid Instruction
   P_VR          : out std_logic;                     -- Vector Fetch
-  P_CON         : out std_logic_vector(1 downto 0)   -- Console
+  P_CON         : out std_logic_vector(2 downto 0)   -- Console
   );
 end TAC_CPU_SEQUENCER;
   
@@ -93,14 +93,15 @@ constant S_RETI1 : std_logic_vector(4 downto 0) := "10001";
 constant S_RETI2 : std_logic_vector(4 downto 0) := "10010";
 constant S_RETI3 : std_logic_vector(4 downto 0) := "10011";
 constant S_IN1   : std_logic_vector(4 downto 0) := "10100";
-constant S_IN2   : std_logic_vector(4 downto 0) := "11000";
-constant S_SVC   : std_logic_vector(4 downto 0) := "11001";
-constant S_INVAL : std_logic_vector(4 downto 0) := "11010";
-constant S_ZDIV  : std_logic_vector(4 downto 0) := "11011";
-constant S_PRIVIO: std_logic_vector(4 downto 0) := "11100";
-constant S_CON1  : std_logic_vector(4 downto 0) := "11101";
-constant S_CON2  : std_logic_vector(4 downto 0) := "11110";
-constant S_CON3  : std_logic_vector(4 downto 0) := "11111";
+constant S_IN2   : std_logic_vector(4 downto 0) := "10101";
+constant S_SVC   : std_logic_vector(4 downto 0) := "10110";
+constant S_INVAL : std_logic_vector(4 downto 0) := "10111";
+constant S_ZDIV  : std_logic_vector(4 downto 0) := "11000";
+constant S_PRIVIO: std_logic_vector(4 downto 0) := "11001";
+constant S_CON1  : std_logic_vector(4 downto 0) := "11010";
+constant S_CON2  : std_logic_vector(4 downto 0) := "11011";
+constant S_CON3  : std_logic_vector(4 downto 0) := "11100";
+constant S_CON4  : std_logic_vector(4 downto 0) := "11101";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
 signal   I_NEXT      : std_logic_vector(4 downto 0);
@@ -113,17 +114,15 @@ signal   I_IS_INDR   : std_logic; -- アドレッシングモードがFP相対�
 signal   I_IS_SHORT  : std_logic; -- アドレッシングモードがレジスタレジスタかショートイミディエイト
 signal   I_IS_ALU    : std_logic; -- LD~SHRL (ST以外)
 signal   I_JMP_GO    : std_logic; -- JMP, CALL が成立するとき
-signal   I_IS_MUL    : std_logic; -- MUL
-signal   I_IS_DIV    : std_logic; -- DIV, MOD
 
 begin
   
-  -- LD, ADD, SUB, CMP, AND, OR, XOR, ADDS, MUL, DIV, MOD, MULL, DIVL, SHLA, SHLL, SHRA, SHRL
-  I_IS_ALU    <= '1' when P_OP1 /= "00000" and P_OP1 /= "00010" and P_OP1(4 downto 2) <= "100" else '0';
+  -- LD,ADD,SUB,CMP,AND,OR,XOR,ADDS,MUL,DIV,MOD,SHLA,SHLL,SHRA,SHRL
+  I_IS_ALU    <= '1' when P_OP1 /= "00000" and P_OP1 /= "00010"
+                          and P_OP1(4 downto 2) <= "100" else '0';
   I_IS_INDR   <= '1' when P_OP2 = "011" or P_OP2(2 downto 1) = "11" else '0';
   I_IS_SHORT  <= '1' when P_OP2(2 downto 1) = "10" else '0';
-  I_IS_MUL    <= '1' when P_OP1 = "01010" else '0';
-  I_IS_DIV    <= '1' when P_OP1 = "01011" or P_OP1 = "01100" else '0';
+
   -- JMP 命令のとき、 JMP するか
   I_JMP_GO    <=
     '1' when P_OP1 = "10100"
@@ -189,9 +188,10 @@ begin
                 or (I_STATE = S_DEC2 and (P_OP1="10111" or P_OP1="10100")) else
     S_SVC     when I_STATE = S_DEC1 and P_OP1 = "11110" else
     S_INVAL   when I_STATE = S_DEC1 or I_STATE = S_DEC2 else
-    S_CON1    when (I_STATE = S_FETCH and P_STOP = '1') or I_STATE = S_CON3 else
+    S_CON1    when (I_STATE = S_FETCH and P_STOP = '1') or I_STATE = S_CON4 else
     S_CON2    when I_STATE = S_CON1 and P_STOP = '1' else
     S_CON3    when I_STATE = S_CON2 else
+    S_CON4    when I_STATE = S_CON3 else
     S_FETCH;
   
   -- ステートマシンはステートの遷移のみを書く
@@ -199,8 +199,10 @@ begin
   begin
     if (P_RESET='0') then
       I_STATE <= S_FETCH;
-    elsif (P_CLK'event and P_CLK='1' and I_WAIT='0') then
-      I_STATE <= I_NEXT;
+    elsif (P_CLK'event and P_CLK='1') then
+      if (I_WAIT='0') then
+        I_STATE <= I_NEXT;
+      end if;
     end if;
   end process;
 
@@ -218,14 +220,15 @@ begin
     end if;
   end process;
 
-  
+
   -- 信号に出力する内容をステートによって決める
 
   P_CON <=
-    "01" when I_STATE = S_CON1 and I_NEXT = S_CON2 else
-    "10" when I_STATE = S_CON2 else
-    "11" when I_STATE = S_CON3 else
-    "00";
+    "100" when I_STATE = S_CON1 and P_STOP = '1' else
+    "101" when I_STATE = S_CON2 else
+    "110" when I_STATE = S_CON3 else
+    "111" when I_STATE = S_CON4 else
+    "000";
   
   P_UPDATE_PC <=
     -- PC += 2
@@ -242,7 +245,7 @@ begin
     -- PC <- Din
     "110" when I_STATE = S_INTR3 or I_STATE = S_INTR4
             or I_STATE = S_RETI2 or I_STATE = S_RET
-            or (I_STATE = S_CON3 and P_OP2(1 downto 0) = "11") else
+            or (I_STATE = S_CON4 and P_OP2(1 downto 0) = "11") else
     -- PC <- EA
     "111" when
             (I_STATE = S_DEC2 and I_JMP_GO = '1') -- JMP
@@ -264,7 +267,7 @@ begin
     '1' when I_NEXT = S_DEC1
           or (I_STATE = S_DEC1 and P_OP2 /= "010") -- 4bit 定数以外ならロード/破壊
           or I_STATE = S_DEC2 or I_STATE = S_RETI1
-          or I_STATE = S_DEC2 else
+          or I_STATE = S_DEC2 or I_STATE = S_CON3  else
     '0'; -- 保持
   
   -- ADD, SUB, ..., SHRL ではフラグが変化する
@@ -283,7 +286,7 @@ begin
           or I_STATE = S_ALU2
           or I_STATE = S_IN1 or I_STATE = S_IN2
           or I_STATE = S_RETI3
-          or (I_STATE = S_CON3 and P_OP2(1 downto 0) = "10") else
+          or (I_STATE = S_CON4 and P_OP2(1 downto 0) = "10") else
     '0'; -- 保持
   
   -- AOUT
@@ -310,9 +313,9 @@ begin
     -- GR[Rd]
     "100" when ((I_STATE = S_DEC1 or I_STATE = S_DEC2) and I_NEXT = S_FETCH)
             or I_NEXT = S_ST1 or I_NEXT = S_ST2
-            or (I_STATE = S_CON2 and P_OP2(0) = '0') else
+            or I_STATE = S_CON2 else
     -- GR[Rd]>>>8
-    "101" when P_OP2 = "111" and P_ADDR(0) = '0' else
+    "101" when P_OP2 = "111" and P_ADDR0 = '0' else
     -- TMP
     "111" when I_STATE = S_INTR2 else
     -- PC
@@ -323,9 +326,9 @@ begin
     -- S4
     "01" when I_STATE = S_FETCH else
     -- L8
-    "10" when P_OP2 = "111" and P_ADDR(0) = '1' else
+    "10" when P_OP2 = "111" and P_ADDR0 = '1' else
     -- H8
-    "11" when P_OP2 = "111" and P_ADDR(0) = '1' else
+    "11" when P_OP2 = "111" and P_ADDR0 = '1' else
     -- 16
     "00";
   
@@ -371,4 +374,4 @@ begin
   P_VR <= '1' when I_STATE = S_INTR3 else '0';
             
 end RTL;
-                
+

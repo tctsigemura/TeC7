@@ -157,7 +157,7 @@ signal i_cpu_mr         : std_logic;
 signal i_adr_int        : std_logic;
 signal i_vio_int        : std_logic;
 signal i_ei             : std_logic;
-signal i_con            : std_logic_vector(1 downto 0);
+signal i_con            : std_logic_vector(2 downto 0);
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
@@ -247,7 +247,7 @@ component TAC_CPU
          P_ZDIV     : out std_logic;                       -- Zero Division
          P_PRIVIO   : out std_logic;                       -- Privilege Vio.
          P_INVINST  : out std_logic;                       -- Invalid Inst.
-         P_CON      : out std_logic_vector(1 downto 0);    -- Console access
+         P_CON      : out std_logic_vector(2 downto 0);    -- Console access
          P_INTR     : in  std_logic;                       -- Intrrupt
          P_STOP     : in  std_logic;                       -- Bus Request
          P_TLBMISS  : in  std_logic                        -- MMU TLB miss
@@ -269,7 +269,7 @@ component TAC_PANEL
          P_MR       : in  std_logic;                       -- memory req.
          P_LI       : in  std_logic;                       -- load instruction
          P_HL       : in  std_logic;                       -- halt instruction
-         P_CON      : in  std_logic_vector(1 downto 0);    -- Console access
+         P_CON      : in  std_logic_vector(2 downto 0);    -- Console access
          P_STOP     : out std_logic;                       -- stop the cpu
          P_RESET    : out std_logic;                       -- reset [OUTPUT]
 
@@ -555,7 +555,7 @@ begin
 
   i_din_cpu <= i_dout_ram   when (i_mr='1') else
                i_dout_panel when ((i_ir='1' and i_addr(7 downto 3)="11111")
-                                 or (i_con/="00")) else
+                                 or i_con(2)='1') else
                i_dout_tmr0  when (i_ir='1' and i_en_tmr0='1') else
                i_dout_tmr1  when (i_ir='1' and i_en_tmr1='1') else
                ("00000000"&i_dout_sio1) when (i_ir='1' and i_en_sio1='1') else
