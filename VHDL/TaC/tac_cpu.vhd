@@ -277,7 +277,7 @@ begin
   P_RW   <= I_REG_RW;
   P_LI   <= I_LOAD_IR;
   P_VR   <= I_VR;
-  P_BT   <= '1' when P_INST_OP2 == "111" else '0';
+  P_BT   <= '1' when P_INST_OP2 = "111" else '0';
   P_PR   <= I_FLAG_P;
   P_IOPR <= I_FLAG_I;
   P_CON  <= I_CON;
