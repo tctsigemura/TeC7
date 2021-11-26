@@ -95,10 +95,10 @@ component TAC_CPU_SEQUENCER is
   P_CLK         : in std_logic;
   P_RESET       : in std_logic;
   P_STOP        : in std_logic;
-  P_INTR        : in std_logic;
+  P_INTR        : in std_logic;                      -- 割り込み（負論理）
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
-  P_RD          : in std_logic_vector(3 downto 0);
+  P_RD          : in std_logic_vector(3 downto 0);   -- 命令の Rd
   P_ADDR0       : in std_logic;                      -- アドレスの最下位
   P_UPDATE_PC   : out std_logic_vector(2 downto 0);  -- PC の更新
   P_UPDATE_SP   : out std_logic_vector(1 downto 0);  -- SP の更新
@@ -118,12 +118,15 @@ component TAC_CPU_SEQUENCER is
   P_FLAG_Z      : in std_logic;
   P_FLAG_S      : in std_logic;
   P_FLAG_P      : in std_logic;
-  P_TLBMISS     : in std_logic;                      -- MMU Interrupt
+  P_TLBMISS     : in std_logic;                      -- TLB miss
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
   P_RW          : out std_logic;                     -- Read/Write
+  P_HL          : out std_logic;                     -- Halt Instruction
   P_SVC         : out std_logic;                     -- Super Visor Call
   P_PRIVIO      : out std_logic;                     -- Privilege Violation
+  P_ZDIV        : out std_logic;                     -- Zero Division
+  P_INVINST     : out std_logic;                     -- Invalid Instruction
   P_VR          : out std_logic;                     -- Vector Fetch
   P_CON         : out std_logic_vector(2 downto 0)   -- Console
   );
@@ -258,8 +261,10 @@ begin
     P_MR        => I_MR,
     P_IR        => I_IR,
     P_RW        => I_RW,
+    P_HL        => P_HL,
     P_SVC       => P_SVC,
     P_PRIVIO    => P_PRIVIO,
+    P_INVINST   => P_INVINST,
     P_VR        => I_VR,
     P_CON       => I_CON
   );
@@ -272,15 +277,9 @@ begin
   P_RW   <= I_REG_RW;
   P_LI   <= I_LOAD_IR;
   P_VR   <= I_VR;
-  P_HL   <= '0'; -- TODO
-  P_BT   <= '0'; -- TODO
+  P_BT   <= '1' when P_INST_OP2 == "111" else '0';
   P_PR   <= I_FLAG_P;
   P_IOPR <= I_FLAG_I;
-  P_INVINST <=  '1' when
-                      ("01101" <= I_INST_OP1 and I_INST_OP1 <= "01111")
-                      or I_INST_OP1 = "11001"
-                      or (I_INST_OP1 >= "11011" and I_INST_OP1 <= "11101") else
-                '0';
   P_CON  <= I_CON;
 
   -- マルチプレクサ

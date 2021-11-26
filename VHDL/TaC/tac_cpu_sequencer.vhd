@@ -60,6 +60,7 @@ entity TAC_CPU_SEQUENCER is
   P_MR          : out std_logic;                     -- Memory Request
   P_IR          : out std_logic;                     -- I/O Request
   P_RW          : out std_logic;                     -- Read/Write
+  P_HL          : out std_logic;                     -- Halt Instruction
   P_SVC         : out std_logic;                     -- Super Visor Call
   P_PRIVIO      : out std_logic;                     -- Privilege Violation
   P_ZDIV        : out std_logic;                     -- Zero Division
@@ -366,6 +367,7 @@ begin
     -- read
     '0';
 
+  P_HL <= '1' when I_STATE = S_DEC1 and P_OP1 = "11111" and I_NEXT = S_FETCH else '0';
   P_SVC <= '1' when I_STATE = S_SVC else '0';
   P_PRIVIO <= '1' when I_STATE = S_PRIVIO else '0';
   P_ZDIV <= '1' when I_STATE = S_ZDIV else '0';
