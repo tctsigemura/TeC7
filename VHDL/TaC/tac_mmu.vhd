@@ -33,7 +33,8 @@ use IEEE.numeric_std.ALL;
 entity TAC_MMU is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
-         P_EN       : in  std_logic;               
+         P_EN       : in  std_logic; 
+         P_IOR      : in  std_logic;              
          P_IOW      : in  std_logic;
          P_RW       : in  std_logic;                     -- read write
          P_LI       : in  std_logic;                     -- instruction fetch
@@ -41,13 +42,13 @@ entity TAC_MMU is
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
          P_STOP     : in  std_logic;                     -- Panel RUN F/F
-         P_VIO_INT  : out std_logic;                     -- Mem Vio bad adr inter
+         P_VIO_INT  : out std_logic;                     -- Mem Vio or bad adr inter
          P_TLB_INT  : out std_logic;                     -- TLB miss inter
          P_MR       : out std_logic;                     -- Memory Request
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
          P_DIN      : in  std_logic_vector(15 downto 0); -- data from cpu
-         P_DOUT     : out std_logic_vector(15 downto 0)  -- 
+         P_DOUT     : out std_logic_vector(15 downto 0)  -- output when interrupt happen
        );
 end TAC_MMU;
 
@@ -79,7 +80,8 @@ signal page : std_logic_vector(7 downto 0);
 signal request : std_logic_vector(2 downto 0);          --RWX request from cpu
 signal perm_vio : std_logic;                            --RWX Violation
 signal intr_page : std_logic_vector(7 downto 0);        --割り込みページ
-signal intr_cause : std_logic_vector(1 downto 0);      --割り込み原因
+signal intr_cause : std_logic_vector(1 downto 0):="00"; --割り込み原因 i_adr & i_vio
+
 
 begin 
 
@@ -112,11 +114,19 @@ begin
   begin 
     if (P_RESET='0') then
       i_en <= '0';
+      for I in TLB'range loop
+        TLB(I)<=(others => '0');
+      end loop;
+      
     elsif (P_CLK'event and P_CLK='1') then
       if(P_EN='1' and P_IOW='1') then                                          -- 80h <= P_MMU_ADDR <=A7h
         if(P_MMU_ADDR(5 downto 4)="10") then                                   -- A-h
           if(P_MMU_ADDR(2 downto 1)="01") then                                 -- A2 or A3h
             i_en <= P_DIN(0);
+          elsif (P_MMU_ADDR(3)='1') then                                                 --TLB Clear
+            for I in TLB'range loop
+              TLB(I)<=(others => '0');
+            end loop;
           end if;
         elsif(P_MMU_ADDR(1)='0') then                                          -- 8-h or 9-h
           TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16) 
@@ -128,24 +138,27 @@ begin
 
       --ページヒット時のD,Rビットの書き換え
       elsif(i_mis='0' and i_vio='0') then 
-          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <= request(1);     --dirty
+          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <= 
+            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) or request(1);     --dirty
+
           TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= '1';            --reference
       end if;
     end if;
+
   end process;
 
   --割り込みページとその原因のレジスタ
   process(P_CLK,P_RESET,P_MMU_ADDR,i_mis,i_adr,i_vio)
   begin
-    if(P_RESET='1') then
+    if(P_RESET='0') then
       intr_cause <= "00";
     elsif(P_CLK'event and P_CLK='1') then
       if(i_mis='1') then
         intr_page <= P_MMU_ADDR(15 downto 8);
       end if;
       if(i_adr='1' or i_vio='1') then
-        intr_cause <= i_adr & i_vio;
-      elsif(P_EN='1' and P_IOW='0' and P_MMU_ADDR(5 downto 1)="10010") then   --A4h
+        intr_cause <= intr_cause or (i_adr & i_vio);
+      elsif(P_EN='1' and P_IOR='1' and P_MMU_ADDR(5 downto 1)="10010") then
         intr_cause <= "00";
       end if;
     end if;
@@ -170,7 +183,7 @@ begin
             "00000000" & intr_page                                           --A6h ページ番号
             when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='1') else      
 
-            "00000000000000" & intr_cause;                                   --A4h 割り込み原因
+            "00000000000000" & intr_cause;                                   --A4h 割り込み原因　下2桁 i_adr & i_vio
 
 
 --relocation register
