@@ -153,7 +153,7 @@ begin
                     or I_STATE = S_RETI1)
                   and P_TLBMISS = '1') else
     S_WAIT2   when I_STATE = S_WAIT1 else
-    S_INTR1   when I_STATE = S_FETCH and P_STOP = '0' and P_INTR = '1' else
+    S_INTR1   when I_STATE = S_FETCH and P_STOP = '0' and P_INTR = '0' else
     S_INTR2   when I_STATE = S_INTR1 else
     S_INTR3   when I_STATE = S_INTR2 else
     S_INTR4   when I_STATE = S_INTR3 else
@@ -163,7 +163,7 @@ begin
     S_ZDIV    when
                 (I_STATE = S_ALU1 or I_STATE = S_ALU2)
                 and P_ALU_ZDIV = '1' else
-    S_DEC1    when I_STATE = S_FETCH and P_STOP = '0' and P_INTR = '0' else
+    S_DEC1    when I_STATE = S_FETCH and P_STOP = '0' and P_INTR = '1' else
     S_DEC2    when I_STATE = S_DEC1 and P_OP2(2 downto 1) = "00" else
     S_ALU1    when
                 (I_STATE = S_DEC1 and I_IS_ALU = '1' and P_OP2 = "010")
@@ -279,7 +279,7 @@ begin
   
   P_LOAD_TMP <=
     '1' when
-      I_STATE = S_FETCH and P_INTR = '1' and P_STOP = '0' else
+      I_STATE = S_FETCH and P_INTR = '0' and P_STOP = '0' else
     '0'; -- 保持
   
   P_LOAD_GR <=
