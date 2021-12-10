@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011-2019 by
+-- Copyright (C) 2011-2021 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -33,32 +33,32 @@ use IEEE.numeric_std.ALL;
 entity TAC_MMU is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
-         P_EN       : in  std_logic; 
-         P_IOR      : in  std_logic;              
-         P_IOW      : in  std_logic;
-         P_RW       : in  std_logic;                     -- read write
-         P_LI       : in  std_logic;                     -- instruction fetch
+         P_EN       : in  std_logic;                     
+         P_IOR      : in  std_logic;                     
+         P_IOW      : in  std_logic;                     
+         P_RW       : in  std_logic;                     
+         P_LI       : in  std_logic;                     
          P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
          P_STOP     : in  std_logic;                     -- Panel RUN F/F
-         P_VIO_INT  : out std_logic;                     -- Mem Vio or bad adr inter
+         P_VIO_INT  : out std_logic;                     -- MemVio/BadAdr inter
          P_TLB_INT  : out std_logic;                     -- TLB miss inter
          P_MR       : out std_logic;                     -- Memory Request
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
-         P_DIN      : in  std_logic_vector(15 downto 0); -- data from cpu
-         P_DOUT     : out std_logic_vector(15 downto 0)  -- output when interrupt happen
+         P_DIN      : in  std_logic_vector(15 downto 0); -- input of i/o write
+         P_DOUT     : out std_logic_vector(15 downto 0)  -- output of i/o read
        );
 end TAC_MMU;
 
 architecture Behavioral of TAC_MMU is
 signal i_en  : std_logic;                                -- Enable resister
---signal i_b   : std_logic_vector(15 downto 0);            -- Base  register
---signal i_l   : std_logic_vector(15 downto 0);            -- Limit register
+--signal i_b   : std_logic_vector(15 downto 0);          -- Base  register
+--signal i_l   : std_logic_vector(15 downto 0);          -- Limit register
 signal i_act : std_logic;                                -- Activate MMU
-signal i_vio : std_logic;                                -- Memory Violation
 signal i_mis : std_logic;                                -- TLB miss
+signal i_vio : std_logic;                                -- Memory Violation
 signal i_adr : std_logic;                                -- Bad Address
 
 --TLBエントリのビット構成
@@ -71,16 +71,16 @@ signal i_adr : std_logic;                                -- Bad Address
 --R/W/X:Read/Write/eXecute, FRAME:フレーム番号
 
 subtype TLB_field is std_logic_vector(23 downto 0); 
-type TLB_array is array(0 to 7) of TLB_field;           --array of 24bit * 8 
+type TLB_array is array(0 to 7) of TLB_field;           -- array of 24bit * 8 
 
-signal TLB : TLB_array;                                 --TLB
-signal index : std_logic_vector(3 downto 0);            
-signal entry : TLB_field;                               --target TLB entry 
+signal TLB : TLB_array;                                 
+signal index : std_logic_vector(3 downto 0);            -- index of TLB entry        
+signal entry : TLB_field;                               -- target TLB entry 
 signal page : std_logic_vector(7 downto 0);
-signal request : std_logic_vector(2 downto 0);          --RWX request from cpu
-signal perm_vio : std_logic;                            --RWX Violation
-signal intr_page : std_logic_vector(7 downto 0);        --割り込みページ
-signal intr_cause : std_logic_vector(1 downto 0):="00"; --割り込み原因 i_adr & i_vio
+signal request : std_logic_vector(2 downto 0);          -- RWX request from cpu
+signal perm_vio : std_logic;                            -- RWX Violation
+signal intr_page : std_logic_vector(7 downto 0);        -- Page happend inter
+signal intr_cause : std_logic_vector(1 downto 0):="00"; -- reason of inter
 
 
 begin 
@@ -104,9 +104,9 @@ begin
   entry <= TLB(TO_INTEGER(unsigned (index(2 downto 0))));
   request <= (not P_RW) & P_RW & P_LI;
 
-  perm_vio <= not entry(9) when request="010" else    --write
-              not entry(10) when request="100" else   --read
-              not (entry(10) and entry(8));           --fetch
+  perm_vio <= not entry(9) when request="010" else    -- write
+              not entry(10) when request="100" else   -- read
+              not (entry(10) and entry(8));           -- fetch
   i_vio <= i_act and perm_vio;
   
   --TLB操作
@@ -119,16 +119,16 @@ begin
       end loop;
       
     elsif (P_CLK'event and P_CLK='1') then
-      if(P_EN='1' and P_IOW='1') then                                          -- 80h <= P_MMU_ADDR <=A7h
-        if(P_MMU_ADDR(5 downto 4)="10") then                                   -- A-h
-          if(P_MMU_ADDR(2 downto 1)="01") then                                 -- A2 or A3h
+      if(P_EN='1' and P_IOW='1') then               -- 80h <= P_MMU_ADDR <=A7h
+        if(P_MMU_ADDR(5 downto 4)="10") then        -- A-h
+          if(P_MMU_ADDR(2 downto 1)="01") then      -- A2h or A3h
             i_en <= P_DIN(0);
-          elsif (P_MMU_ADDR(3)='1') then                                                 --TLB Clear
+          elsif (P_MMU_ADDR(3)='1') then            -- A8h or A9h 
             for I in TLB'range loop
               TLB(I)<=(others => '0');
             end loop;
           end if;
-        elsif(P_MMU_ADDR(1)='0') then                                          -- 8-h or 9-h
+        elsif(P_MMU_ADDR(1)='0') then               -- 8-h or 9-h
           TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16) 
             <= P_DIN(7 downto 0);
         else
@@ -138,10 +138,9 @@ begin
 
       --ページヒット時のD,Rビットの書き換え
       elsif(i_mis='0' and i_vio='0') then 
-          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <= 
-            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) or request(1);     --dirty
-
-          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= '1';            --reference
+          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <=       -- D bit        
+            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) or request(1);     
+          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= '1';  -- R bit
       end if;
     end if;
 
@@ -171,19 +170,19 @@ begin
   P_VIO_INT <= i_adr or i_vio;    
   P_TLB_INT <= i_mis;                       
   
-  --割り込み時の出力 (P_PR='1')
-  P_DOUT <= "00000000" & TLB(TO_INTEGER(unsigned                             --TLBの上位8ビット
+  --割り込み時の出力 (P_IOR='1')
+  P_DOUT <= "00000000" & TLB(TO_INTEGER(unsigned             --TLBの上位8ビット
             (P_MMU_ADDR(4 downto 2))))(23 downto 16)   
             when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5)='0') else
 
-            TLB(TO_INTEGER(unsigned                                          --TLBの下位16ビット
+            TLB(TO_INTEGER(unsigned                          --TLBの下位16ビット
             (P_MMU_ADDR(4 downto 2))))(15 downto 0)                  
             when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='0') else
             
-            "00000000" & intr_page                                           --A6h ページ番号
+            "00000000" & intr_page                           --A6h ページ番号
             when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='1') else      
 
-            "00000000000000" & intr_cause;                                   --A4h 割り込み原因　下2桁 i_adr & i_vio
+            "00000000000000" & intr_cause;                   --A4h 割り込み原因　下2桁
 
 
 --relocation register
