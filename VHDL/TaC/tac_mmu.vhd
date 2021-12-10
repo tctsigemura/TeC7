@@ -48,8 +48,8 @@ entity TAC_MMU is
          P_MR       : out std_logic;                     -- Memory Request
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
-         P_DIN      : in  std_logic_vector(15 downto 0); -- data from cpu
-         P_DOUT     : out std_logic_vector(15 downto 0)  -- output when i/o read
+         P_DIN      : in  std_logic_vector(15 downto 0); -- Input from cpu
+         P_DOUT     : out std_logic_vector(15 downto 0)  -- Output w/ i/o read
        );
 end TAC_MMU;
 
@@ -129,11 +129,7 @@ begin
               TLB(I)<=(others => '0');
             end loop;
           end if;
-<<<<<<< HEAD
         elsif(P_MMU_ADDR(1)='0') then               -- 8-h or 9-h
-=======
-        elsif(P_MMU_ADDR(1)='0') then                -- 8-h or 9-h
->>>>>>> 10f05920f7dacf52b0bdabaab0117801098b58a5
           TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16) 
             <= P_DIN(7 downto 0);
         else
