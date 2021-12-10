@@ -95,7 +95,7 @@ component TAC_CPU_SEQUENCER is
   P_CLK         : in std_logic;
   P_RESET       : in std_logic;
   P_STOP        : in std_logic;
-  P_INTR        : in std_logic;                      -- 割り込み（負論理）
+  P_INTR        : in std_logic;                      -- 割り込み
   P_OP1         : in std_logic_vector(4 downto 0);
   P_OP2         : in std_logic_vector(2 downto 0);
   P_RD          : in std_logic_vector(3 downto 0);   -- 命令の Rd

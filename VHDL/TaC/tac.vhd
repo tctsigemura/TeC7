@@ -535,7 +535,8 @@ begin
          P_CON      => i_con,
          P_INTR     => i_intr,
          P_STOP     => i_stop,
-         P_TLBMISS  => i_int_bit(15)
+--         P_TLBMISS  => i_int_bit(15)
+         P_TLBMISS  => '0'
   );
 
   i_iow       <= i_ir and i_rw and (not i_li);
