@@ -166,8 +166,8 @@ begin
     S_DEC1   when I_STATE=S_FETCH and P_STOP='0' else -- and P_INTR='0' else
     S_DEC2   when I_STATE=S_DEC1 and P_OP2(2 downto 1)="00" and     -- Drct,Idx
                   ((P_OP1/="00000" and P_OP1<=01100) or             -- LD〜MOD
-                   (P_OP1(4 downto 3)="10")) else                   -- SHIFT
-    S_ALU1   when (I_STATE=S_DEC1 and I_IS_ALU='1' and P_OP2="010") or
+                   (P_OP1(4 downto 3)="10")) else                   -- SFT〜OUT
+    S_ALU1   when (I_STATE=S_DEC1 and I_IS_ALU='1' and P_OP2="010") or -- Imm
                   (I_STATE=S_DEC2 and I_IS_ALU='1') or
                   (I_STATE=S_ALU1 and P_BUSY='1') else
     S_ALU2   when (I_STATE=S_DEC1 and I_IS_ALU='1') or
@@ -182,11 +182,14 @@ begin
     S_RETI2  when I_STATE=S_RETI1 else
     S_RETI3  when I_STATE=S_RETI2 else
     S_IN1    when I_STATE=S_DEC2 and P_OP1="10110" else
-    S_IN2    when I_STATE=S_DEC1 and P_OP1="10110" and I_IS_INDR='1' else
+    S_IN2    when I_STATE=S_DEC1 and
+                  P_OP1="10110" and P_OP2(2 downto 1)="11" else
     S_FETCH  when (I_STATE=S_DEC1 and
-                   P_OP1="10111" and I_IS_INDR='1') or              -- OUT
+                   (P_OP1="00000" and P_OP2="000") or               -- NO
+                   (P_OP1="11111" and P_OP2="111") or               -- HALT
+                   (P_OP1="10111" and P_OP2(2 downto 1)="11") or    -- OUT
                   (I_STATE=S_DEC2 and
-                   (P_OP1="10111" or P_OP1="10100")) else           -- OUT/JMP
+                   (P_OP1="10100" or P_OP1="10111")) else           -- OUT/CALL
     S_SVC    when I_STATE=S_DEC1 and P_OP1="11110" else
     S_INVAL  when I_STATE=S_DEC1 or I_STATE=S_DEC2 else
     S_CON1   when (I_STATE=S_FETCH and P_STOP='1') or I_STATE=S_CON4 else
