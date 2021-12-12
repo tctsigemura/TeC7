@@ -185,9 +185,9 @@ begin
     S_IN2    when I_STATE=S_DEC1 and
                   P_OP1="10110" and P_OP2(2 downto 1)="11" else
     S_FETCH  when (I_STATE=S_DEC1 and
-                   (P_OP1="00000" and P_OP2="000") or               -- NO
-                   (P_OP1="11111" and P_OP2="111") or               -- HALT
-                   (P_OP1="10111" and P_OP2(2 downto 1)="11") or    -- OUT
+                   ((P_OP1="00000" and P_OP2="000") or              -- NO
+                    (P_OP1="11111" and P_OP2="111") or              -- HALT
+                    (P_OP1="10111" and P_OP2(2 downto 1)="11"))) or -- OUT
                   (I_STATE=S_DEC2 and
                    (P_OP1="10100" or P_OP1="10111")) else           -- OUT/CALL
     S_SVC    when I_STATE=S_DEC1 and P_OP1="11110" else
