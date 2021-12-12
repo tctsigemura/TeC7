@@ -260,7 +260,7 @@ begin
   P_LOAD_FLAG <= '1' when (I_STATE=S_ALU1 or I_STATE=S_ALU2) and
                           P_OP1/="00001" else '0';                 -- LD 以外
   
-  P_LOAD_TMP <= '1' when I_STATE=S_FETCH else '0';
+  P_LOAD_TMP <= '1' when I_NEXT=S_INTR1 else '0';
   
   P_LOAD_GR <= '1' when (I_STATE=S_DEC1 and I_IS_SHORT='1' and I_IS_ALU='1') or
                         I_STATE=S_ALU2 or I_STATE=S_IN1 or
