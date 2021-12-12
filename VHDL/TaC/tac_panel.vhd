@@ -347,7 +347,7 @@ begin  -- RTL
     elsif (P_CLK'event and P_CLK='1') then
       if (BtnDbnc(4)='1' or                             -- Btn4(STOP)
           P_HL='1' or                                   -- halt instruction
-          (P_STEP_SW='1' and P_LI='1' and P_MR='1') or  -- step
+          (P_STEP_SW='1' and P_MR='1') or               -- step
           (P_BREAK_SW='1' and P_MR='1' and              -- break
            P_AIN(15 downto 1)=AdrReg(15 downto 1))) then
         Run <= '0';
