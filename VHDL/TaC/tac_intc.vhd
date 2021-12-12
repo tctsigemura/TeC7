@@ -59,38 +59,30 @@ signal intSnd  : std_logic_vector(15 downto  0);
 signal intMsk  : std_logic_vector(14 downto  0);
 
 begin
-  -- synchronize with CLK
-  process(P_RESET, P_CLK)
-  begin
-    if (P_RESET='0') then
-      intInp <= (others => '0');
-    elsif (P_CLK'event and P_CLK='1') then
-      intInp <= P_INT_BIT;
-    end if;
-  end process;
 
   -- edge trigger
   process(P_RESET, P_CLK)
   begin
     if (P_RESET='0') then
-      intReg  <= (others => '0');
+      intInp  <= (others => '0');
       intInpD <= (others => '0');
+      intReg  <= (others => '0');
     elsif (P_CLK'event and P_CLK='1') then
-      intReg <= (intReg and not intSnd) or
-                (intInp and (intInpD xor intInp));
+      intInp  <= P_INT_BIT;
       intInpD <= intInp;
+      intReg  <= (intReg and not intSnd) or
+                 (intInp and (intInpD xor intInp));
     end if;
   end process;
 
   -- select send signal
-  intMsk(14) <= intReg(15);
-  intMsk(13 downto 0) <= intMsk(14 downto 1) or intReg(14 downto 1);
+  intMsk <= ('0' & intMsk(14 downto 1)) or intReg(15 downto 1);
   intSnd <= intReg and (not ("0" & intMsk)) when (P_VR='1') else
             (others => '0');
 
   -- to cpu
-  P_INTR  <= '1' when intMsk(9)='1' or            -- exception
-                     (intMsk(0)='1' and P_EI='1') -- interrupt
+  P_INTR  <= '1' when intMsk(9)='1' or                          -- exception
+                      ((intMsk(0) or intReg(0)) and P_EI)='1')  -- interrupt
              else '0';
   P_DOUT(15 downto 5) <= "11111111111";
   P_DOUT(4 downto 1) <=

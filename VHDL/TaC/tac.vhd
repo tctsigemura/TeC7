@@ -481,9 +481,6 @@ begin
   -- CNT16 (1kHz のパルスを発生する)
   i_1kHz <= '1' when (i_cnt16=49151) else '0';
 
-  -- 割込み許可信号
-  i_ei <= '1'; --TODO: 設定する
-
   process(P_CLK, P_RESET)
     begin
       if (P_RESET='0') then
@@ -528,6 +525,7 @@ begin
          P_HL       => i_hl,
          P_BT       => i_bt,
          P_PR       => i_pr,
+         P_EI       => i_ei,
          P_SVC      => i_int_bit(14),
          P_ZDIV     => i_int_bit(11),
          P_PRIVIO   => i_int_bit(12),

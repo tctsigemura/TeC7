@@ -56,6 +56,7 @@ entity TAC_CPU is
          P_HL       : out std_logic;                        -- Halt Instruction
          P_BT       : out std_logic;                        -- Byte to
          P_PR       : out std_logic;                        -- privilege Mode
+         P_EI       : out std_logic;                        -- Enable Interrupt
          P_IOPR     : out std_logic;                        -- IO privilege Mode
          P_SVC      : out std_logic;                        -- Super Visor Call
          P_ZDIV     : out std_logic;                        -- Zero Division
@@ -279,6 +280,7 @@ begin
   P_VR   <= I_VR;
   P_BT   <= '1' when I_INST_OP2 = "111" else '0';
   P_PR   <= I_FLAG_P;
+  P_EI   <= I_FLAG_E;
   P_IOPR <= I_FLAG_I;
   P_CON  <= I_CON;
 
