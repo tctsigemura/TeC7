@@ -282,7 +282,6 @@ begin
   P_BT   <= '1' when I_INST_OP2 = "111" else '0';
   P_PR   <= I_FLAG_P;
   P_EI   <= I_FLAG_E;
-  P_IOPR <= I_FLAG_I;
   P_CON  <= I_CON;
 
   -- マルチプレクサ
