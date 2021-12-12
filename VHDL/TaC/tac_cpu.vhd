@@ -57,7 +57,6 @@ entity TAC_CPU is
          P_BT       : out std_logic;                        -- Byte to
          P_PR       : out std_logic;                        -- privilege Mode
          P_EI       : out std_logic;                        -- Enable Interrupt
-         P_IOPR     : out std_logic;                        -- IO privilege Mode
          P_SVC      : out std_logic;                        -- Super Visor Call
          P_ZDIV     : out std_logic;                        -- Zero Division
          P_PRIVIO   : out std_logic;                        -- Privilege Vio.
@@ -118,6 +117,7 @@ component TAC_CPU_SEQUENCER is
   P_FLAG_C      : in std_logic;
   P_FLAG_Z      : in std_logic;
   P_FLAG_S      : in std_logic;
+  P_FLAG_I      : in std_logic;
   P_FLAG_P      : in std_logic;
   P_TLBMISS     : in std_logic;                      -- TLB miss
   P_MR          : out std_logic;                     -- Memory Request
@@ -257,6 +257,7 @@ begin
     P_FLAG_C    => I_FLAG_C,
     P_FLAG_Z    => I_FLAG_Z,
     P_FLAG_S    => I_FLAG_S,
+    P_FLAG_I    => I_FLAG_I,
     P_FLAG_P    => I_FLAG_P,
     P_TLBMISS   => P_TLBMISS,
     P_MR        => I_MR,

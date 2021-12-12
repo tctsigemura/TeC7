@@ -55,6 +55,7 @@ entity TAC_CPU_SEQUENCER is
   P_FLAG_C      : in std_logic;
   P_FLAG_Z      : in std_logic;
   P_FLAG_S      : in std_logic;
+  P_FLAG_I      : in std_logic;
   P_FLAG_P      : in std_logic;
   P_TLBMISS     : in std_logic;                      -- TLB miss
   P_MR          : out std_logic;                     -- Memory Request
@@ -141,7 +142,7 @@ begin
               (P_RD="1011" and P_FLAG_V='0') or                         -- JNO
               (P_RD="1100" and P_FLAG_Z='0' and P_FLAG_C='0') or        -- JHI
               (P_RD="1110" and (P_FLAG_Z='1' or P_FLAG_C='1')) or       -- JLS
-              (P_RD="1111"))                                            -- JMP
+              (P_RD="1111")                                             -- JMP
              ) else '0';
 
   -- ステート遷移を決める組み合わせ回路
@@ -159,7 +160,7 @@ begin
     S_PRIVIO when I_STATE=S_DEC1 and
                   ((P_OP1="11111" and P_FLAG_P='0') or               -- HALT
                    (P_OP1(4 downto 1)="1011" and                     -- IN/OUT
-                    P_FLAG_P='0' and P_FLAG_I='0') else
+                    P_FLAG_P='0' and P_FLAG_I='0')) else
     S_ZDIV   when (I_STATE=S_ALU1 or I_STATE=S_ALU2) and P_ALU_ZDIV='1' else
     S_DEC1   when I_STATE=S_FETCH and P_STOP='0' and P_INTR='0' else
     S_DEC2   when I_STATE=S_DEC1 and P_OP2(2 downto 1)="00" else
@@ -259,7 +260,7 @@ begin
   P_LOAD_FLAG <= '1' when (I_STATE=S_ALU1 or I_STATE=S_ALU2) and
                           P_OP1/="00001" else '0';                 -- LD 以外
   
-  P_LOAD_TMP <= '1' when I_STATE=S_FETCH '0';
+  P_LOAD_TMP <= '1' when I_STATE=S_FETCH else '0';
   
   P_LOAD_GR <= '1' when (I_STATE=S_DEC1 and I_IS_SHORT='1' and I_IS_ALU='1') or
                         I_STATE=S_ALU2 or I_STATE=S_IN1 or

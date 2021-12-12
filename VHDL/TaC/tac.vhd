@@ -243,6 +243,7 @@ component TAC_CPU
          P_HL       : out std_logic;                       -- Halt instruction
          P_BT       : out std_logic;                       -- Byte Access
          P_PR       : out std_logic;                       -- Privilege Mode
+         P_EI       : out std_logic;                       -- Enable Interrupt
          P_SVC      : out std_logic;                       -- Super Visor Call
          P_ZDIV     : out std_logic;                       -- Zero Division
          P_PRIVIO   : out std_logic;                       -- Privilege Vio.

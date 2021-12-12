@@ -82,7 +82,7 @@ begin
 
   -- to cpu
   P_INTR  <= '1' when intMsk(9)='1' or                          -- exception
-                      ((intMsk(0) or intReg(0)) and P_EI)='1')  -- interrupt
+                      ((intMsk(0) or intReg(0)) and P_EI)='1'   -- interrupt
              else '0';
   P_DOUT(15 downto 5) <= "11111111111";
   P_DOUT(4 downto 1) <=
