@@ -481,7 +481,10 @@ begin
       I_FLAG_S <= '0';
       I_FLAG_Z <= '0';
     elsif (P_CLK'event and P_CLK='1') then
-      if (I_LOAD_GR='1' and I_INST_RD="1111") then
+      if (I_LOAD_TMP='1') then                      -- 割り込み発生
+          I_FLAG_E <= '0';
+          I_FLAG_P <= '1';
+      elsif (I_LOAD_GR='1' and I_INST_RD="1111") then
         if (I_FLAG_P='1' or I_CON(2)='1') then      -- 特権モード or コンソール
           I_FLAG_E <= I_ALU_OUT(7);
           I_FLAG_P <= I_ALU_OUT(6);
