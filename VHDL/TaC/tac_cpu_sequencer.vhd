@@ -120,8 +120,9 @@ signal   I_JMP_GO    : std_logic;                    -- JMP条件成立
 begin
   
   -- LD,ADD,SUB,CMP,AND,OR,XOR,ADDS,MUL,DIV,MOD,SHLA,SHLL,SHRA,SHRL
-  I_IS_ALU   <= '1' when P_OP1/="00000" and P_OP1/="00010" and
-                         P_OP1(4 downto 2)<="100" else '0';
+  I_IS_ALU   <= '1' when (P_OP1/="00000" and P_OP1/="00010" and   -- NO,ST 以外
+                          P_OP1<="01100") or                      -- MODまで
+                         P_OP1(4 downto 2)="100" else '0';        -- SHIFT
   I_IS_INDR  <= '1' when P_OP2="011" or P_OP2(2 downto 1)="11" else '0';
   I_IS_SHORT <= '1' when P_OP2(2 downto 1)="10" else '0';
 
@@ -153,7 +154,7 @@ begin
                     I_STATE=S_DEC2 or I_STATE=S_RETI1) and
                    P_TLBMISS='1') else
     S_WAIT2  when I_STATE=S_WAIT1 else
-    S_INTR1  when I_STATE=S_FETCH and P_STOP='0' and P_INTR='1' else
+    -- S_INTR1  when I_STATE=S_FETCH and P_STOP='0' and P_INTR='1' else
     S_INTR2  when I_STATE=S_INTR1 else
     S_INTR3  when I_STATE=S_INTR2 else
     S_INTR4  when I_STATE=S_INTR3 else
@@ -162,8 +163,10 @@ begin
                    (P_OP1(4 downto 1)="1011" and                     -- IN/OUT
                     P_FLAG_P='0' and P_FLAG_I='0')) else
     S_ZDIV   when (I_STATE=S_ALU1 or I_STATE=S_ALU2) and P_ALU_ZDIV='1' else
-    S_DEC1   when I_STATE=S_FETCH and P_STOP='0' and P_INTR='0' else
-    S_DEC2   when I_STATE=S_DEC1 and P_OP2(2 downto 1)="00" else
+    S_DEC1   when I_STATE=S_FETCH and P_STOP='0' else -- and P_INTR='0' else
+    S_DEC2   when I_STATE=S_DEC1 and P_OP2(2 downto 1)="00" and     -- Drct,Idx
+                  ((P_OP1/="00000" and P_OP1<=01100) or             -- LD〜MOD
+                   (P_OP1(4 downto 3)="10")) else                   -- SHIFT
     S_ALU1   when (I_STATE=S_DEC1 and I_IS_ALU='1' and P_OP2="010") or
                   (I_STATE=S_DEC2 and I_IS_ALU='1') or
                   (I_STATE=S_ALU1 and P_BUSY='1') else
