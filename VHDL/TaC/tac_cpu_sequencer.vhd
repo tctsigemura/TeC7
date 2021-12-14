@@ -204,7 +204,7 @@ begin
     if (P_RESET='0') then
       I_STATE <= S_FETCH;
     elsif (P_CLK'event and P_CLK='1') then
-      if (I_WAIT='0') then
+      if not (I_WAIT='0' and (I_IR='1' or I_MR='1')) then
         I_STATE <= I_NEXT;
       end if;
     end if;
