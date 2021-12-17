@@ -117,7 +117,6 @@ signal   I_IR        : std_logic;
 signal   I_MR        : std_logic;
 
 signal   I_IS_INDR   : std_logic;                    -- FP相対,レジスタ間接
-signal   I_IS_SHORT  : std_logic;                    -- Reg-Reg, Imm4
 signal   I_IS_ALU    : std_logic;                    -- LD~SHRL (ST以外)
 signal   I_JMP_GO    : std_logic;                    -- JMP条件成立
 
@@ -128,7 +127,6 @@ begin
                           P_OP1<="01100") or                      -- MODまで
                          P_OP1(4 downto 2)="100" else '0';        -- SHIFT
   I_IS_INDR  <= '1' when P_OP2="011" or P_OP2(2 downto 1)="11" else '0';
-  I_IS_SHORT <= '1' when P_OP2(2 downto 1)="10" else '0';
 
   -- JMP 命令のとき、 JMP するか
   I_JMP_GO    <=
@@ -158,7 +156,7 @@ begin
                     I_STATE=S_DEC2 or I_STATE=S_RETI1) and
                    P_TLBMISS='1') else
     S_WAIT2  when I_STATE=S_WAIT1 else
-    -- S_INTR1  when I_STATE=S_FETCH and P_STOP='0' and P_INTR='1' else
+    S_INTR1  when I_STATE=S_FETCH and P_STOP='0' and P_INTR='1' else
     S_INTR2  when I_STATE=S_INTR1 else
     S_INTR3  when I_STATE=S_INTR2 else
     S_INTR4  when I_STATE=S_INTR3 else
@@ -172,10 +170,8 @@ begin
                   ((P_OP1/="00000" and P_OP1<=01100) or             -- LD〜MOD
                    (P_OP1(4 downto 3)="10")) else                   -- SFT〜OUT
     S_ALU1   when (I_STATE=S_DEC1 and I_IS_ALU='1' and P_OP2="010") or -- Imm
-                  (I_STATE=S_DEC2 and I_IS_ALU='1') or
-                  (I_STATE=S_ALU1 and P_BUSY='1') else
-    S_ALU2   when (I_STATE=S_DEC1 and I_IS_ALU='1') or
-                  (I_STATE=S_ALU2 and P_BUSY='1') else
+                  (I_STATE=S_DEC2 and I_IS_ALU='1') else
+    S_ALU2   when (I_STATE=S_DEC1 and I_IS_ALU='1') else
     S_ST1    when I_STATE=S_DEC2 and P_OP1="00010" else
     S_ST2    when I_STATE=S_DEC1 and P_OP1="00010" and I_IS_INDR='1' else
     S_PUSH   when I_STATE=S_DEC1 and P_OP1="11000" and P_OP2(2)='0' else
@@ -203,20 +199,20 @@ begin
     S_FETCH;
   
   -- ステートの遷移
-  I_WAIT <= (not I_IDLE) and (I_MR or I_IR);          -- メモリ，I/Oアクセス(待が必要)
-
   process (P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
       I_STATE <= S_FETCH;
     elsif (P_CLK'event and P_CLK='1') then
-      if I_WAIT='0' then
+      if I_WAIT='0' and P_BUSY='0' then
         I_STATE <= I_NEXT;
       end if;
     end if;
   end process;
 
   -- I_IDLE の制御
+  I_WAIT <= (not I_IDLE) and (I_MR or I_IR);          -- メモリ，I/Oアクセス(待が必要)
+
   process (P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -235,7 +231,7 @@ begin
            "111" when I_STATE=S_CON4 else
            "000";
  
-  P_UPDATE_PC <= "000" when I_WAIT='1' else I_UPDATE_PC; 
+  P_UPDATE_PC <= "000" when I_WAIT='1' or P_BUSY='1' else I_UPDATE_PC;
   I_UPDATE_PC <= "100" when (I_STATE=S_DEC1 and                     -- PC+=2
                              (I_NEXT=S_FETCH or I_NEXT=S_IN2)) or
                             I_STATE=S_ALU2 or I_STATE=S_ST2 or
@@ -253,7 +249,7 @@ begin
                             I_STATE=S_CALL else                     --   CALL
                  "000";                                             -- 保持
  
-  P_UPDATE_SP <= "00"  when I_WAIT='1' else I_UPDATE_SP; 
+  P_UPDATE_SP <= "00"  when I_WAIT='1' or P_BUSY='1' else I_UPDATE_SP;
   I_UPDATE_SP <= "01"  when I_STATE=S_POP or I_STATE=S_RET or        -- SP+=2
                             I_STATE=S_RETI2 or I_STATE=S_RETI3 else
                  "10"  when I_STATE=S_INTR1 or I_STATE=S_INTR2 or    -- SP-=2
@@ -266,16 +262,16 @@ begin
                         (I_STATE=S_DEC1 and P_OP2/="101") or       -- Imm4 以外
                         I_STATE=S_DEC2 or I_STATE=S_RETI1 or
                         I_STATE=S_CON3  else '0';
-  
+
   -- ADD, SUB, ..., SHRL ではフラグが変化する
   P_LOAD_FLAG <= '1' when (I_STATE=S_ALU1 or I_STATE=S_ALU2) and
                           P_OP1/="00001" else '0';                 -- LD 以外
-  
+ 
   P_LOAD_TMP <= '1' when I_NEXT=S_INTR1 else '0';
-  
-  P_LOAD_GR <= '1' when (I_STATE=S_DEC1 and I_IS_SHORT='1' and I_IS_ALU='1') or
-                        I_STATE=S_ALU2 or I_STATE=S_IN1 or
-                        I_STATE=S_IN2 or I_STATE=S_RETI3 or
+
+  P_LOAD_GR <= '1' when I_STATE=S_ALU1 or I_STATE=S_ALU2 or
+                        I_STATE=S_IN1 or I_STATE=S_IN2 or
+                        I_STATE=S_RETI3 or
                         (I_STATE=S_CON4 and P_OP2(1 downto 0)="10") else '0';
   
   -- AOUT
