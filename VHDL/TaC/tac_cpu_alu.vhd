@@ -42,7 +42,7 @@ entity TAC_CPU_ALU is
             P_CARRY     : out std_logic;
             P_ZERO      : out std_logic;
             P_SIGN      : out std_logic
-            );
+         );
 end TAC_CPU_ALU;
 
 architecture RTL of TAC_CPU_ALU is
@@ -82,61 +82,61 @@ begin
 
     P_ZDIV <= I_ZDIV;
 
-    I_DIVMOD <= '1' when P_OP1 = "01011" or P_OP1 = "01100" else '0';
+    I_DIVMOD <= '1' when P_OP1="01011" or P_OP1="01100" else '0';
 
-    I_OUT  <= '0' & P_B                 when P_OP1 = "00001" else   -- LD
-              ('0' & P_A) + P_B         when P_OP1 = "00011" else   -- ADD
-              ('0' & P_A) - P_B when P_OP1(4 downto 1) = "0010" else-- SUB, CMP
-              '0' & (P_A and P_B)       when P_OP1 = "00110" else   -- AND
-              '0' & (P_A or P_B)        when P_OP1 = "00111" else   -- OR
-              '0' & (P_A xor P_B)       when P_OP1 = "01000" else   -- XOR
-              ('0' & P_A) + (P_B & '0') when P_OP1 = "01001" else   -- ADDS
-              -- MUL では CARRY は常に 0
-              '0' & I_AtB(15 downto 0) when P_OP1 = "01010" else   -- MUL
-              '0' & I_YX(15 downto 0)   when P_OP1 = "01011" else   -- DIV
-              '0' & I_YX(31 downto 16)  when P_OP1 = "01100" else   -- MOD
-              -- シフト命令では CARRY （端からあふれた値）は 1 ビットシフトの時だけ正しい値になる
-              P_A(15) & I_SHL when P_OP1(4 downto 1) = "1000" else-- SHLA, SHLL
-              P_A(0) & I_SHR when P_OP1(4 downto 1) = "1001" else-- SHRA, SHRL
-              '0' & P_B                 when P_OP1 = "10110" or     -- IN
-                                             P_OP1 = "11000" else   -- PUSH
-              (others => '0');
+    I_OUT <= '0' & P_B                 when P_OP1="00001"            -- LD
+        else ('0' & P_A) + P_B         when P_OP1="00011"            -- ADD
+        else ('0' & P_A) - P_B         when P_OP1(4 downto 1)="0010" -- SUB,CMP
+        else '0' & (P_A and P_B)       when P_OP1="00110"            -- AND
+        else '0' & (P_A or P_B)        when P_OP1="00111"            -- OR
+        else '0' & (P_A xor P_B)       when P_OP1="01000"            -- XOR
+        else ('0' & P_A) + (P_B & '0') when P_OP1="01001"            -- ADDS
+        -- MUL では CARRY は常に 0
+        else '0' & I_AtB(15 downto 0)  when P_OP1="01010"            -- MUL
+        else '0' & I_YX(15 downto 0)   when P_OP1="01011"            -- DIV
+        else '0' & I_YX(31 downto 16)  when P_OP1="01100"            -- MOD
+        -- シフト命令では CARRY は 1 ビットシフトの時だけ正しい値になる
+        else P_A(15) & I_SHL           when P_OP1(4 downto 1)="1000" -- SHL?
+        else P_A(0)  & I_SHR           when P_OP1(4 downto 1)="1001" -- SHR?
+        else '0' & P_B                 when P_OP1="10110" or         -- IN
+                                             P_OP1="11000"           -- PUSH
+        else (others => '0');
     
     -- 左シフト
-    I_S1    <= P_A(14 downto 0) & "0" when P_B(0) = '1' else P_A;
-    I_S3    <= I_S1(13 downto 0) & "00" when P_B(1) = '1' else I_S1;
-    I_S7    <= I_S3(11 downto 0) & "0000" when P_B(2) = '1' else I_S3;
-    I_SHL   <= I_S7(7 downto 0) & "00000000" when P_B(3) = '1' else I_S3;
+    I_S1   <= P_A(14 downto  0) & "0"        when P_B(0)='1' else P_A;
+    I_S3   <= I_S1(13 downto 0) & "00"       when P_B(1)='1' else I_S1;
+    I_S7   <= I_S3(11 downto 0) & "0000"     when P_B(2)='1' else I_S3;
+    I_SHL  <= I_S7( 7 downto 0) & "00000000" when P_B(3)='1' else I_S7;
 
     -- 右シフト
-    I_SIGN  <= P_A(15) when P_OP1(0) = '0' else '0';
-    I_E8    <= (15 downto 8 => I_SIGN) & P_A(15 downto 8);
-    I_S8    <= I_E8 when P_B(3) = '1' else P_A;
-    I_E12   <= (15 downto 12 => I_SIGN) & I_S8(15 downto 4);
-    I_S12   <= I_E12 when P_B(2) = '1' else I_S8;
-    I_E14   <= (15 downto 14 => I_SIGN) & I_S12(15 downto 2);
-    I_S14   <= I_E14 when P_B(1) = '1' else I_S12;
-    I_E15   <= I_SIGN & I_S14(15 downto 1);
-    I_SHR   <= I_E15 when P_B(0) = '1' else I_S14;
+    I_SIGN <= P_A(15) when P_OP1(0)='0' else '0';
+    I_E8   <= (15 downto 8 => I_SIGN) & P_A(15 downto 8);
+    I_S8   <= I_E8    when P_B(3)='1' else P_A;
+    I_E12  <= (15 downto 12 => I_SIGN) & I_S8(15 downto 4);
+    I_S12  <= I_E12   when P_B(2)='1' else I_S8;
+    I_E14  <= (15 downto 14 => I_SIGN) & I_S12(15 downto 2);
+    I_S14  <= I_E14   when P_B(1)='1' else I_S12;
+    I_E15  <= I_SIGN & I_S14(15 downto 1);
+    I_SHR  <= I_E15   when P_B(0)='1' else I_S14;
 
     -- 割り算
     I_AmB <= ('0' & I_YX(30 downto 15)) - P_B;
     process (P_CLK, P_RESET)
     begin
-        if (P_RESET = '0') then
+        if (P_RESET='0') then
             I_BUSY <= '0';
         elsif (P_CLK 'event and P_CLK = '1') then
-            if (I_BUSY = '1') then
+            if (I_BUSY='1') then
                 -- I_YX(31 downto 16) = あまり
                 -- I_YX(15 downto 0) = 商
-                if (I_AmB(16) = '0') then
+                if (I_AmB(16)='0') then
                     I_YX(31 downto 16) <= I_AmB(15 downto 0);
                 else
                     I_YX(31 downto 16) <= I_YX(30 downto 15);
                 end if;
                 I_YX(15 downto 0) <= I_YX(14 downto 0) & not I_AmB(15);
                 I_CNT <= I_CNT + 1;
-                if (I_CNT = 15) then
+                if (I_CNT=15) then
                     I_BUSY <= '0';
                 end if;
             elsif (P_START = '1' and I_DIVMOD = '1' and I_ZDIV = '0') then
