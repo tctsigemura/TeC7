@@ -275,7 +275,7 @@ begin
                         (I_STATE=S_CON4 and P_OP2(1 downto 0)="10") else '0';
   
   -- AOUT
-  P_SELECT_A <= "000" when I_NEXT=S_DEC1 else                      -- PC
+  P_SELECT_A <= "000" when I_NEXT=S_DEC1 or I_STATE=S_INTR4 else   -- PC
                 "001" when I_STATE=S_DEC1 and                      -- PC+2
                            (I_NEXT=S_DEC2 or I_NEXT=S_ALU1) else
                 "100" when I_NEXT=S_POP or I_NEXT=S_RET or         -- SP
