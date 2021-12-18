@@ -238,8 +238,8 @@ begin
                             I_STATE=S_PUSH or I_STATE=S_POP or
                             I_STATE=S_SVC else
                  "101" when (I_STATE=S_DEC2 and                     -- PC+=4
-                             ((P_OP1="10100" and I_JMP_GO='0') or
-                              I_NEXT=S_IN1)) or
+                             ((P_OP1="10100" and I_JMP_GO='0') or   -- JMP
+                              P_OP1(4 downto 1)="1011")) or         -- IN/OUT
                             I_STATE=S_ALU1 or I_STATE=S_ST1 else
                  "110" when I_STATE=S_INTR3 or I_STATE=S_INTR4 or   -- PC<-Din
                             I_STATE=S_RETI2 or I_STATE=S_RET or
