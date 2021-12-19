@@ -156,7 +156,7 @@ begin
                     I_STATE=S_DEC2 or I_STATE=S_RETI1) and
                    P_TLBMISS='1') else
     S_WAIT2  when I_STATE=S_WAIT1 else
-    S_INTR1  when I_STATE=S_FETCH and P_STOP='0' and P_INTR='1' else
+    S_INTR1  when I_STATE=S_FETCH and P_INTR='1' else
     S_INTR2  when I_STATE=S_INTR1 else
     S_INTR3  when I_STATE=S_INTR2 else
     S_INTR4  when I_STATE=S_INTR3 else
