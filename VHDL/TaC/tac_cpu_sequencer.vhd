@@ -189,7 +189,7 @@ begin
                     (P_OP1="11111" and P_OP2="111") or              -- HALT
                     (P_OP1="10111" and P_OP2(2 downto 1)="11"))) or -- OUT
                   (I_STATE=S_DEC2 and
-                   (P_OP1="10100" or P_OP1="10111")) else           -- OUT/CALL
+                   (P_OP1="10100" or P_OP1="10111")) else           -- JMP/OUT
     S_SVC    when I_STATE=S_DEC1 and P_OP1="11110" else
     S_INVAL  when I_STATE=S_DEC1 or I_STATE=S_DEC2 else
     S_CON1   when (I_STATE=S_FETCH and P_STOP='1') or I_STATE=S_CON4 else
@@ -211,7 +211,7 @@ begin
   end process;
 
   -- I_IDLE の制御
-  I_WAIT <= (not I_IDLE) and (I_MR or I_IR);          -- メモリ，I/Oアクセス(待が必要)
+  I_WAIT <= (not I_IDLE) and (I_MR or I_IR);  -- メモリ，I/Oアクセス(待が必要)
 
   process (P_CLK, P_RESET)
   begin
@@ -327,13 +327,12 @@ begin
                    ((I_STATE = S_DEC1 or I_STATE = S_DEC2) and
                     I_NEXT = S_FETCH and P_OP1 = "10111") else '0'; -- OUT
 
-  P_HL <= '1' when I_STATE=S_DEC1 and P_OP1="11111" else '0';
-  P_SVC <= '1' when I_STATE=S_SVC else '0';
-  P_PRIVIO <= '1' when I_STATE=S_PRIVIO else '0';
-  P_ZDIV <= '1' when I_STATE=S_ZDIV else '0';
-  P_INVINST <= '1' when I_STATE=S_INVAL else '0';
-
-  P_VR <= '1' when I_STATE=S_INTR3 else '0';
+  P_HL      <= '1' when I_STATE=S_DEC1 and P_OP1="11111" else '0';
+  P_SVC     <= '1' when I_STATE=S_SVC    else '0';
+  P_PRIVIO  <= '1' when I_STATE=S_PRIVIO else '0';
+  P_ZDIV    <= '1' when I_STATE=S_ZDIV   else '0';
+  P_INVINST <= '1' when I_STATE=S_INVAL  else '0';
+  P_VR      <= '1' when I_STATE=S_INTR3  else '0';
             
 end RTL;
 

@@ -553,18 +553,19 @@ begin
   i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110" and
                       (i_addr(2)='1' or i_addr(1)='1')) else '0'; -- f2‾f7
 
-  i_din_cpu <= i_dout_ram   when (i_mr='1') else
-               i_dout_panel when ((i_ir='1' and i_addr(7 downto 3)="11111")
-                                 or i_con(2)='1') else
-               i_dout_tmr0  when (i_ir='1' and i_en_tmr0='1') else
-               i_dout_tmr1  when (i_ir='1' and i_en_tmr1='1') else
+  i_din_cpu <= i_dout_ram               when (i_mr='1')                   else
+               i_dout_panel             when ((i_ir='1' and
+                                               i_addr(7 downto 3)="11111")
+                                               or i_con(2)='1')           else
+               i_dout_tmr0              when (i_ir='1' and i_en_tmr0='1') else
+               i_dout_tmr1              when (i_ir='1' and i_en_tmr1='1') else
                ("00000000"&i_dout_sio1) when (i_ir='1' and i_en_sio1='1') else
                ("00000000"&i_dout_sio2) when (i_ir='1' and i_en_sio2='1') else
-               i_dout_spi when (i_ir='1' and i_en_spi='1') else
-               ("00000000"&i_dout_pio) when (i_ir='1' and i_en_pio='1') else
-               ("00000000"&i_dout_rn) when (i_ir='1' and i_en_rn='1') else
-               ("00000000"&i_dout_tec) when (i_ir='1' and i_en_tec='1') else
-               i_dout_intc when (i_vr='1') else
+               i_dout_spi               when (i_ir='1' and i_en_spi='1')  else
+               ("00000000"&i_dout_pio)  when (i_ir='1' and i_en_pio='1')  else
+               ("00000000"&i_dout_rn)   when (i_ir='1' and i_en_rn='1')   else
+               ("00000000"&i_dout_tec)  when (i_ir='1' and i_en_tec='1')  else
+               i_dout_intc              when (i_vr='1')                   else
                "0000000000000000";
 
   -- TaC PANEL
