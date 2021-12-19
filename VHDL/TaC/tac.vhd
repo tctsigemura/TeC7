@@ -539,8 +539,8 @@ begin
          P_TLBMISS  => '0'
   );
 
-  i_iow      <= i_ir and i_rw and (not i_li);
-  i_ior      <= i_ir and (not i_rw) and (not i_li);
+  i_iow      <= i_ir and i_rw;
+  i_ior      <= i_ir and (not i_rw);
   i_en_tmr0  <= '1' when (i_addr(7 downto 2)="000000") else '0'; -- 00‾03
   i_en_tmr1  <= '1' when (i_addr(7 downto 2)="000001") else '0'; -- 04‾07
   i_en_sio1  <= '1' when (i_addr(7 downto 2)="000010") else '0'; -- 08‾0b
