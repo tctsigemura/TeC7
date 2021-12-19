@@ -305,7 +305,7 @@ begin
   I_ALU_START <= '1' when I_NEXT=S_ALU1 or I_NEXT=S_ALU2 else '0';
 
   -- Memory Request
-  P_MR <= I_MR;
+  P_MR <= '0' when I_IDLE='1' else I_MR;
   I_MR <= '1' when I_NEXT=S_DEC1 or I_NEXT=S_DEC2 or I_NEXT=S_ALU1 or
                    (I_NEXT=S_ALU2 and I_IS_INDR='1') or
                    I_NEXT=S_ST1 or I_NEXT=S_ST2 or I_NEXT=S_PUSH or
@@ -315,7 +315,7 @@ begin
                    I_STATE=S_INTR2 or I_STATE=S_INTR4 else '0';
 
   -- I/O Request
-  P_IR <= I_IR;
+  P_IR <= '0' when I_IDLE='1' else I_IR;
   I_IR <= '1' when I_NEXT=S_IN1 or I_NEXT=S_IN2 or
                    ((I_STATE = S_DEC1 or I_STATE = S_DEC2) and
                     I_NEXT = S_FETCH and P_OP1 = "10111") else '0'; -- OUT
