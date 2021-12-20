@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002 - 2019 by
+-- Copyright (C) 2002 - 2021 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac_intc.vhd : Interrupt Controler
 --
+-- 2021.10.13 : TaC-CPU V3 対応
 -- 2019.07.30 : 使用していない割込に関する警告を消す
 -- 2013.01.06 : TaC-CPU V2 対応
 -- 2012.01.22 : entity 名見直し
@@ -40,72 +41,67 @@ entity TAC_INTC is
          P_RESET    : in  std_logic;
          P_DOUT     : out std_logic_vector(15 downto 0);
          P_VR       : in  std_logic;
+         P_EI       : in  std_logic;  -- 割込許可
          P_INTR     : out std_logic;
-         P_INT_BIT  : in  std_logic_vector(11 downto 0)
+         P_INT_BIT  : in  std_logic_vector(15 downto 0)
        );
 end TAC_INTC;
 
 architecture RTL of TAC_INTC is
 
 -- register
-signal intReg  : std_logic_vector(11 downto 0);
-signal intInp  : std_logic_vector(11 downto 0);
-signal intInpD : std_logic_vector(11 downto 0);
+signal intReg  : std_logic_vector(15 downto 0);
+signal intInp  : std_logic_vector(15 downto 0);
+signal intInpD : std_logic_vector(15 downto 0);
 
 -- signal
-signal intSnd  : std_logic_vector(11 downto 0);
-signal intMsk  : std_logic_vector(11 downto 1);
+signal intSnd  : std_logic_vector(15 downto  0);
+signal intMsk  : std_logic_vector(14 downto  0);
 
 begin
-  -- synchronize with CLK
-  process(P_RESET, P_CLK)
-  begin
-    if (P_RESET='0') then
-      intInp <= "000000000000";
-    elsif (P_CLK'event and P_CLK='1') then
-      intInp <= P_INT_BIT;
-    end if;
-  end process;
 
   -- edge trigger
   process(P_RESET, P_CLK)
   begin
     if (P_RESET='0') then
-      intReg  <= "000000000000";
-      intInpD <= "000000000000";
+      intInp  <= (others => '0');
+      intInpD <= (others => '0');
+      intReg  <= (others => '0');
     elsif (P_CLK'event and P_CLK='1') then
-      intReg <= (intReg and not intSnd) or
-                (intInp and (intInpD xor intInp));
+      intInp  <= P_INT_BIT;
       intInpD <= intInp;
+      intReg  <= (intReg and not intSnd) or
+                 (intInp and (intInpD xor intInp));
     end if;
   end process;
 
   -- select send signal
-  intMsk(1) <= intReg(0);
-  intMsk(11 downto 2) <= intMsk(10 downto 1) or intReg(10 downto 1);
-  intSnd <= intReg and (not (intMsk & "0")) when (P_VR='1') else
-            "000000000000";
+  intMsk <= ('0' & intMsk(14 downto 1)) or intReg(15 downto 1);
+  intSnd <= intReg and (not ("0" & intMsk)) when (P_VR='1') else
+            (others => '0');
 
   -- to cpu
-  P_INTR  <= '0' when (intReg = 0) else '1';
+  P_INTR  <= '1' when intMsk(9)='1' or                          -- exception
+                      ((intMsk(0) or intReg(0)) and P_EI)='1'   -- interrupt
+             else '0';
   P_DOUT(15 downto 5) <= "11111111111";
   P_DOUT(4 downto 1) <=
-            "0000" when (intReg(0)  = '1') else  -- Int0
-            "0001" when (intReg(1)  = '1') else  -- Int1
-            "0010" when (intReg(2)  = '1') else  -- Int2
-            "0011" when (intReg(3)  = '1') else  -- Int3
-            "0100" when (intReg(4)  = '1') else  -- Int4
-            "0101" when (intReg(5)  = '1') else  -- Int5
-            "0110" when (intReg(6)  = '1') else  -- Int6
-            "0111" when (intReg(7)  = '1') else  -- Int7
-            "1000" when (intReg(8)  = '1') else  -- Int8
-            "1001" when (intReg(9)  = '1') else  -- Int9
-            "1010" when (intReg(10) = '1') else  -- Int10
-            "1011" when (intReg(11) = '1') else  -- Int11
---          "1100" when (intReg(12) = '1') else  -- Int12
---          "1101" when (intReg(13) = '1') else  -- Int13
---          "1110" when (intReg(14) = '1') else  -- Int14
-            "1111";                              -- Int15
+            "1111" when (intReg(15) = '1') else  -- Int15(tlbMiss)
+            "1110" when (intReg(14) = '1') else  -- Int14(SVC)
+            "1101" when (intReg(13) = '1') else  -- Int13(InvInst)
+            "1100" when (intReg(12) = '1') else  -- Int12(PriVio)
+            "1011" when (intReg(11) = '1') else  -- Int11(ZeroDiv)
+            "1010" when (intReg(10) = '1') else  -- Int10(MemVio)
+            "1001" when (intReg( 9) = '1') else  -- Int9 (Timer0)
+            "1000" when (intReg( 8) = '1') else  -- Int8 (Timer1)
+            "0111" when (intReg( 7) = '1') else  -- Int7 (RN4020 Rx)
+            "0110" when (intReg( 6) = '1') else  -- Int6 (RN4020 Tx)
+            "0101" when (intReg( 5) = '1') else  -- Int5 (FT232 Rx)
+            "0100" when (intReg( 4) = '1') else  -- Int4 (FT232 Tx)
+            "0011" when (intReg( 3) = '1') else  -- Int3 (TeC Tx)
+            "0010" when (intReg( 2) = '1') else  -- Int2 (TeC Rx)
+            "0001" when (intReg( 1) = '1') else  -- Int1 (uSD)
+            "0000"; --  (intReg( 0) = '1') else  -- Int0 (PIO)
   P_DOUT(0) <= '0';
 end RTL;
 

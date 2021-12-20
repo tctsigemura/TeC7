@@ -1,0 +1,267 @@
+KEEP => null;
+
+FETCH_CON => null;
+
+FETCH_INTR1 =>
+  -- TMP <- FLAG
+  LOAD_TMP <= '1';
+  -- FLAG_P <- 1
+  FLAG_P <= '1';
+
+FETCH_DEC1 =>
+  -- IR <- M(PC)
+  MR <= '1';
+  RW <= '0';
+  LOAD_IR <= '1';
+  -- DR <- 4bit(M(PC))
+  LOAD_DR <= '1';
+  SELECT_W <= "01";
+
+WAIT_FETCH => null;
+
+CON_FETCH => null;
+
+INTR1_INTR2 =>
+  -- M(SP-2) <- PC
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "110";
+  SELECT_D <= "000";
+  -- SP -= 2
+  UPDATE_SP <= "10";
+
+INTR2_INTR3 =>
+  -- M(SP-2) <- TMP
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "110";
+  SELECT_D <= "111";
+  -- SP -= 2
+  UPDATE_SP <= "10";
+
+INTR3_INTR4 =>
+  -- PC <- ベクタアドレス
+  PC <= ベクタアドレス;
+
+INTR4_FETCH =>
+  -- PC <- M(PC)
+  MR <= '1';
+  SELECT_A <= "000";
+  UPDATE_PC <= "11";
+
+DEC1_NO_HALT =>
+  -- PC += 2
+  UPDATE_PC <= "01";
+
+DEC1_IMM =>
+  -- DR <- M(PC+2)
+  MR <= '1';
+  SELECT_A <= "001";
+  LOAD_DR <= '1';
+  -- ALU <- START
+  ALU_START <= '1';
+
+DEC1_DRCT =>
+  -- DR <- M(PC+2)
+  MR <= '1';
+  SELECT_A <= "001";
+  LOAD_DR <= '1';
+
+DEC1_INDR_ALU =>
+  -- DR <- M(EA)
+  MR <= '1';
+  SELECT_A <= "010";
+  -- ALU <- START
+  ALU_START <= '1';
+
+DEC1_INDR_ST =>
+  -- M(EA) <- R(Rd)
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "010";
+  SELECT_D <= "100";
+
+DEC1_SHORT_ALU =>
+  -- R(Rd) <- ALU
+  LOAD_GR <= '1';
+  -- PC += 2
+  UPDATE_PC <= "01";
+
+DEC1_SHORT_DIV =>
+  -- ALU <- START
+  ALU_START <= '1';
+
+DEC1_INDR_IN =>
+  -- DR <- IO(EA)
+  IR <= '1'; -- I/O Request
+  SELECT_A <= "010";
+  SELECT_W <= "00";
+  LOAD_DR <= '1';
+  -- PC += 2
+  UPDATE_PC <= "01";
+
+DEC1_INDR_OUT =>
+  -- IO(EA) <- R(Rd)
+  IR <= '1'; -- I/O Request
+  RW <= '1';
+  SELECT_A <= "010";
+  SELECT_D <= "100";
+  -- PC += 2
+  UPDATE_PC <= "01";
+
+DEC1_PUSH =>
+  -- M(SP-2) <- R(Rd)
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "110";
+  SELECT_D <= "100";
+
+DEC1_POP =>
+  -- DR <- M(SP)
+  MR <= '1';
+  SELECT_A <= "100";
+  LOAD_DR <= '1';
+
+DEC1_RET =>
+  -- DR <- M(SP)
+  MR <= '1';
+  SELECT_A <= "100";
+  LOAD_DR <= '1';
+
+DEC1_RETI =>
+  -- M(SP)
+  MR <= '1';
+  SELECT_A <= "100";
+
+DEC2_ALU =>
+  -- DR <- M(EA)
+  MR <= '1';
+  SELECT_A <= "010";
+  LOAD_DR <= '1';
+  -- ALU <- START
+  ALU_START <= '1';
+
+DEC2_ST =>
+  -- M(EA) <- R(Rd)
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "010";
+  SELECT_D <= "100";
+
+DEC2_JMP (Yes) =>
+  -- PC <- EA (どうやって？)
+  LOAD_PC <= "???";
+
+
+DEC2_JMP (No) =>
+  -- PC += 4
+  LOAD_PC <= "10";
+
+DEC2_CALL =>
+  -- M(SP-2) <- PC+4
+  MR <= '1';
+  RW <= '1';
+  SELECT_A <= "110";
+  SELECT_D <= "010";
+
+DEC2_IN =>
+  -- DR <- IO(EA)
+  IR <= '1'; -- I/O Req
+  SELECT_A <= "010";
+  LOAD_DR <= '1':
+  -- PC += 4
+  UPDATE_PC <= "10";
+
+DEC2_OUT =>
+  -- IO(EA) <- R(Rd)
+  IR <= '1'; -- I/O Req
+  RW <= '1';
+  SELECT_A <= "010";
+  SELECT_D <= "100";
+  -- PC += 4
+  UPDATE_PC <= "10";
+
+ALU1_FETCH =>
+  -- R(Rd) <- ALU
+  LOAD_GR <= '1';
+  -- PC += 4
+  UPDATE_PC <= "10";
+
+ST1_FETCH =>
+  -- PC += 4
+  UPDATE_PC <= "10";
+
+CALL1_FETCH =>
+  -- SP -= 2
+  UPDATE_SP <= "10";
+  -- PC <- EA (どうやって？)
+  UPDATE_PC <= UPDATE_PC_EA;
+
+IN1_FETCH =>
+  -- R(Rd) <- DR: R(Rd) <- ALU
+  SELECT_B <- '1';
+  LOAD_GR <= '1';
+
+ALU2_FETCH =>
+  -- R(Rd) <- ALU
+  LOAD_GR <= '1';
+  -- PC += 2
+  UPDATE_PC <= "01";
+
+ST2_FETCH =>
+  -- PC += 2
+  UPDATE_PC <= "01";
+
+ALU3_FETCH =>
+  -- R(Rd) <- ALU
+  LOAD_GR <= '1';
+  -- PC += 2
+  UPDATE_PC <= "01";
+
+IN2_FETCH =>
+  -- R(Rd) <- DR
+  SELECT_B <= '1';
+  LOAD_GR <= '1';
+
+PUSH_FETCH =>
+  -- SP -= 2
+  UPDATE_SP <= "10";
+  -- PC += 2
+  UPDATE_PC <= "01";
+
+POP_FETCH =>
+  -- R(Rd) <- DR
+  SELECT_B <= '1';
+  -- SP += 2
+  UPDATE_SP <= "01";
+  -- PC += 2
+  UPDATE_PC <= "01";
+
+RET_FETCH =>
+  -- SP += 2
+  UPDATE_SP <= "01";
+  -- PC <- M(SP)
+  MR <= '1';
+  SELECT_A <= "100";
+  UPDATE_PC <= "11";
+
+RETI1_RETI2 =>
+  -- DR <- M(SP+2)
+  MR <= '1';
+  SELECT_A <= "101";
+  LOAD_DR <= '1';
+
+RETI2_RETI3 =>
+  -- PC <- M(SP)
+  MR <= '1';
+  SELECT_A <= "100";
+  UPDATE_PC <= "11";
+  -- SP += 2
+  UPDATE_SP <= "01";
+
+RETI3_FETCH =>
+  -- R(Rd) <- DR
+  SELECT_B <= '0';
+  LOAD_GR <= '1';
+  -- SP += 2
+  UPDATE_SP <= "01";
