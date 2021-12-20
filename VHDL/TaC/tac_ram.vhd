@@ -139,7 +139,8 @@ architecture BEHAVE of TAC_RAM is
     process(P_RESET, P_CLK)
     begin
       if (P_RESET='0') then
-        iplBank <= '0';                               -- IPL0
+--        iplBank <= '0';                               -- IPL0
+        iplBank <= '1';                               -- ！！デバッグ用！！
       elsif (P_CLK'event and P_CLK='1') then
         if (P_IOE='1' and P_IOW='1') then
           iplBank <= P_DIN1(0);
