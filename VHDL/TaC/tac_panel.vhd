@@ -55,7 +55,6 @@ entity TAC_PANEL is
          P_RW       : in  std_logic;                     -- read/write
          P_IR       : in  std_logic;                     -- i/o req.
          P_MR       : in  std_logic;                     -- memory req.
-         P_LI       : in  std_logic;                     -- load instruction
          P_HL       : in  std_logic;                     -- halt instruction
          P_CON      : in  std_logic_vector(2 downto 0);  -- Console access
          P_STOP     : out std_logic;                     -- stop the cpu

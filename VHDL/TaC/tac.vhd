@@ -268,7 +268,6 @@ component TAC_PANEL
          P_RW       : in  std_logic;                       -- read/write
          P_IR       : in  std_logic;                       -- i/o req.
          P_MR       : in  std_logic;                       -- memory req.
-         P_LI       : in  std_logic;                       -- load instruction
          P_HL       : in  std_logic;                       -- halt instruction
          P_CON      : in  std_logic_vector(2 downto 0);    -- Console access
          P_STOP     : out std_logic;                       -- stop the cpu
@@ -585,7 +584,6 @@ begin
          P_RW       => i_rw,
          P_IR       => i_ir,
          P_MR       => i_mr,
-         P_LI       => i_li,
          P_HL       => i_hl,
          P_CON      => i_con,
          P_STOP     => i_stop,

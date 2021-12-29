@@ -105,9 +105,14 @@ begin
   entry <= TLB(TO_INTEGER(unsigned (index(2 downto 0))));
   request <= (not P_RW) & P_RW & P_LI;
 
-  perm_vio <= not entry(9) when request="010" else    -- write
-              not entry(10) when request="100" else   -- read
-              not (entry(10) and entry(8));           -- fetch
+  perm_vio <= ((not P_RW) and (not entry(10))) or               -- read
+              ((    P_RW) and (not entry( 9))) or               -- write
+              ((    P_LI) and (not (entry(10) and entry(8))));  -- fetch
+
+  -- perm_vio <= not entry(9) when request="010" else    -- write
+  --             not entry(10) when request="100" else   -- read
+  --             not (entry(10) and entry(8));           -- fetch
+
   i_vio <= i_act and perm_vio;
   
   --TLB操作

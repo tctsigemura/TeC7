@@ -176,6 +176,9 @@ signal I_REG_DOUT    : Word;                          -- データ
 signal I_REG_MR      : std_logic;                     -- MR
 signal I_REG_IR      : std_logic;                     -- IR
 signal I_REG_RW      : std_logic;                     -- RW
+signal I_REG_PR      : std_logic;                     -- Privilege
+signal I_REG_BT      : std_logic;                     -- Byte
+signal I_REG_LI      : std_logic;                     -- Instruction fetch
 
 -- 内部配線
 signal I_ADDR        : Word;                          -- アドレス
@@ -277,10 +280,10 @@ begin
   P_MR   <= I_REG_MR;
   P_IR   <= I_REG_IR;
   P_RW   <= I_REG_RW;
-  P_LI   <= I_LOAD_IR;
+  P_PR   <= I_REG_PR;
+  P_BT   <= I_REG_BT;
+  P_LI   <= I_REG_LI;
   P_VR   <= I_VR;
-  P_BT   <= '1' when I_INST_OP2 = "111" else '0';
-  P_PR   <= I_FLAG_P;
   P_EI   <= I_FLAG_E;
   P_CON  <= I_CON;
 
@@ -376,12 +379,22 @@ begin
       I_REG_MR       <= '0';
       I_REG_IR       <= '0';
       I_REG_RW       <= '0';
+      I_REG_PR       <= '1';
+      I_REG_LI       <= '0';
+      I_REG_BT       <= '0';
     elsif (P_CLK' event and P_CLK='1') then
       I_REG_ADDR <= I_ADDR;
       I_REG_DOUT <= I_DOUT;
       I_REG_MR   <= I_MR;
       I_REG_IR   <= I_IR;
       I_REG_RW   <= I_RW;
+      I_REG_PR   <= I_FLAG_P;
+      I_REG_LI   <= I_LOAD_IR;
+      if (I_INST_OP2="111") then
+        I_REG_BT <= '1';
+      else
+        I_REG_BT <= '0';
+      end if;
     end if;
   end process;
 
