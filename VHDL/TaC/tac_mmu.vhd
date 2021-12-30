@@ -77,33 +77,73 @@ type TLB_array is array(0 to 7) of TLB_field;           -- array of 24bit * 8
 signal TLB : TLB_array;                                 
 signal index : std_logic_vector(3 downto 0);            -- index of TLB entry        
 signal entry : TLB_field;                               -- target TLB entry 
-signal page : std_logic_vector(7 downto 0);
-signal request : std_logic_vector(2 downto 0);          -- RWX request from cpu
+signal page : std_logic_vector(7 downto 0);             -- page no
+signal offs : std_logic_vector(7 downto 0);             -- in page offset
+signal act  : std_logic;
+-- signal request : std_logic_vector(2 downto 0);       -- RWX request from cpu
 signal perm_vio : std_logic;                            -- RWX Violation
 signal intr_page : std_logic_vector(7 downto 0);        -- Page happend inter
 signal intr_cause : std_logic_vector(1 downto 0):="00"; -- reason of inter
 
-
 begin 
 
-  i_act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
-  i_adr <= P_MMU_ADDR(0) and i_act and not P_BT;
+  act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
+  process(P_CLK)
+  begin
+    if (P_CLK'event and P_CLK='1') then
+      page <= P_MMU_ADDR(15 downto 8);
+      offs <= P_MMU_ADDR(7  downto 0);
+      i_act <= act;
+      i_adr <= P_MMU_ADDR(0) and act and not P_BT;
+    end if;
+  end process;
 
-  page <= P_MMU_ADDR(15 downto 8);
-
-  index <= X"0" when page & '1'=TLB(0)(23 downto 15) else
-           X"1" when page & '1'=TLB(1)(23 downto 15) else
-           X"2" when page & '1'=TLB(2)(23 downto 15) else
-           X"3" when page & '1'=TLB(3)(23 downto 15) else
-           X"4" when page & '1'=TLB(4)(23 downto 15) else
-           X"5" when page & '1'=TLB(5)(23 downto 15) else
-           X"6" when page & '1'=TLB(6)(23 downto 15) else
-           X"7" when page & '1'=TLB(7)(23 downto 15) else
-           X"8";
+  process(page,TLB)
+  begin
+    if    (page & '1'=TLB(0)(23 downto 15)) then
+      index <= X"0";
+      entry <= TLB(0);
+    elsif (page & '1'=TLB(1)(23 downto 15)) then
+      index <= X"1";
+      entry <= TLB(1);
+    elsif (page & '1'=TLB(2)(23 downto 15)) then
+      index <= X"2";
+      entry <= TLB(2);
+    elsif (page & '1'=TLB(3)(23 downto 15)) then
+      index <= X"3";
+      entry <= TLB(3);
+    elsif (page & '1'=TLB(4)(23 downto 15)) then
+      index <= X"4";
+      entry <= TLB(4);
+    elsif (page & '1'=TLB(5)(23 downto 15)) then
+      index <= X"5";
+      entry <= TLB(5);
+    elsif (page & '1'=TLB(6)(23 downto 15)) then
+      index <= X"6";
+      entry <= TLB(6);
+    elsif (page & '1'=TLB(7)(23 downto 15)) then
+      index <= X"7";
+      entry <= TLB(7);
+    else
+      index <= X"8";
+      entry <= (others => 'X');
+    end if;
+  end process;
 
   i_mis <= index(3) and i_act;
-  entry <= TLB(TO_INTEGER(unsigned (index(2 downto 0))));
-  request <= (not P_RW) & P_RW & P_LI;
+    
+--  index <= X"0" when page & '1'=TLB(0)(23 downto 15) else
+--           X"1" when page & '1'=TLB(1)(23 downto 15) else
+--           X"2" when page & '1'=TLB(2)(23 downto 15) else
+--           X"3" when page & '1'=TLB(3)(23 downto 15) else
+--           X"4" when page & '1'=TLB(4)(23 downto 15) else
+--           X"5" when page & '1'=TLB(5)(23 downto 15) else
+--           X"6" when page & '1'=TLB(6)(23 downto 15) else
+--           X"7" when page & '1'=TLB(7)(23 downto 15) else
+--           X"8";
+--
+--  entry <= TLB(TO_INTEGER(unsigned (index(2 downto 0))));
+--  request <= (not P_RW) & P_RW & P_LI;
 
   perm_vio <= ((not P_RW) and (not entry(10))) or               -- read
               ((    P_RW) and (not entry( 9))) or               -- write
@@ -144,8 +184,9 @@ begin
 
       --ページヒット時のD,Rビットの書き換え
       elsif(i_mis='0' and i_vio='0') then 
-          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <=       -- D bit        
-            TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) or request(1);     
+          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <=       -- D bit
+            entry(11) or P_RW;
+--             TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) or P_RW;
           TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= '1';  -- R bit
       end if;
     end if;
@@ -159,7 +200,8 @@ begin
       intr_cause <= "00";
     elsif(P_CLK'event and P_CLK='1') then
       if(i_mis='1') then
-        intr_page <= P_MMU_ADDR(15 downto 8);
+  --       intr_page <= P_MMU_ADDR(15 downto 8);
+        intr_page <= page;
       end if;
       if(i_adr='1' or i_vio='1') then
         intr_cause <= intr_cause or (i_adr & i_vio);
@@ -170,9 +212,11 @@ begin
   end process;
 
   P_ADDR(15 downto 8) <= entry(7 downto 0) when (i_act='1') else page;
-  P_ADDR(7 downto 0) <= P_MMU_ADDR(7 downto 0);
+  P_ADDR(7 downto 0) <= offs;
+  -- P_ADDR(7 downto 0) <= P_MMU_ADDR(7 downto 0);
 
-  P_MR <= P_MMU_MR and (not i_vio) and (not i_mis);
+  P_MR <= P_MMU_MR and (not i_act or not index(3)); -- タイミングが厳しい
+  -- P_MR <= P_MMU_MR and (not i_vio) and (not i_mis);
   P_VIO_INT <= i_adr or i_vio;    
   P_TLB_INT <= i_mis;                       
   
