@@ -70,7 +70,7 @@ end TAC_CPU;
 
 
 architecture RTL of TAC_CPU is
-  
+
 subtype Word is std_logic_vector(15 downto 0);
 
 component TAC_CPU_ALU is
@@ -296,7 +296,7 @@ begin
               I_SP              when "100",
               I_SP + 2          when "101",
               I_SP - 2          when others;
-  
+
   --- MUX D
   with I_SELECT_D select
     I_DOUT <= I_REG_PC                        when "000",
@@ -313,7 +313,7 @@ begin
                (11 downto 0 => P_DIN(3)) & P_DIN(3 downto 0) when "01",
                "00000000" & P_DIN(7 downto 0)           when "10",
                "00000000" & P_DIN(15 downto 8)          when others;
-  
+
   --- MUX B
   with I_INST_OP2 select
     I_ALU_B <= I_RX         when "100",
@@ -370,7 +370,7 @@ begin
             I_SP      when "1101",
             I_REG_USP when "1110",
             I_FLAG    when others;
-  
+
   --- 外部バスへの出力
   process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
@@ -441,11 +441,11 @@ begin
   I_SP_IN <=  I_SP + 2 when I_UPDATE_SP="01" else
               I_SP - 2 when I_UPDATE_SP="10" else
               I_ALU_OUT;
-  
+
   I_LOAD_SP <=  '1' when (I_UPDATE_SP(1)='1' or I_UPDATE_SP(0)='1')
                       or (I_LOAD_GR='1' and I_INST_RD="1101") else
                 '0';
-  
+
   -- SSP の書き込み制御
   process(P_CLK, P_RESET)
   begin
@@ -457,7 +457,7 @@ begin
       end if;
     end if;
   end process;
-  
+
   -- USP の書き込み制御
   process(P_CLK, P_RESET)
   begin
@@ -515,7 +515,7 @@ begin
       end if;
     end if;
   end process;
-  
+
   -- PC の書き込み制御
   process(P_CLK, P_RESET) begin
     if (P_RESET='0') then

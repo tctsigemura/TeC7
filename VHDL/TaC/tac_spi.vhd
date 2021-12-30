@@ -49,7 +49,7 @@ entity TAC_SPI is
          P_ADDR   : in  std_logic_vector( 1 downto 0);
          P_DIN    : in  std_logic_vector(15 downto 0);  -- from CPU
          P_DOUT   : out std_logic_vector(15 downto 0);  -- to CPU
-       
+
          -- DMA関連
          P_ADDR_DMA  : out std_logic_vector(14 downto 0);
          P_DIN_DMA   : in  std_logic_vector(15 downto 0);
@@ -57,7 +57,7 @@ entity TAC_SPI is
          P_RW_DMA    : out std_logic;
          P_MR_DMA    : out std_logic;
          P_IDLE_DMA  : out std_logic;
-       
+
          -- uSD端子
          P_SCLK    : out std_logic;
          P_DI      : in  std_logic;
@@ -69,7 +69,7 @@ entity TAC_SPI is
 end TAC_SPI;
 
 architecture Behavioral of TAC_SPI is
-  
+
   -- 定数
   constant CMD0    : std_logic_vector(47 downto 0) := X"400000000095";
   constant CMD1    : std_logic_vector(47 downto 0) := X"410000000001";
@@ -79,27 +79,27 @@ architecture Behavioral of TAC_SPI is
   constant CMD24    : std_logic_vector( 7 downto 0) := X"58";
   constant START_BYTE  : std_logic_vector( 7 downto 0) := X"FE";
   constant CRC    : std_logic_vector( 7 downto 0) := X"01";
-  
+
   -- 配線類
   signal i_init_cs  : std_logic;
   signal i_init_sclk  : std_logic;
   signal i_init_do  : std_logic;
   signal i_init_led  : std_logic;
-  
+
   signal i_read_cs  : std_logic;
   signal i_read_sclk  : std_logic;
   signal i_read_do  : std_logic;
   signal i_read_led  : std_logic;
-  
+
   signal i_write_cs  : std_logic;
   signal i_write_sclk  : std_logic;
   signal i_write_do  : std_logic;
   signal i_write_led  : std_logic;
-  
+
   signal i_read_mr  : std_logic;  -- memory req(DMA用)
   signal i_write_mr  : std_logic;  -- memory req(DMA用)
-  
-  
+
+
   -- デコード結果
   signal IOW_SPI_Ctl  : std_logic;  -- コントロールの書き込み
   signal IOR_SPI_Sta  : std_logic;  -- ステータスの読み込み
@@ -108,7 +108,7 @@ architecture Behavioral of TAC_SPI is
   signal IOW_Blk_Addr : std_logic;  -- ブロックアドレスの書き込み
 --signal IOR_Blk_Addr : std_logic;  --        〃       の読み込み
                     -- (上位16bitか下位16bitかは、P_ADDR(0)で区別)
-  
+
   -- レジスタ
   signal Memory_Addr : std_logic_vector(15 downto 0);   -- メモリアドレス
   signal Block_Addr  : std_logic_vector(31 downto 0);   -- ブロックアドレス
@@ -119,7 +119,7 @@ architecture Behavioral of TAC_SPI is
   signal Error       : std_logic := '0';                -- エラーが発生した
   signal Idle        : std_logic := '0';
   signal Interrupt   : std_logic := '0';                -- 割込み
-  
+
   -- Init
   signal Init_Req     : std_logic;                     -- 初期化リクエスト
   signal Initializing : std_logic;                     -- 初期化中FF
@@ -128,7 +128,7 @@ architecture Behavioral of TAC_SPI is
   signal Init_Clk_Cnt : std_logic_vector( 7 downto 0); -- 400kHz生成用カウンタ
   signal Init_Byte_Buffer : std_logic_vector( 6 downto 0); -- バイトバッファ
   signal Init_Error       : std_logic;                     -- エラー発生FF
-  
+
   -- Read
   signal Read_Req     : std_logic;                     -- 読み込みリクエスト
   signal Reading      : std_logic;                     -- 読み込み中FF
@@ -137,10 +137,10 @@ architecture Behavioral of TAC_SPI is
   signal Read_Clk_Cnt : std_logic;                     -- 25MHz生成用カウンタ
   signal Read_Byte_Buffer : std_logic_vector( 6 downto 0); -- バイトバッファ
   signal Read_Error       : std_logic;            -- エラー発生FF
-  
+
   signal Read_Counter256 : std_logic_vector( 7 downto 0); -- データ受信カウンタ
   signal Read_Word_Buffer : std_logic_vector(14 downto 0);  -- ワードバッファ
-  
+
   -- Write
   signal Write_Req     : std_logic;            -- 書き込みリクエスト
   signal Writing       : std_logic;            -- 書き込み中FF
@@ -149,16 +149,16 @@ architecture Behavioral of TAC_SPI is
   signal Write_Clk_Cnt : std_logic;                      -- 25MHz生成用カウンタ
   signal Write_Byte_Buffer : std_logic_vector( 6 downto 0);  -- バイトバッファ
   signal Write_Error       : std_logic;            -- エラー発生FF
-  
+
   signal Write_Counter256 : std_logic_vector( 7 downto 0); -- データ送信カウンタ
   signal Write_Word_Buffer  : std_logic_vector(15 downto 0);  -- ワードバッファ
-  
+
   -- DMA
   signal Read_Addr_DMA  : std_logic_vector(14 downto 0);
   signal Write_Addr_DMA  : std_logic_vector(14 downto 0);
-  
+
 begin
-  
+
   -- アドレスデコーダ
   IOW_SPI_Ctl <=                                                         -- 10h
     '1' when (P_IOW='1' and P_EN='1' and P_ADDR(1 downto 0)="00") else '0';
@@ -200,7 +200,7 @@ begin
       end if;
     end if;
    end process;
-  
+
   -- メモリアドレス
   process (P_CLK, P_RESET)
   begin
@@ -212,7 +212,7 @@ begin
       end if;
     end if;
   end process;
-  
+
   -- ブロックアドレス(データアドレス)
   -- 注：データアドレスはブロックアドレスを9bit左シフト
   process (P_CLK, P_RESET)
@@ -234,13 +234,13 @@ begin
       end if;
     end if;
   end process;
-  
+
   -- データバス
-  -- 
+  --
   -- 【ステータス仕様】
-  -- 
+  --
   --   0000 0000 IE00 0000
-  -- 
+  --
   --   I(Idle)…初期化、読み込み、書き込みのいずれも正常に実行可能である
   --    I <= (not Processing) and (not Error)
   --   E(Error)…処理中にエラーが発生した
@@ -264,7 +264,7 @@ begin
       P_DOUT <= Block_Addr(15 downto 0);     -- ブロックアドレス下位16bitを出力
     end if;
   end process;
-  
+
   -- コントロール
   process (P_CLK, P_RESET)
   begin
@@ -294,7 +294,7 @@ begin
       end if;
     end if;
   end process;
-  
+
   -- Init
   process (P_CLK, P_RESET)
   begin
@@ -313,18 +313,18 @@ begin
         if (Init_Clk_Cnt = 61) then -- このif文の中は400kHz毎(ネガティブエッジ)
           Init_Clk_Cnt <= Init_Clk_Cnt + 1;
           i_init_sclk <= '0';       -- uSDのクロックを立ち下げる
-          
+
           case Init_State is
           -- 80回のダミークロック
           when "0000" =>
-            
+
           -- CMD0の送信
           when "0001" =>
             i_init_cs <= '0';
             i_init_do <= CMD0(conv_integer(Init_Counter));
           -- R1レスポンス(0x01)待ち
           when "0010" =>
-            
+
           -- 8回のダミークロック
           when "0011" =>
             i_init_cs <= '1';
@@ -338,22 +338,22 @@ begin
           -- 8回のダミークロック
           when "0110" =>
             i_init_cs <= '1';
-            
+
           -- ここからブロック長の変更
           -- CMD16の送信
           when "0111" =>
             i_init_cs <= '0';
             i_init_do <= CMD16(conv_integer(Init_Counter));
-          -- R1レスポンス(0x00)の受信  
+          -- R1レスポンス(0x00)の受信
           when "1000" =>
             i_init_do <= '1';
           when others =>
           end case;
-          
+
         elsif (Init_Clk_Cnt = 123) then -- 400kHz毎(ポジティブエッジ)
           Init_Clk_Cnt <= "00000000";
           i_init_sclk <= '1';           -- uSDのクロックを立ち上げる
-          
+
           case Init_State is
           -- 80回のダミークロック
           when "0000" =>
@@ -371,7 +371,7 @@ begin
             else
               Init_Counter <= Init_Counter - 1;
             end if;
-          -- R1レスポンス(0x01)の受信  
+          -- R1レスポンス(0x01)の受信
           when "0010" =>
             Init_Byte_Buffer(6 downto 0) <= Init_Byte_Buffer(5 downto 0) & P_DI;
             if (Init_Counter = 0) then
@@ -472,8 +472,8 @@ begin
             end if;
           when others =>
           end case;
-          
-        else 
+
+        else
           Init_Clk_Cnt <= Init_Clk_Cnt + 1;
         end if;
       elsif (Init_Req = '1') then        -- 初期化リクエストがあったら
@@ -487,14 +487,14 @@ begin
         i_init_do     <= '1';
         i_init_led     <= '1';
       end if;
-      
+
       if (Init_Req = '1') then
         Init_Error <= '0';
       end if;
-      
+
     end if;
   end process;
-  
+
   -- Read
   process (P_CLK, P_RESET)
   begin
@@ -517,7 +517,7 @@ begin
         if (Read_Clk_Cnt = '0') then -- このif文の中は25MHz毎(ネガティブエッジ)
           Read_Clk_Cnt <= '1';
           i_read_sclk <= '0';        -- uSDのクロックを立ち下げる
-          
+
           case Read_State is
           -- CMD17の送信
           -- CMD17
@@ -532,23 +532,23 @@ begin
             i_read_do <= CRC(conv_integer(Read_Counter));
           -- R1レスポンス(0x00)の受信
           when "011" =>
-            
+
           -- スタートバイト(0xFE)の受信
           when "100" =>
-            
+
           -- データブロックの受信
           when "101" =>
-            
+
           -- 24回のダミークロック
           when "110" =>
             i_read_cs <= '1';
           when others =>
           end case;
-          
+
         elsif (Read_Clk_Cnt='1') then --このif文の中は25MHz毎(ポジティブエッジ)
           Read_Clk_Cnt <= '0';
           i_read_sclk <= '1';         -- uSDのクロックを立ち上げる
-          
+
           case Read_State is
           -- CMD17の送信
           -- CMD17
@@ -656,17 +656,17 @@ begin
             end if;
           when others =>
           end case;
-        
-        else 
+
+        else
           Read_Clk_Cnt <= '1';
         end if;
-        
+
         -- DMA(Buffer -> TaC RAM)
         if (i_read_mr = '1') then
           P_RW_DMA <= '0';
           i_read_mr <= '0';
         end if;
-        
+
       elsif (Read_Req = '1') then        -- 読み込みリクエストがあったら
         Reading       <= '1';      -- 読み込み中FFをセット
         Read_Clk_Cnt   <= '0';
@@ -681,14 +681,14 @@ begin
         Read_Addr_DMA   <= Memory_Addr(15 downto 1);
         i_read_mr     <= '0';
       end if;
-      
+
       if (Init_Req = '1') then
         Read_Error <= '0';
       end if;
-      
+
     end if;
   end process;
-  
+
   -- Write
   process (P_CLK, P_RESET)
   begin
@@ -711,7 +711,7 @@ begin
         if (Write_Clk_Cnt='0') then -- このif文の中は25MHz毎(ネガティブエッジ)
           Write_Clk_Cnt <= '1';
           i_write_sclk <= '0';      -- uSDのクロックを立ち下げる
-                    
+
           case Write_State is
           -- CMD24の送信
           -- CMD24
@@ -746,18 +746,18 @@ begin
             i_write_do <= '1';
           -- BUSYの間待つ
           when "1000" =>
-          
+
           -- 8回のダミークロック
           when "1001" =>
             i_write_cs <= '1';
-          
+
           when others =>
           end case;
-          
+
         elsif (Write_Clk_Cnt='1') then -- 25MHz毎(ポジティブエッジ)
           Write_Clk_Cnt <= '0';
           i_write_sclk <= '1';      -- uSDのクロックを立ち上げる
-          
+
           case Write_State is
           -- CMD24の送信
           -- CMD24
@@ -879,22 +879,22 @@ begin
               i_write_do   <= '1';
               i_write_led   <= '0';
               Write_Addr_DMA <= "000000000000000";
-            else 
+            else
               Write_Counter <= Write_Counter - 1;
             end if;
           when others =>
           end case;
-          
-        else 
+
+        else
           Write_Clk_Cnt <= '1';
         end if;
-        
+
         -- DMA(TaC RAM -> Buffer)
         if (i_write_mr = '1') then
           i_write_mr <= '0';
           Write_Word_Buffer <= P_DIN_DMA;
         end if;
-        
+
       elsif (Write_Req = '1') then      -- 書き込みリクエストがあったら
         Writing        <= '1';      -- 書き込み中FFをセット
         Write_Clk_Cnt    <= '0';
@@ -906,27 +906,27 @@ begin
         i_write_sclk    <= '1';
         i_write_do      <= '1';
         i_write_led      <= '1';
-        
+
         -- 次のクロックで、最初に書き込むワードをバッファに取り込んでおく
         Write_Addr_DMA <= Memory_Addr(15 downto 1);
         i_write_mr <= '1';
       end if;
-      
+
       if (Init_Req = '1') then
         Write_Error <= '0';
       end if;
-      
+
     end if;
   end process;
-  
+
   -- 各プロセスの配線をuSD端子へ集約
   P_CS   <= i_init_cs and i_read_cs and i_write_cs;
   P_DO   <= i_init_do and i_read_do and i_write_do;
   P_SCLK <= i_init_sclk and i_read_sclk and i_write_sclk;
   P_ACC  <= not (i_init_led or i_read_led or i_write_led);
-  
+
   -- 各プロセスの配線をDMA用端子へ集約
   P_ADDR_DMA <= Read_Addr_DMA or Write_Addr_DMA;
   P_MR_DMA <= i_read_mr or i_write_mr;
-  
+
 end Behavioral;

@@ -89,7 +89,7 @@ architecture BEHAVE of TAC_RAM is
   shared variable memB1L : Mem8kB;                             -- odd  address
   signal memB1     : std_logic_vector(15 downto 0);
   signal memB1_dma : std_logic_vector(15 downto 0);
-  
+
   -- Bank2(C000H-DFFFH)
   shared variable memB2H : Mem4kB;                             -- even address
   shared variable memB2L : Mem4kB;                             -- odd  address
@@ -108,7 +108,7 @@ architecture BEHAVE of TAC_RAM is
   -- BankIPL(E000H-FFFFH)
   shared variable memBIHL : Mem4kw := read_file("tac_ram.txt");
   signal memBI     : std_logic_vector(15 downto 0);
-  
+
   -- CPU
   signal csB0   : std_logic;                          -- CS Bank0
   signal csB1   : std_logic;                          -- CS Bank1
@@ -119,7 +119,7 @@ architecture BEHAVE of TAC_RAM is
   signal weB1   : std_logic;                          -- WE Bank1
   signal weB2   : std_logic;                          -- WE Bank2
   signal weB3   : std_logic;                          -- WE Bank3
-    
+
   signal high   : std_logic;                          -- High Byte
   signal low    : std_logic;                          -- Low  Byte
 
@@ -133,7 +133,7 @@ architecture BEHAVE of TAC_RAM is
   signal weB1_dma   : std_logic;                      -- WE Bank1
   signal weB2_dma   : std_logic;                      -- WE Bank2
   signal weB3_dma   : std_logic;                      -- WE Bank3
-  
+
   begin
     -- IPL bank register
     process(P_RESET, P_CLK)
@@ -163,7 +163,7 @@ architecture BEHAVE of TAC_RAM is
           else memBI when (csB3='1' and iplBank='0') -- E000H - FFFFH(ROM)
           else memB3 when (csB3='1')                 -- E000H - FFFFH(RAM)
           else "0000000000000000";
- 
+
     -- write control
     weB0  <= csB0 and P_MR1 and P_RW1;
     weB1  <= csB1 and P_MR1 and P_RW1;

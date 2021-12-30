@@ -57,7 +57,7 @@ end TAC_FIFO;
 architecture BEHAVE of TAC_FIFO is
   constant ptrW : integer := integer(ceil(log2(real(depth))));
   constant cntW : integer := integer(ceil(log2(real(depth+1))));
-  
+
   subtype Word is std_logic_vector(width-1 downto 0);
   type Fifo is array(0 to depth-1) of Word;
   signal i_buf   : Fifo;

@@ -34,11 +34,11 @@ use IEEE.numeric_std.ALL;
 entity TAC_MMU is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
-         P_EN       : in  std_logic;                     
-         P_IOR      : in  std_logic;                     
-         P_IOW      : in  std_logic;                     
-         P_RW       : in  std_logic;                     
-         P_LI       : in  std_logic;                     
+         P_EN       : in  std_logic;
+         P_IOR      : in  std_logic;
+         P_IOW      : in  std_logic;
+         P_RW       : in  std_logic;
+         P_LI       : in  std_logic;
          P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
          P_BT       : in  std_logic;                     -- Byte access
          P_PR       : in  std_logic;                     -- Privilege mode
@@ -67,16 +67,16 @@ signal i_adr : std_logic;                                -- Bad Address
 --+---------------+-+-+-+-+-+-----+---------------+
 --|       PAGE    |V|*|*|R|D|R/W/X|      FRAME    |
 --+---------------+-+-+-+-+-+-----+---------------+
--- 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 
+-- 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
 --PAGE:ページ番号, V:Valid, *:未定義, R:Reference, D:Dirty,
 --R/W/X:Read/Write/eXecute, FRAME:フレーム番号
 
-subtype TLB_field is std_logic_vector(23 downto 0); 
-type TLB_array is array(0 to 7) of TLB_field;           -- array of 24bit * 8 
+subtype TLB_field is std_logic_vector(23 downto 0);
+type TLB_array is array(0 to 7) of TLB_field;           -- array of 24bit * 8
 
-signal TLB : TLB_array;                                 
-signal index : std_logic_vector(3 downto 0);            -- index of TLB entry        
-signal entry : TLB_field;                               -- target TLB entry 
+signal TLB : TLB_array;
+signal index : std_logic_vector(3 downto 0);            -- index of TLB entry
+signal entry : TLB_field;                               -- target TLB entry
 signal page : std_logic_vector(7 downto 0);             -- page no
 signal offs : std_logic_vector(7 downto 0);             -- in page offset
 signal act  : std_logic;
@@ -85,7 +85,7 @@ signal perm_vio : std_logic;                            -- RWX Violation
 signal intr_page : std_logic_vector(7 downto 0);        -- Page happend inter
 signal intr_cause : std_logic_vector(1 downto 0):="00"; -- reason of inter
 
-begin 
+begin
 
   act <= (not P_PR) and (not P_STOP) and P_MMU_MR and i_en;
   process(P_CLK)
@@ -131,7 +131,7 @@ begin
   end process;
 
   i_mis <= index(3) and i_act;
-    
+
 --  index <= X"0" when page & '1'=TLB(0)(23 downto 15) else
 --           X"1" when page & '1'=TLB(1)(23 downto 15) else
 --           X"2" when page & '1'=TLB(2)(23 downto 15) else
@@ -154,36 +154,36 @@ begin
   --             not (entry(10) and entry(8));           -- fetch
 
   i_vio <= i_act and perm_vio;
-  
+
   --TLB操作
   process(P_CLK,P_RESET)
-  begin 
+  begin
     if (P_RESET='0') then
       i_en <= '0';
       for I in TLB'range loop
         TLB(I)<=(others => '0');
       end loop;
-      
+
     elsif (P_CLK'event and P_CLK='1') then
       if(P_EN='1' and P_IOW='1') then               -- 80h <= P_MMU_ADDR <=A7h
         if(P_MMU_ADDR(5 downto 4)="10") then        -- A-h
           if(P_MMU_ADDR(2 downto 1)="01") then      -- A2h or A3h
             i_en <= P_DIN(0);
-          elsif (P_MMU_ADDR(3)='1') then            -- A8h or A9h 
+          elsif (P_MMU_ADDR(3)='1') then            -- A8h or A9h
             for I in TLB'range loop
               TLB(I)<=(others => '0');
             end loop;
           end if;
         elsif(P_MMU_ADDR(1)='0') then               -- 8-h or 9-h
-          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16) 
+          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(23 downto 16)
             <= P_DIN(7 downto 0);
         else
-          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(15 downto 0)      
+          TLB(TO_INTEGER(unsigned(P_MMU_ADDR(4 downto 2))))(15 downto 0)
             <= P_DIN;
         end if;
 
       --ページヒット時のD,Rビットの書き換え
-      elsif(i_mis='0' and i_vio='0') then 
+      elsif(i_mis='0' and i_vio='0') then
           TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <=       -- D bit
             entry(11) or P_RW;
 --             TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) or P_RW;
@@ -217,20 +217,20 @@ begin
 
   P_MR <= P_MMU_MR and (not i_act or not index(3)); -- タイミングが厳しい
   -- P_MR <= P_MMU_MR and (not i_vio) and (not i_mis);
-  P_VIO_INT <= i_adr or i_vio;    
-  P_TLB_INT <= i_mis;                       
-  
+  P_VIO_INT <= i_adr or i_vio;
+  P_TLB_INT <= i_mis;
+
   --割り込み時の出力 (P_IOR='1')
   P_DOUT <= "00000000" & TLB(TO_INTEGER(unsigned             --TLBの上位8ビット
-            (P_MMU_ADDR(4 downto 2))))(23 downto 16)   
+            (P_MMU_ADDR(4 downto 2))))(23 downto 16)
             when (P_MMU_ADDR(1)='0' and P_MMU_ADDR(5)='0') else
 
             TLB(TO_INTEGER(unsigned                          --TLBの下位16ビット
-            (P_MMU_ADDR(4 downto 2))))(15 downto 0)                  
+            (P_MMU_ADDR(4 downto 2))))(15 downto 0)
             when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='0') else
-            
+
             "00000000" & intr_page                           --A6h ページ番号
-            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='1') else      
+            when (P_MMU_ADDR(1)='1' and P_MMU_ADDR(5)='1') else
 
             "00000000000000" & intr_cause;           --A4h 割り込み原因　下2桁
 

@@ -451,7 +451,7 @@ component TAC_MMU is
          P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
          P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
          P_DIN      : in  std_logic_vector(15 downto 0); -- New TLB field
-         P_DOUT     : out std_logic_vector(15 downto 0)  -- 
+         P_DOUT     : out std_logic_vector(15 downto 0)  --
        );
 end component;
 
@@ -553,7 +553,7 @@ begin
                            i_addr(7 downto 3)="10100" or          -- a0‾a7
                            i_addr(7 downto 1)="1010100" else '0'; -- a8‾a9
   i_en_panel <= '1' when (i_addr(7 downto 3)="11111")  else '0';  -- f8‾ff
-                           
+
   i_din_cpu <=
            i_dout_ram               when (i_mr='1')                     else
            i_dout_panel             when ((i_ir='1' and i_en_panel='1')
@@ -646,7 +646,7 @@ begin
          P_DIN         => i_dout_cpu,
          P_DOUT        => i_dout_mmu
   );
-  
+
   -- RAM
   TAC_RAM1 : TAC_RAM
   port map (

@@ -101,7 +101,7 @@ begin
         else '0' & P_B                 when P_OP1="10110" or         -- IN
                                              P_OP1="11000"           -- PUSH
         else (others => '0');
-    
+
     -- 左シフト
     I_S1   <= P_A(14 downto  0) & "0"        when P_B(0)='1' else P_A;
     I_S3   <= I_S1(13 downto 0) & "00"       when P_B(1)='1' else I_S1;
@@ -155,7 +155,7 @@ begin
     P_CARRY <= I_OUT(16);
     P_ZERO <= '1' when I_OUT(15 downto 0) = (15 downto 0 => '0') else '0';
     P_SIGN <= I_OUT(15);
-    
+
     -- ゼロ除算
     I_ZDIV <= '1' when I_DIVMOD = '1' and P_B = (15 downto 0 => '0') else '0';
 

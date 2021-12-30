@@ -194,7 +194,7 @@ component TEC
            -- SIO
            P_SIO_RXD  : in    std_logic;                      -- SIO Receive
            P_SIO_TXD  : out   std_logic;                      -- SIO Transmit
-            
+
            -- PIO
            P_EXT_IN   : in   std_logic_vector (7 downto 0);
            P_ADC_REF  : out  std_logic_vector (7 downto 0);
@@ -282,7 +282,7 @@ end component;
 begin
   IBUFG1 : IBUFG
     port map ( O => i_9_8304MHz, I => CLK_IN );
-     
+
   DCM1 : DCM
     port map ( P_CLK_IN    => i_9_8304MHz,
                P_49_152MHz => i_49_152MHz,
@@ -310,7 +310,7 @@ begin
   -- FT232RL
     i_ft_txd    <= FT232RL_TXD;
     FT232RL_RXD <= i_ft_rxd;
-  
+
   -- RN4020
     i_rn_tx    <= RN4020_TX;
     RN4020_RX  <= i_rn_rx;
@@ -319,7 +319,7 @@ begin
     RN4020_CTS <= not i_rn_cts;
     RN4020_HW  <= i_rn_hw;
     i_rn_rts   <= not RN4020_RTS;
-  
+
   -- I/O Switch (select TeC/TaC)
   -- INPUT
   i_in(27 downto 24) <= EXT_INOUT;
@@ -340,13 +340,13 @@ begin
 
   i_in_tec <= "000000000000000000000000000" when i_mode="001" else i_in;
   i_in_tac <= i_in when i_mode="001" else "000000000000000000000000000";
-  
+
   -- OUTPUT
   EXT_INOUT <= "ZZZZ" when i_out(48)='0' else i_out(47 downto 44);
   EXT_OUT <= i_out(43 downto 36);
   ADC_REF <= i_out(35 downto 28);
   ADDR_LED <= not i_out(27 downto 20);
-  DATA_LED <= not i_out(19 downto 12);  
+  DATA_LED <= not i_out(19 downto 12);
   RUN_LED <= not i_out(11);
   C_LED <= not i_out(10);
   S_LED <= not i_out(9);
@@ -365,7 +365,7 @@ begin
          P_RESET    => i_reset_tec,                         -- CLK が有効
          P_MODE     => i_mode(1 downto 0),                  -- 0:TeC 1:TaC
          P_CLK      => i_2_4576MHz,                         -- 2.4576MHz
-            
+
          -- CONSOLE(INPUT)
          P_DATA_SW  => i_in_tec(19 downto 12),              -- DATA  SW
          P_RESET_SW => i_in_tec(11),                        -- RESET SW
@@ -458,7 +458,7 @@ begin
          -- TEC
          P_TEC_RXD  => i_tec_rxd,                       -- SIO Receive
          P_TEC_TXD  => i_tec_txd,                       -- SIO Transmit
-         
+
          -- FT232RL
          P_FT232RL_RXD => i_ft_rxd,
          P_FT232RL_TXD => i_ft_txd,

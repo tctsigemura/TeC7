@@ -147,7 +147,7 @@ begin  -- RTL
       p32ms <= Cnt(4) and not Cnt4D;              -- 32ms 周期のパルス
     end if;
   end process;
-    
+
   -- 押しボタン９個分の Debounce 回路
   process(P_CLK, P_RESET_IN)
   begin
@@ -313,7 +313,7 @@ begin  -- RTL
       end if;
     end if;
   end process;
-  
+
   -- FncReg decoder (F_DEC)
   FncReg(3 downto 0) <=
     "0000" when (Pos(4)='0' and WriteFF='0') else                -- Reg Read
@@ -388,8 +388,8 @@ begin  -- RTL
     ("000000000000" & FncReg         )   when (P_AIN(2 downto 1)="11") else
     ("000000000000" & Pos(3 downto 0))   when (P_AIN(2 downto 1)="10") else
     ( AdrReg(15 downto 1) & '0'      )   when (P_AIN(2 downto 1)="01") else
-    ("00000000" & P_DATA_SW          );    -- (P_AIN(2 downto 1)="00") 
-  
+    ("00000000" & P_DATA_SW          );    -- (P_AIN(2 downto 1)="00")
+
   -- DMA
   P_AOUT_DMA <= AdrReg(15 downto 1);
   P_DOUT_DMA <= P_DIN_DMA(7 downto 0) & P_DATA_SW;

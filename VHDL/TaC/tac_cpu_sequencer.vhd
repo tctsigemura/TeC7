@@ -70,7 +70,7 @@ entity TAC_CPU_SEQUENCER is
   P_CON         : out std_logic_vector(2 downto 0)   -- Console
   );
 end TAC_CPU_SEQUENCER;
-  
+
 architecture RTL of TAC_CPU_SEQUENCER is
 
 -- ステート
@@ -121,7 +121,7 @@ signal   I_IS_ALU    : std_logic;                    -- LD~SHRL (ST以外)
 signal   I_JMP_GO    : std_logic;                    -- JMP条件成立
 
 begin
-  
+
   -- LD,ADD,SUB,CMP,AND,OR,XOR,ADDS,MUL,DIV,MOD,SHLA,SHLL,SHRA,SHRL
   I_IS_ALU   <= '1' when (P_OP1/="00000" and P_OP1/="00010" and   -- NO,ST 以外
                           P_OP1<="01100") or                      -- MODまで
@@ -197,7 +197,7 @@ begin
     S_CON3   when I_STATE=S_CON2 else
     S_CON4   when I_STATE=S_CON3 else
     S_FETCH;
-  
+
   -- ステートの遷移
   process (P_CLK, P_RESET)
   begin
@@ -230,7 +230,7 @@ begin
            "110" when I_STATE=S_CON3 else
            "111" when I_STATE=S_CON4 else
            "000";
- 
+
   P_UPDATE_PC <= "000" when I_WAIT='1' or P_BUSY='1' else I_UPDATE_PC;
   I_UPDATE_PC <= "100" when (I_STATE=S_DEC1 and                     -- PC+=2
                              (I_NEXT=S_FETCH or I_NEXT=S_IN2)) or
@@ -248,14 +248,14 @@ begin
                              P_OP1="10100" and I_JMP_GO='1') or     --   JMP
                             I_STATE=S_CALL else                     --   CALL
                  "000";                                             -- 保持
- 
+
   P_UPDATE_SP <= "00"  when I_WAIT='1' or P_BUSY='1' else I_UPDATE_SP;
   I_UPDATE_SP <= "01"  when I_STATE=S_POP or I_STATE=S_RET or        -- SP+=2
                             I_STATE=S_RETI2 or I_STATE=S_RETI3 else
                  "10"  when I_STATE=S_INTR1 or I_STATE=S_INTR2 or    -- SP-=2
                             I_STATE=S_CALL or I_STATE=S_PUSH else
                  "00";                                               -- 保持
-  
+
   P_LOAD_IR <= '1' when I_STATE=S_FETCH or I_NEXT=S_CON2 else '0';
 
   P_LOAD_DR <= '1' when I_NEXT=S_DEC1 or
@@ -266,14 +266,14 @@ begin
   -- ADD, SUB, ..., SHRL ではフラグが変化する
   P_LOAD_FLAG <= '1' when (I_STATE=S_ALU1 or I_STATE=S_ALU2) and
                           P_OP1/="00001" else '0';                 -- LD 以外
- 
+
   P_LOAD_TMP <= '1' when I_NEXT=S_INTR1 else '0';
 
   P_LOAD_GR <= '1' when I_STATE=S_ALU1 or I_STATE=S_ALU2 or
                         I_STATE=S_IN1 or I_STATE=S_IN2 or
                         I_STATE=S_RETI3 or
                         (I_STATE=S_CON4 and P_OP2(1 downto 0)="10") else '0';
-  
+
   -- AOUT
   P_SELECT_A <= "000" when I_NEXT=S_DEC1 or I_STATE=S_INTR4 else   -- PC
                 "001" when I_STATE=S_DEC1 and                      -- PC+2
@@ -284,7 +284,7 @@ begin
                 "110" when I_STATE=S_INTR1 or I_STATE=S_INTR2 or   -- SP-2
                            I_NEXT=S_PUSH or I_NEXT=S_CALL else
                 "010";                                             -- EA
-  
+
   -- DOUT
   P_SELECT_D <= "010" when I_NEXT=S_CALL else                      -- PC+4
                 "100" when ((I_STATE=S_DEC1 or I_STATE=S_DEC2) and -- GR[Rd]
@@ -294,14 +294,14 @@ begin
                 "101" when P_OP2="111" and P_ADDR0='0' else       -- GR[Rd]>>>8
                 "111" when I_STATE=S_INTR2 else                   -- TMP
                 "000";                                            -- PC
-  
+
   -- DIN から DR
   P_SELECT_W <= "01" when I_STATE=S_FETCH else                    -- S4
                 "10" when P_OP2="111" and P_ADDR0='1' else        -- L8
                 "11" when P_OP2="111" and P_ADDR0='0' else        -- H8
                 "00";                                             -- 16
- 
-  P_ALU_START <= '0' when I_WAIT='1' else I_ALU_START; 
+
+  P_ALU_START <= '0' when I_WAIT='1' else I_ALU_START;
   I_ALU_START <= '1' when I_NEXT=S_ALU1 or I_NEXT=S_ALU2 else '0';
 
   -- Memory Request
@@ -319,7 +319,7 @@ begin
   I_IR <= '1' when I_NEXT=S_IN1 or I_NEXT=S_IN2 or
                    ((I_STATE = S_DEC1 or I_STATE = S_DEC2) and
                     I_NEXT = S_FETCH and P_OP1 = "10111") else '0'; -- OUT
-  
+
   -- Read/Write
   P_RW <= '1' when I_STATE=S_INTR1 or I_STATE=S_INTR2 or
                    I_NEXT=S_ST1 or I_NEXT=S_ST2 or
@@ -333,6 +333,6 @@ begin
   P_ZDIV    <= '1' when I_STATE=S_ZDIV   else '0';
   P_INVINST <= '1' when I_STATE=S_INVAL  else '0';
   P_VR      <= '1' when I_STATE=S_INTR3  else '0';
-            
+
 end RTL;
 
