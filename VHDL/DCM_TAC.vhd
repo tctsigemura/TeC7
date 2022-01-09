@@ -1,6 +1,6 @@
 -- file: DCM_TAC.vhd
 -- 
--- (c) Copyright 2008 - 2010 Xilinx, Inc. All rights reserved.
+-- (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
 -- 
 -- This file contains confidential and proprietary information
 -- of Xilinx, Inc. and is protected under U.S. and
@@ -52,15 +52,15 @@
 -- None
 --
 ------------------------------------------------------------------------------
--- Output     Output      Phase    Duty Cycle   Pk-to-Pk     Phase
--- Clock     Freq (MHz)  (degrees)    (%)     Jitter (ps)  Error (ps)
+-- "Output    Output      Phase     Duty      Pk-to-Pk        Phase"
+-- "Clock    Freq (MHz) (degrees) Cycle (%) Jitter (ps)  Error (ps)"
 ------------------------------------------------------------------------------
--- CLK_OUT1    49.152      0.000      50.0      737.316     50.000
+-- CLK_OUT1____39.322______0.000______50.0______551.988____150.000
 --
 ------------------------------------------------------------------------------
--- Input Clock   Input Freq (MHz)   Input Jitter (UI)
+-- "Input Clock   Freq (MHz)    Input Jitter (UI)"
 ------------------------------------------------------------------------------
--- primary          9.8304            0.010
+-- __primary__________9.8304____________0.010
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -84,7 +84,7 @@ end DCM_TAC;
 
 architecture xilinx of DCM_TAC is
   attribute CORE_GENERATION_INFO : string;
-  attribute CORE_GENERATION_INFO of xilinx : architecture is "DCM_TAC,clk_wiz_v1_8,{component_name=DCM_TAC,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=DCM_SP,num_out_clk=1,clkin1_period=101.725260417,clkin2_period=101.725260417,use_power_down=false,use_reset=false,use_locked=true,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=AUTO,manual_override=false}";
+  attribute CORE_GENERATION_INFO of xilinx : architecture is "DCM_TAC,clk_wiz_v3_6,{component_name=DCM_TAC,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=DCM_SP,num_out_clk=1,clkin1_period=101.725260417,clkin2_period=101.725260417,use_power_down=false,use_reset=false,use_locked=true,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=AUTO,manual_override=false}";
 	  -- Input clock buffering / unused connectors
   signal clkin1            : std_logic;
   -- Output clock buffering
@@ -104,14 +104,15 @@ begin
 
   -- Clocking primitive
   --------------------------------------
+  
   -- Instantiation of the DCM primitive
   --    * Unused inputs are tied off
   --    * Unused outputs are labeled unused
   dcm_sp_inst: DCM_SP
   generic map
    (CLKDV_DIVIDE          => 2.000,
-    CLKFX_DIVIDE          => 2,
-    CLKFX_MULTIPLY        => 10,
+    CLKFX_DIVIDE          => 1,
+    CLKFX_MULTIPLY        => 4,
     CLKIN_DIVIDE_BY_2     => FALSE,
     CLKIN_PERIOD          => 101.725260417,
     CLKOUT_PHASE_SHIFT    => "NONE",
@@ -148,6 +149,7 @@ begin
   LOCKED                <= locked_internal;
 
 
+
   -- Output buffering
   -------------------------------------
   clkf_buf : BUFG
@@ -160,5 +162,7 @@ begin
   port map
    (O   => CLK_OUT1,
     I   => clkfx);
+
+
 
 end xilinx;
