@@ -153,19 +153,27 @@ signal i_rw             : std_logic;
 signal i_bt             : std_logic;
 signal i_int_bit        : std_logic_vector(15 downto 0);
 signal i_pr             : std_logic;
-signal i_cpu_mr         : std_logic;
 signal i_ei             : std_logic;
-signal i_con            : std_logic_vector(2 downto 0);
+signal i_idle           : std_logic;
+signal i_wait           : std_logic;
+signal i_con            : std_logic_vector(1 downto 0);
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
-signal i_cpu_addr       : std_logic_vector(15 downto 0);
+
+-- mmu - memory bus
+signal i_addr_ram       : std_logic_vector(15 downto 0);
+signal i_mr_ram         : std_logic;
+signal i_rw_ram         : std_logic;
+signal i_bt_ram         : std_logic;
+signal i_bank_ram       : std_logic;
+signal i_din_ram        : std_logic_vector(15 downto 0);
+signal i_dout_ram       : std_logic_vector(15 downto 0);
 
 -- data bus
 signal i_dout_cpu       : std_logic_vector(15 downto 0);
 signal i_din_cpu        : std_logic_vector(15 downto 0);
 signal i_dout_panel     : std_logic_vector(15 downto 0);
-signal i_dout_ram       : std_logic_vector(15 downto 0);
 signal i_dout_tmr       : std_logic_vector(15 downto 0);
 signal i_dout_intc      : std_logic_vector(15 downto 0);
 signal i_dout_spi       : std_logic_vector(15 downto 0);
@@ -190,7 +198,6 @@ signal i_en_tmr0        : std_logic;
 signal i_en_tmr1        : std_logic;
 signal i_en_tec         : std_logic;
 signal i_en_mmu         : std_logic;
-signal i_en_ram         : std_logic;
 signal i_en_panel       : std_logic;
 
 -- ram dma bus
@@ -248,8 +255,10 @@ component TAC_CPU
          P_ZDIV     : out std_logic;                       -- Zero Division
          P_PRIVIO   : out std_logic;                       -- Privilege Vio.
          P_INVINST  : out std_logic;                       -- Invalid Inst.
-         P_CON      : out std_logic_vector(2 downto 0);    -- Console access
+         P_IDLE     : out std_logic;                       -- Idle state
+         P_CON      : out std_logic_vector(1 downto 0);    -- Console access
          P_INTR     : in  std_logic;                       -- Intrrupt
+         P_WAIT     : in  std_logic;                       -- Wait Request
          P_STOP     : in  std_logic;                       -- Bus Request
          P_TLBMISS  : in  std_logic                        -- MMU TLB miss
        );
@@ -269,7 +278,8 @@ component TAC_PANEL
          P_IR       : in  std_logic;                       -- i/o req.
          P_MR       : in  std_logic;                       -- memory req.
          P_HL       : in  std_logic;                       -- halt instruction
-         P_CON      : in  std_logic_vector(2 downto 0);    -- Console access
+         P_IDLE     : in  std_logic;                       -- idle state
+         P_CON      : in  std_logic_vector(1 downto 0);    -- Console access
          P_STOP     : out std_logic;                       -- stop the cpu
          P_RESET    : out std_logic;                       -- reset [OUTPUT]
 
@@ -313,16 +323,14 @@ end component;
 component TAC_RAM
   port (
          P_CLK    : in  std_logic;
-         P_RESET  : in  std_logic;
-         P_IOE    : in  std_logic;                         -- I/O Enable
-         P_IOW    : in  std_logic;                         -- I/O Write
-         -- for CPU
+         -- for MMU
          P_AIN1   : in  std_logic_vector(15 downto 0);
          P_DIN1   : in  std_logic_vector(15 downto 0);
          P_DOUT1  : out std_logic_vector(15 downto 0);
          P_RW1    : in  std_logic;
          P_MR1    : in  std_logic;
          P_BT     : in  std_logic;
+         P_BANK   : in  std_logic;
          -- for DMA
          P_AIN2   : in  std_logic_vector(14 downto 0);
          P_DIN2   : in  std_logic_vector(15 downto 0);
@@ -436,22 +444,33 @@ end component;
 component TAC_MMU is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
-         P_EN       : in  std_logic;
-         P_IOR      : in  std_logic;
-         P_IOW      : in  std_logic;
-         P_RW       : in  std_logic;
-         P_LI       : in  std_logic;
-         P_MMU_MR   : in  std_logic;                     -- Memory Request(CPU)
-         P_BT       : in  std_logic;                     -- Byte access
+         P_EN       : in  std_logic;                     -- i/o enable
+         P_IOR      : in  std_logic;                     -- i/o read
+         P_IOW      : in  std_logic;                     -- i/o write
+
+         P_LI       : in  std_logic;                     -- inst. fetch(exec)
          P_PR       : in  std_logic;                     -- Privilege mode
          P_STOP     : in  std_logic;                     -- Panel RUN F/F
-         P_VIO_INT  : out std_logic;                     -- Mem Add Vio inter
+         P_WAIT     : out std_logic;                     -- Wait Request
+         P_VIO_INT  : out std_logic;                     -- MemVio/BadAdr inter
          P_TLB_INT  : out std_logic;                     -- TLB miss inter
-         P_MR       : out std_logic;                     -- Memory Request
-         P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
-         P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
-         P_DIN      : in  std_logic_vector(15 downto 0); -- New TLB field
-         P_DOUT     : out std_logic_vector(15 downto 0)  --
+
+         -- from cpu
+         P_ADDR     : in  std_logic_vector(15 downto 0); -- Virtual address
+         P_MR       : in  std_logic;                     -- Memory Request
+         P_RW       : in  std_logic;                     -- read/write
+         P_BT       : in  std_logic;                     -- byte access
+         P_DIN      : in  std_logic_vector(15 downto 0); -- Memory/IO data
+         P_DOUT     : out std_logic_vector(15 downto 0); -- Memory/IO data
+
+         -- to memory
+         P_ADDR_MEM : out std_logic_vector(15 downto 0); -- Physical address
+         P_MR_MEM   : out std_logic;                     -- Memory Request
+         P_RW_MEM   : out std_logic;                     -- read/write
+         P_BT_MEM   : out std_logic;                     -- byte access
+         P_BANK_MEM : out std_logic;                     -- ipl bank
+         P_DOUT_MEM : out std_logic_vector(15 downto 0); -- to memory
+         P_DIN_MEM  : in  std_logic_vector(15 downto 0)  -- form memory
        );
 end component;
 
@@ -514,13 +533,13 @@ begin
          P_CLK      => P_CLK,
          P_RESET    => i_reset,
 
-         P_ADDR     => i_cpu_addr,
+         P_ADDR     => i_addr,
          P_DIN      => i_din_cpu,
          P_DOUT     => i_dout_cpu,
 
          P_RW       => i_rw,
          P_IR       => i_ir,
-         P_MR       => i_cpu_mr,
+         P_MR       => i_mr,
          P_LI       => i_li,
          P_VR       => i_vr,
          P_HL       => i_hl,
@@ -531,8 +550,10 @@ begin
          P_ZDIV     => i_int_bit(12),
          P_PRIVIO   => i_int_bit(13),
          P_INVINST  => i_int_bit(14),
+         P_IDLE     => i_idle,
          P_CON      => i_con,
          P_INTR     => i_intr,
+         P_WAIT     => i_wait,
          P_STOP     => i_stop,
          P_TLBMISS  => i_int_bit(10)
   );
@@ -548,16 +569,16 @@ begin
                           i_addr(7 downto 3)="00100")  else '0';  -- 20‾27
   i_en_rn    <= '1' when (i_addr(7 downto 3)="00101")  else '0';  -- 28‾2f
   i_en_tec   <= '1' when (i_addr(7 downto 3)="00110")  else '0';  -- 30‾37
-  i_en_ram   <= '1' when (i_addr(7 downto 1)="1010000")else '0';  -- a0‾a1
   i_en_mmu   <= '1' when  i_addr(7 downto 5)="100" or             -- 80‾9f
                            i_addr(7 downto 3)="10100" or          -- a0‾a7
                            i_addr(7 downto 1)="1010100" else '0'; -- a8‾a9
   i_en_panel <= '1' when (i_addr(7 downto 3)="11111")  else '0';  -- f8‾ff
 
   i_din_cpu <=
-           i_dout_ram               when (i_mr='1')                     else
+           i_dout_mmu               when ((i_ir='1' and i_en_mmu='1')
+                                          or i_mr='1')                  else
            i_dout_panel             when ((i_ir='1' and i_en_panel='1')
-                                          or i_con(2)='1')              else
+                                          or i_con/="00")               else
            i_dout_tmr0              when (i_ir='1' and i_en_tmr0='1')   else
            i_dout_tmr1              when (i_ir='1' and i_en_tmr1='1')   else
            ("00000000"&i_dout_sio1) when (i_ir='1' and i_en_sio1='1')   else
@@ -566,7 +587,6 @@ begin
            ("00000000"&i_dout_pio)  when (i_ir='1' and i_en_pio='1')    else
            ("00000000"&i_dout_rn)   when (i_ir='1' and i_en_rn='1')     else
            ("00000000"&i_dout_tec)  when (i_ir='1' and i_en_tec='1')    else
-           i_dout_mmu               when (i_ir='1' and i_en_mmu='1')    else
            i_dout_intc              when (i_vr='1')                     else
            "0000000000000000";
 
@@ -585,6 +605,7 @@ begin
          P_IR       => i_ir,
          P_MR       => i_mr,
          P_HL       => i_hl,
+         P_IDLE     => i_idle,
          P_CON      => i_con,
          P_STOP     => i_stop,
          P_RESET    => i_reset,
@@ -632,34 +653,43 @@ begin
          P_EN          => i_en_mmu,
          P_IOR         => i_ior,
          P_IOW         => i_iow,
-         P_RW          => i_rw,
+
          P_LI          => i_li,
-         P_MMU_MR      => i_cpu_mr,
-         P_BT          => i_bt,
          P_PR          => i_pr,
          P_STOP        => i_stop,
+         P_WAIT        => i_wait,
          P_VIO_INT     => i_int_bit(11),
          P_TLB_INT     => i_int_bit(10),
-         P_MR          => i_mr,
+
          P_ADDR        => i_addr,
-         P_MMU_ADDR    => i_cpu_addr,
+         P_MR          => i_mr,
+         P_RW          => i_rw,
+         P_BT          => i_bt,
          P_DIN         => i_dout_cpu,
-         P_DOUT        => i_dout_mmu
+         P_DOUT        => i_dout_mmu,
+
+         P_ADDR_MEM    => i_addr_ram,
+         P_MR_MEM      => i_mr_ram,
+         P_RW_MEM      => i_rw_ram,
+         P_BT_MEM      => i_bt_ram,
+         P_BANK_MEM    => i_bank_ram,
+         P_DIN_MEM     => i_dout_ram,
+         P_DOUT_MEM    => i_din_ram
   );
 
   -- RAM
   TAC_RAM1 : TAC_RAM
   port map (
          P_CLK      => P_CLK,
-         P_RESET    => i_reset,
-         P_IOE      => i_en_ram,
-         P_IOW      => i_iow,
-         P_AIN1     => i_addr,
-         P_DIN1     => i_dout_cpu,
+
+         P_AIN1     => i_addr_ram,
+         P_DIN1     => i_din_ram,
          P_DOUT1    => i_dout_ram,
-         P_RW1      => i_rw,
-         P_MR1      => i_mr,
-         P_BT       => i_bt,
+         P_RW1      => i_rw_ram,
+         P_MR1      => i_mr_ram,
+         P_BT       => i_bt_ram,
+         P_BANK     => i_bank_ram,
+
          P_AIN2     => i_ain_ram_dma,
          P_DIN2     => i_din_ram_dma,
          P_DOUT2    => i_dout_ram_dma,
@@ -687,8 +717,8 @@ begin
          P_ADDR     => i_addr(1),
          P_DOUT     => i_dout_sio1,
          P_DIN      => i_dout_cpu(7 downto 0),
-         P_INT_TxD  => i_int_bit(5),
-         P_INT_RxD  => i_int_bit(4),
+         P_INT_TxD  => i_int_bit(4),
+         P_INT_RxD  => i_int_bit(5),
          P_TxD      => P_FT232RL_RXD,
          P_RxD      => P_FT232RL_TXD
        );
@@ -703,8 +733,8 @@ begin
          P_ADDR     => i_addr(1),
          P_DOUT     => i_dout_sio2,
          P_DIN      => i_dout_cpu(7 downto 0),
-         P_INT_TxD  => i_int_bit(7),
-         P_INT_RxD  => i_int_bit(6),
+         P_INT_TxD  => i_int_bit(2),
+         P_INT_RxD  => i_int_bit(3),
          P_TxD      => P_TEC_RXD,
          P_RxD      => P_TEC_TXD
        );
@@ -719,8 +749,8 @@ begin
          P_ADDR     => i_addr(2 downto 1),
          P_DOUT     => i_dout_rn,
          P_DIN      => i_dout_cpu(7 downto 0),
-         P_INT_TxD  => i_int_bit(3),
-         P_INT_RxD  => i_int_bit(2),
+         P_INT_TxD  => i_int_bit(6),
+         P_INT_RxD  => i_int_bit(7),
          P_TxD      => P_RN4020_RX,
          P_RxD      => P_RN4020_TX,
          P_CTS      => P_RN4020_RTS,
@@ -737,7 +767,7 @@ begin
          P_EN       => i_en_spi,
          P_IOR      => i_ior,
          P_IOW      => i_iow,
-         P_INT      => i_int_bit(8),
+         P_INT      => i_int_bit(1),
          P_ADDR     => i_addr(2 downto 1),
          P_DIN      => i_dout_cpu(15 downto 0),
          P_DOUT     => i_dout_spi,
@@ -764,7 +794,7 @@ begin
          P_EN       => i_en_pio,
 --       P_IOR      => i_ior,
          P_IOW      => i_iow,
-         P_INT      => i_int_bit(9),
+         P_INT      => i_int_bit(0),
          P_ADDR     => i_addr(3 downto 1),
          P_DIN      => i_dout_cpu(7 downto 0),
          P_DOUT     => i_dout_pio,
@@ -783,7 +813,7 @@ begin
       P_EN          => i_en_tmr0,
       P_IOR         => i_ior,
       P_IOW         => i_iow,
-      P_INT         => i_int_bit(0),
+      P_INT         => i_int_bit(9),
       P_ADDR        => i_addr(1),
       P_1kHz        => i_1kHz,
       P_DIN         => i_dout_cpu,
@@ -798,7 +828,7 @@ begin
       P_EN          => i_en_tmr1,
       P_IOR         => i_ior,
       P_IOW         => i_iow,
-      P_INT         => i_int_bit(1),
+      P_INT         => i_int_bit(8),
       P_ADDR        => i_addr(1),
       P_1kHz        => i_1kHz,
       P_DIN         => i_dout_cpu,

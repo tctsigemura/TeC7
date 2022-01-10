@@ -86,12 +86,12 @@ begin
              else '0';
   P_DOUT(15 downto 5) <= "11111111111";
   P_DOUT(4 downto 1) <=
-            "1111" when (intReg(15) = '1') else  -- Int15(tlbMiss)
-            "1110" when (intReg(14) = '1') else  -- Int14(SVC)
-            "1101" when (intReg(13) = '1') else  -- Int13(InvInst)
-            "1100" when (intReg(12) = '1') else  -- Int12(PriVio)
-            "1011" when (intReg(11) = '1') else  -- Int11(ZeroDiv)
-            "1010" when (intReg(10) = '1') else  -- Int10(MemVio)
+            "1111" when (intReg(15) = '1') else  -- Int15(SVC)
+            "1110" when (intReg(14) = '1') else  -- Int14(InvInst)
+            "1101" when (intReg(13) = '1') else  -- Int13(PriVio)
+            "1100" when (intReg(12) = '1') else  -- Int12(ZeroDiv)
+            "1011" when (intReg(11) = '1') else  -- Int11(MemVio)
+            "1010" when (intReg(10) = '1') else  -- Int10(TlbMiss)
             "1001" when (intReg( 9) = '1') else  -- Int9 (Timer0)
             "1000" when (intReg( 8) = '1') else  -- Int8 (Timer1)
             "0111" when (intReg( 7) = '1') else  -- Int7 (RN4020 Rx)

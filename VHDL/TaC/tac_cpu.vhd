@@ -61,8 +61,10 @@ entity TAC_CPU is
          P_ZDIV     : out std_logic;                        -- Zero Division
          P_PRIVIO   : out std_logic;                        -- Privilege Vio.
          P_INVINST  : out std_logic;                        -- Invalid Inst.
-         P_CON      : out std_logic_vector(2 downto 0);     -- Console access
+         P_IDLE     : out std_logic;                        -- idle state
+         P_CON      : out std_logic_vector(1 downto 0);     -- Console access
          P_INTR     : in  std_logic;                        -- Intrrupt
+         P_WAIT     : in  std_logic;                        -- wait reqest
          P_STOP     : in  std_logic;                        -- Panel RUN F/F
          P_TLBMISS  : in std_logic                          -- TLB miss
         );
@@ -112,7 +114,7 @@ component TAC_CPU_SEQUENCER is
   P_SELECT_W    : out std_logic_vector(1 downto 0);  -- DR への入力の選択
   P_ALU_START   : out std_logic;
   P_ALU_ZDIV    : in std_logic;
-  P_BUSY        : in std_logic;
+  P_WAIT        : in std_logic;                      -- ALU, MMUからの待ち要求
   P_FLAG_V      : in std_logic;
   P_FLAG_C      : in std_logic;
   P_FLAG_Z      : in std_logic;
@@ -129,7 +131,7 @@ component TAC_CPU_SEQUENCER is
   P_ZDIV        : out std_logic;                     -- Zero Division
   P_INVINST     : out std_logic;                     -- Invalid Instruction
   P_VR          : out std_logic;                     -- Vector Fetch
-  P_CON         : out std_logic_vector(2 downto 0)   -- Console
+  P_CON         : out std_logic_vector(1 downto 0)   -- Console
   );
 end component;
 
@@ -170,16 +172,6 @@ signal I_INST_OP2    : std_logic_vector(2 downto 0);  -- 命令の OP2
 signal I_INST_RD     : std_logic_vector(3 downto 0);  -- 命令の Rd
 signal I_INST_RX     : std_logic_vector(3 downto 0);  -- 命令の Rx
 
--- 外部バスへの出力を保持するレジスタ
-signal I_REG_ADDR    : Word;                          -- アドレス
-signal I_REG_DOUT    : Word;                          -- データ
-signal I_REG_MR      : std_logic;                     -- MR
-signal I_REG_IR      : std_logic;                     -- IR
-signal I_REG_RW      : std_logic;                     -- RW
-signal I_REG_PR      : std_logic;                     -- Privilege
-signal I_REG_BT      : std_logic;                     -- Byte
-signal I_REG_LI      : std_logic;                     -- Instruction fetch
-
 -- 内部配線
 signal I_ADDR        : Word;                          -- アドレス
 signal I_DOUT        : Word;                          -- データ
@@ -211,9 +203,9 @@ signal I_ALU_OVERFLOW: std_logic;                     -- ALU の Over flow 出�
 signal I_ALU_CARRY   : std_logic;                     -- ALU の Carry 出力
 signal I_ALU_ZERO    : std_logic;                     -- ALU の Zero  出力
 signal I_ALU_SIGN    : std_logic;                     -- ALU の Sign  出力
-signal I_VR          : std_logic;                     -- Vector Fetch
-signal I_ZDIV        : std_logic;                     -- Zero Division
-signal I_CON         : std_logic_vector(2 downto 0);  -- コンソール動作中
+signal I_ALU_ZDIV    : std_logic;                     -- ALU の 0除算出力
+signal I_WAIT        : std_logic;                     -- 待が必要
+signal I_CON         : std_logic_vector(1 downto 0);  -- コンソール動作中
 
 begin
   ALU : TAC_CPU_ALU
@@ -225,13 +217,15 @@ begin
     P_A         => I_RD,
     P_B         => I_ALU_B,
     P_BUSY      => I_ALU_BUSY,
-    P_ZDIV      => I_ZDIV,
+    P_ZDIV      => I_ALU_ZDIV,
     P_OUT       => I_ALU_OUT,
     P_OVERFLOW  => I_ALU_OVERFLOW,
     P_CARRY     => I_ALU_CARRY,
     P_ZERO      => I_ALU_ZERO,
     P_SIGN      => I_ALU_SIGN
   );
+
+  I_WAIT <= I_ALU_BUSY or P_WAIT;
 
   SEQUENCER : TAC_CPU_SEQUENCER
   port map (
@@ -254,8 +248,8 @@ begin
     P_SELECT_D  => I_SELECT_D,
     P_SELECT_W  => I_SELECT_W,
     P_ALU_START => I_ALU_START,
-    P_ALU_ZDIV  => I_ZDIV,
-    P_BUSY      => I_ALU_BUSY,
+    P_ALU_ZDIV  => I_ALU_ZDIV,
+    P_WAIT      => I_WAIT,
     P_FLAG_V    => I_FLAG_V,
     P_FLAG_C    => I_FLAG_C,
     P_FLAG_Z    => I_FLAG_Z,
@@ -269,22 +263,23 @@ begin
     P_HL        => P_HL,
     P_SVC       => P_SVC,
     P_PRIVIO    => P_PRIVIO,
+    P_ZDIV      => P_ZDIV,
     P_INVINST   => P_INVINST,
-    P_VR        => I_VR,
+    P_VR        => P_VR,
     P_CON       => I_CON
   );
 
   -- ポート
-  P_ADDR <= I_REG_ADDR;
-  P_DOUT <= I_REG_DOUT;
-  P_MR   <= I_REG_MR;
-  P_IR   <= I_REG_IR;
-  P_RW   <= I_REG_RW;
-  P_PR   <= I_REG_PR;
-  P_BT   <= I_REG_BT;
-  P_LI   <= I_REG_LI;
-  P_VR   <= I_VR;
+  P_ADDR <= I_ADDR;
+  P_DOUT <= I_DOUT;
+  P_MR   <= I_MR;
+  P_IR   <= I_IR;
+  P_RW   <= I_RW;
+  P_PR   <= I_FLAG_P;
+  P_BT   <= '1' when I_INST_OP2="111" else '0';
+  P_LI   <= I_LOAD_IR;
   P_EI   <= I_FLAG_E;
+  P_IDLE <= I_ALU_BUSY or P_WAIT;
   P_CON  <= I_CON;
 
   -- マルチプレクサ
@@ -370,33 +365,6 @@ begin
             I_SP      when "1101",
             I_REG_USP when "1110",
             I_FLAG    when others;
-
-  --- 外部バスへの出力
-  process(P_CLK, P_RESET) begin
-    if (P_RESET='0') then
-      I_REG_ADDR <= (others => '0');
-      I_REG_DOUT <= (others => '0');
-      I_REG_MR       <= '0';
-      I_REG_IR       <= '0';
-      I_REG_RW       <= '0';
-      I_REG_PR       <= '1';
-      I_REG_LI       <= '0';
-      I_REG_BT       <= '0';
-    elsif (P_CLK' event and P_CLK='1') then
-      I_REG_ADDR <= I_ADDR;
-      I_REG_DOUT <= I_DOUT;
-      I_REG_MR   <= I_MR;
-      I_REG_IR   <= I_IR;
-      I_REG_RW   <= I_RW;
-      I_REG_PR   <= I_FLAG_P;
-      I_REG_LI   <= I_LOAD_IR;
-      if (I_INST_OP2="111") then
-        I_REG_BT <= '1';
-      else
-        I_REG_BT <= '0';
-      end if;
-    end if;
-  end process;
 
   --- GR の書き込み制御
   process(P_CLK, P_RESET)
@@ -498,7 +466,7 @@ begin
           I_FLAG_E <= '0';
           I_FLAG_P <= '1';
       elsif (I_LOAD_GR='1' and I_INST_RD="1111") then
-        if (I_FLAG_P='1' or I_CON(2)='1') then      -- 特権モード or コンソール
+        if (I_FLAG_P='1' or I_CON/="00") then      -- 特権モード or コンソール
           I_FLAG_E <= I_ALU_OUT(7);
           I_FLAG_P <= I_ALU_OUT(6);
           I_FLAG_I <= I_ALU_OUT(5);
@@ -521,17 +489,13 @@ begin
     if (P_RESET='0') then
       I_REG_PC <= (others => '0');
     elsif (P_CLK'event and P_CLK='1') then
-      if (I_VR='1') then
-        I_REG_PC <= P_DIN;  -- 割込みベクタのアドレス
-      else
-        case I_UPDATE_PC is
-          when "100" => I_REG_PC <= I_REG_PC + 2;
-          when "101" => I_REG_PC <= I_REG_PC + 4;
-          when "110" => I_REG_PC <= P_DIN;
-          when "111" => I_REG_PC <= I_EA;
-          when others => NULL;
-        end case;
-      end if;
+      case I_UPDATE_PC is
+        when "100" => I_REG_PC <= I_REG_PC + 2;
+        when "101" => I_REG_PC <= I_REG_PC + 4;
+        when "110" => I_REG_PC <= P_DIN;
+        when "111" => I_REG_PC <= I_EA;
+        when others => NULL;
+      end case;
     end if;
   end process;
 

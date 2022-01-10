@@ -50,7 +50,7 @@ entity TAC_CPU_SEQUENCER is
   P_SELECT_W    : out std_logic_vector(1 downto 0);  -- DR への入力の選択
   P_ALU_START   : out std_logic;
   P_ALU_ZDIV    : in std_logic;
-  P_BUSY        : in std_logic;
+  P_WAIT        : in std_logic;                      -- ALU, MMUからの待ち要求
   P_FLAG_V      : in std_logic;
   P_FLAG_C      : in std_logic;
   P_FLAG_Z      : in std_logic;
@@ -67,7 +67,7 @@ entity TAC_CPU_SEQUENCER is
   P_ZDIV        : out std_logic;                     -- Zero Division
   P_INVINST     : out std_logic;                     -- Invalid Instruction
   P_VR          : out std_logic;                     -- Vector Fetch
-  P_CON         : out std_logic_vector(2 downto 0)   -- Console
+  P_CON         : out std_logic_vector(1 downto 0)   -- Console
   );
 end TAC_CPU_SEQUENCER;
 
@@ -103,18 +103,13 @@ constant S_PRIVIO: std_logic_vector(4 downto 0) := "11001";
 constant S_CON1  : std_logic_vector(4 downto 0) := "11010";
 constant S_CON2  : std_logic_vector(4 downto 0) := "11011";
 constant S_CON3  : std_logic_vector(4 downto 0) := "11100";
-constant S_CON4  : std_logic_vector(4 downto 0) := "11101";
 
 signal   I_STATE     : std_logic_vector(4 downto 0);
 signal   I_NEXT      : std_logic_vector(4 downto 0);
-signal   I_WAIT      : std_logic;                    -- MR,IRを検出(待が必要）
-signal   I_IDLE      : std_logic;                    -- 待ち状態
 
 signal   I_UPDATE_PC : std_logic_vector(2 downto 0);
 signal   I_UPDATE_SP : std_logic_vector(1 downto 0);
 signal   I_ALU_START : std_logic;
-signal   I_IR        : std_logic;
-signal   I_MR        : std_logic;
 
 signal   I_IS_INDR   : std_logic;                    -- FP相対,レジスタ間接
 signal   I_IS_ALU    : std_logic;                    -- LD~SHRL (ST以外)
@@ -192,10 +187,9 @@ begin
                    (P_OP1="10100" or P_OP1="10111")) else           -- JMP/OUT
     S_SVC    when I_STATE=S_DEC1 and P_OP1="11110" else
     S_INVAL  when I_STATE=S_DEC1 or I_STATE=S_DEC2 else
-    S_CON1   when (I_STATE=S_FETCH and P_STOP='1') or I_STATE=S_CON4 else
+    S_CON1   when (I_STATE=S_FETCH and P_STOP='1') or I_STATE=S_CON3 else
     S_CON2   when I_STATE=S_CON1 and P_STOP='1' else
     S_CON3   when I_STATE=S_CON2 else
-    S_CON4   when I_STATE=S_CON3 else
     S_FETCH;
 
   -- ステートの遷移
@@ -204,34 +198,20 @@ begin
     if (P_RESET='0') then
       I_STATE <= S_FETCH;
     elsif (P_CLK'event and P_CLK='1') then
-      if I_WAIT='0' and P_BUSY='0' then
+      if P_WAIT='0' then
         I_STATE <= I_NEXT;
       end if;
     end if;
   end process;
 
-  -- I_IDLE の制御
-  I_WAIT <= (not I_IDLE) and (I_MR or I_IR);  -- メモリ，I/Oアクセス(待が必要)
-
-  process (P_CLK, P_RESET)
-  begin
-    if (P_RESET='0') then
-      I_IDLE <= '0';
-    elsif (P_CLK'event and P_CLK='1') then
-      I_IDLE <= I_WAIT;
-    end if;
-  end process;
-
-
   -- 信号に出力する内容をステートによって決める
 
-  P_CON <= "100" when I_STATE=S_CON1 and P_STOP='1' else
-           "101" when I_STATE=S_CON2 else
-           "110" when I_STATE=S_CON3 else
-           "111" when I_STATE=S_CON4 else
-           "000";
+  P_CON <= "01" when I_STATE=S_CON1 and P_STOP='1' else
+           "10" when I_STATE=S_CON2 else
+           "11" when I_STATE=S_CON3 else
+           "00";
 
-  P_UPDATE_PC <= "000" when I_WAIT='1' or P_BUSY='1' else I_UPDATE_PC;
+  P_UPDATE_PC <= "000" when P_WAIT='1' else I_UPDATE_PC;
   I_UPDATE_PC <= "100" when (I_STATE=S_DEC1 and                     -- PC+=2
                              (I_NEXT=S_FETCH or I_NEXT=S_IN2)) or
                             I_STATE=S_ALU2 or I_STATE=S_ST2 or
@@ -243,13 +223,13 @@ begin
                             I_STATE=S_ALU1 or I_STATE=S_ST1 else
                  "110" when I_STATE=S_INTR3 or I_STATE=S_INTR4 or   -- PC<-Din
                             I_STATE=S_RETI2 or I_STATE=S_RET or
-                            (I_STATE=S_CON4 and P_OP2(1 downto 0)="11") else
+                            (I_STATE=S_CON3 and P_OP2(1 downto 0)="11") else
                  "111" when (I_STATE=S_DEC2 and                     -- PC<-EA
                              P_OP1="10100" and I_JMP_GO='1') or     --   JMP
                             I_STATE=S_CALL else                     --   CALL
                  "000";                                             -- 保持
 
-  P_UPDATE_SP <= "00"  when I_WAIT='1' or P_BUSY='1' else I_UPDATE_SP;
+  P_UPDATE_SP <= "00"  when P_WAIT='1' else I_UPDATE_SP;
   I_UPDATE_SP <= "01"  when I_STATE=S_POP or I_STATE=S_RET or        -- SP+=2
                             I_STATE=S_RETI2 or I_STATE=S_RETI3 else
                  "10"  when I_STATE=S_INTR1 or I_STATE=S_INTR2 or    -- SP-=2
@@ -261,7 +241,7 @@ begin
   P_LOAD_DR <= '1' when I_NEXT=S_DEC1 or
                         (I_STATE=S_DEC1 and P_OP2/="101") or       -- Imm4 以外
                         I_STATE=S_DEC2 or I_STATE=S_RETI1 or
-                        I_STATE=S_CON3  else '0';
+                        I_STATE=S_CON2  else '0';
 
   -- ADD, SUB, ..., SHRL ではフラグが変化する
   P_LOAD_FLAG <= '1' when (I_STATE=S_ALU1 or I_STATE=S_ALU2) and
@@ -272,7 +252,7 @@ begin
   P_LOAD_GR <= '1' when I_STATE=S_ALU1 or I_STATE=S_ALU2 or
                         I_STATE=S_IN1 or I_STATE=S_IN2 or
                         I_STATE=S_RETI3 or
-                        (I_STATE=S_CON4 and P_OP2(1 downto 0)="10") else '0';
+                        (I_STATE=S_CON3 and P_OP2(1 downto 0)="10") else '0';
 
   -- AOUT
   P_SELECT_A <= "000" when I_NEXT=S_DEC1 or I_STATE=S_INTR4 else   -- PC
@@ -301,12 +281,11 @@ begin
                 "11" when P_OP2="111" and P_ADDR0='0' else        -- H8
                 "00";                                             -- 16
 
-  P_ALU_START <= '0' when I_WAIT='1' else I_ALU_START;
+  P_ALU_START <= '0' when P_WAIT='1' else I_ALU_START;
   I_ALU_START <= '1' when I_NEXT=S_ALU1 or I_NEXT=S_ALU2 else '0';
 
   -- Memory Request
-  P_MR <= '0' when I_IDLE='1' else I_MR;
-  I_MR <= '1' when I_NEXT=S_DEC1 or I_NEXT=S_DEC2 or I_NEXT=S_ALU1 or
+  P_MR <= '1' when I_NEXT=S_DEC1 or I_NEXT=S_DEC2 or I_NEXT=S_ALU1 or
                    (I_NEXT=S_ALU2 and I_IS_INDR='1') or
                    I_NEXT=S_ST1 or I_NEXT=S_ST2 or I_NEXT=S_PUSH or
                    I_NEXT=S_POP or I_NEXT=S_CALL or I_NEXT=S_RET or
@@ -315,8 +294,7 @@ begin
                    I_STATE=S_INTR2 or I_STATE=S_INTR4 else '0';
 
   -- I/O Request
-  P_IR <= '0' when I_IDLE='1' else I_IR;
-  I_IR <= '1' when I_NEXT=S_IN1 or I_NEXT=S_IN2 or
+  P_IR <= '1' when I_NEXT=S_IN1 or I_NEXT=S_IN2 or
                    ((I_STATE = S_DEC1 or I_STATE = S_DEC2) and
                     I_NEXT = S_FETCH and P_OP1 = "10111") else '0'; -- OUT
 
