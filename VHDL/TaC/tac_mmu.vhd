@@ -40,7 +40,6 @@ entity TAC_MMU is
 
          P_LI       : in  std_logic;                     -- inst. fetch(exec)
          P_PR       : in  std_logic;                     -- Privilege mode
-         P_STOP     : in  std_logic;                     -- Panel RUN F/F
          P_WAIT     : out std_logic;                     -- Wait Request
          P_VIO_INT  : out std_logic;                     -- MemVio/BadAdr inter
          P_TLB_INT  : out std_logic;                     -- TLB miss inter
@@ -122,7 +121,7 @@ begin
       i_mr  <= P_MR;
       i_rw  <= P_RW;
       i_li  <= P_LI;
-      i_act <= (not P_PR) and (not P_STOP) and P_MR and i_en;
+      i_act <= (not P_PR) and P_MR and i_en;
       i_adr <= P_ADDR(0) and not P_BT and P_MR;
       P_RW_MEM   <= P_RW;
       P_BT_MEM   <= P_BT;

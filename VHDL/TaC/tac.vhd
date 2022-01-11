@@ -450,7 +450,6 @@ component TAC_MMU is
 
          P_LI       : in  std_logic;                     -- inst. fetch(exec)
          P_PR       : in  std_logic;                     -- Privilege mode
-         P_STOP     : in  std_logic;                     -- Panel RUN F/F
          P_WAIT     : out std_logic;                     -- Wait Request
          P_VIO_INT  : out std_logic;                     -- MemVio/BadAdr inter
          P_TLB_INT  : out std_logic;                     -- TLB miss inter
@@ -656,7 +655,6 @@ begin
 
          P_LI          => i_li,
          P_PR          => i_pr,
-         P_STOP        => i_stop,
          P_WAIT        => i_wait,
          P_VIO_INT     => i_int_bit(11),
          P_TLB_INT     => i_int_bit(10),
