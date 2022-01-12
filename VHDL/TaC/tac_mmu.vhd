@@ -189,12 +189,12 @@ begin
   P_ADDR_MEM(15 downto 8) <= entry(7 downto 0) when (i_act='1') else page;
   P_ADDR_MEM(7 downto 0) <= offs;
 
-  -- 何も問題がない場合だけメモリをアクセスする
+  -- TLBミスが発生していなければメモリをアクセスする
   P_MR_MEM <= i_mr and not (i_act and index(3));          -- タイミングが厳しい
 
   -- メモリ関係の例外をCPUに知らせる
-  P_VIO_INT <= i_adr or i_vio;
-  P_TLB_INT <= i_mis;
+  P_VIO_INT <= i_adr or i_vio;            -- 割り込みコントローラだけに接続
+  P_TLB_INT <= i_mis;                     -- 割り込みコントローラとCPUに接続
 
   --TLB操作
   process(P_CLK,P_RESET)
