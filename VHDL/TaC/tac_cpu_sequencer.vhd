@@ -268,7 +268,8 @@ begin
 
   -- DOUT
   P_SELECT_D <= "010" when I_NEXT=S_CALL else                      -- PC+4
-                "101" when P_OP2="111" and P_ADDR0='0' else       -- GR[Rd]>>>8
+                "101" when (I_NEXT=S_ST1 or I_NEXT=S_ST2) and 
+                          P_OP2="111" and P_ADDR0='0' else       -- GR[Rd]>>>8
                 "100" when ((I_STATE=S_DEC1 or I_STATE=S_DEC2) and -- GR[Rd]
                             I_NEXT=S_FETCH) or
                            I_NEXT=S_ST1 or I_NEXT=S_ST2 or
