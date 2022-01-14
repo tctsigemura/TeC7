@@ -298,7 +298,7 @@ begin
               I_REG_PC + 2                    when "001",
               I_REG_PC + 4                    when "010",
               I_RD                            when "100",
-              "00000000" & I_RD(15 downto 8)  when "101",
+              I_RD(7 downto 0) & I_RD(15 downto 8)  when "101",
               I_FLAG                          when "110",
               I_REG_TMP                       when others;
 
