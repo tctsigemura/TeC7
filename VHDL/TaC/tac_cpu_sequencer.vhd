@@ -249,7 +249,8 @@ begin
 
   P_LOAD_TMP <= '1' when I_NEXT=S_INTR1 else '0';
 
-  P_LOAD_GR <= '1' when I_STATE=S_ALU1 or I_STATE=S_ALU2 or
+  P_LOAD_GR <= '1' when (I_STATE=S_ALU1 and P_OP1 /= "00101") or
+                        (I_STATE=S_ALU2 and P_OP1 /= "00101") or
                         I_STATE=S_IN1 or I_STATE=S_IN2 or
                         I_STATE=S_RETI3 or
                         (I_STATE=S_CON3 and P_OP2(1 downto 0)="10") else '0';
