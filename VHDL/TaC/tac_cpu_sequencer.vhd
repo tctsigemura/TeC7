@@ -259,9 +259,9 @@ begin
   P_LOAD_IR <= '1' when I_STATE=S_FETCH or I_NEXT=S_CON2 else '0';
 
   P_LOAD_DR <= '1' when I_NEXT=S_DEC1 or
-                        (I_STATE=S_DEC1 and P_OP2/="101"
-                          and P_OP1/="10101") or -- Imm4 以外
-                        I_STATE=S_DEC2 or I_STATE=S_RETI1 or
+                        (I_STATE=S_DEC1 and P_OP2/="101") or       -- Imm4 以外
+                        (I_STATE=S_DEC2 and P_OP1/="10101") or     -- CALL 以外
+                        I_STATE=S_RETI1 or
                         I_STATE=S_CON3  else '0';
 
   -- ADD, SUB, ..., SHRL ではフラグが変化する
