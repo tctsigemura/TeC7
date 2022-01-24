@@ -568,9 +568,9 @@ begin
                           i_addr(7 downto 3)="00100")  else '0';  -- 20‾27
   i_en_rn    <= '1' when (i_addr(7 downto 3)="00101")  else '0';  -- 28‾2f
   i_en_tec   <= '1' when (i_addr(7 downto 3)="00110")  else '0';  -- 30‾37
-  i_en_mmu   <= '1' when  i_addr(7 downto 5)="100" or             -- 80‾9f
-                           i_addr(7 downto 3)="10100" or          -- a0‾a7
-                           i_addr(7 downto 1)="1010100" else '0'; -- a8‾a9
+  i_en_mmu   <= '1' when (i_addr(7 downto 5)="100" or             -- 80‾9f
+                          i_addr(7 downto 3)="10100" or           -- a0‾a7
+                          i_addr(7 downto 1)="1010100") else '0'; -- a8‾a9
   i_en_panel <= '1' when (i_addr(7 downto 3)="11111")  else '0';  -- f8‾ff
 
   i_din_cpu <=
