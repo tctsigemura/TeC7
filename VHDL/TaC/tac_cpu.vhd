@@ -487,7 +487,7 @@ begin
   -- PC の書き込み制御
   process(P_CLK, P_RESET) begin
     if (P_RESET='0') then
-      I_REG_PC <= (others => '0');
+      I_REG_PC <= "1110000000000000";               -- 0xe000
     elsif (P_CLK'event and P_CLK='1') then
       case I_UPDATE_PC is
         when "100" => I_REG_PC <= I_REG_PC + 2;
