@@ -253,7 +253,7 @@ begin
   P_LOAD_GR <= '1' when (I_STATE=S_ALU1 and P_OP1 /= "00101") or
                         (I_STATE=S_ALU2 and P_OP1 /= "00101") or
                         I_STATE=S_IN1 or I_STATE=S_IN2 or
-                        I_STATE=S_RETI3 or
+                        I_STATE=S_POP or I_STATE=S_RETI3 or
                         (I_STATE=S_CON3 and P_OP2(1 downto 0)="10") else '0';
 
   -- AOUT
@@ -273,8 +273,8 @@ begin
                           P_OP2="111" and P_ADDR0='0' else       -- GR[Rd]>>>8
                 "100" when ((I_STATE=S_DEC1 or I_STATE=S_DEC2) and -- GR[Rd]
                             I_NEXT=S_FETCH) or
-                           I_NEXT=S_ST1 or I_NEXT=S_ST2 or
-                           I_STATE=S_CON2 else
+                           I_NEXT=S_PUSH or I_NEXT=S_ST1 or
+                           I_NEXT=S_ST2 or I_STATE=S_CON2 else
                 "111" when I_STATE=S_INTR2 else                   -- TMP
                 "000";                                            -- PC
 

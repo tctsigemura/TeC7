@@ -310,9 +310,14 @@ begin
                "00000000" & P_DIN(15 downto 8)          when others;
 
   --- MUX B
-  with I_INST_OP2 select
-    I_ALU_B <= I_RX         when "100",
-               I_REG_DR     when others;
+  process(I_INST_OP1(4 downto 3), I_INST_OP2)
+  begin
+    if (I_INST_OP1(4 downto 3)/="11" and I_INST_OP2="100") then
+      I_ALU_B <= I_RX;
+    else
+      I_ALU_B <= I_REG_DR;
+    end if;
+  end process;
 
   --- EA
   with I_INST_OP2 select
