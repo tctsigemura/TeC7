@@ -59,14 +59,12 @@ entity TAC_MMU is
          P_BT_MEM   : out std_logic;                     -- byte access
          P_BANK_MEM : out std_logic;                     -- ipl bank
          P_DOUT_MEM : out std_logic_vector(15 downto 0); -- to memory
-         P_DIN_MEM  : in  std_logic_vector(15 downto 0)  -- form memory
+         P_DIN_MEM  : in  std_logic_vector(15 downto 0)  -- from memory
        );
 end TAC_MMU;
 
 architecture Behavioral of TAC_MMU is
 signal i_en  : std_logic;                                -- Enable resister
---signal i_b   : std_logic_vector(15 downto 0);          -- Base  register
---signal i_l   : std_logic_vector(15 downto 0);          -- Limit register
 signal i_act   : std_logic;                              -- Activate MMU
 signal i_mis   : std_logic;                              -- TLB miss
 signal i_vio   : std_logic;                              -- Memory Violation
@@ -163,27 +161,10 @@ begin
 
   i_mis <= index(3) and i_act;
 
---  index <= X"0" when page & '1'=TLB(0)(23 downto 15) else
---           X"1" when page & '1'=TLB(1)(23 downto 15) else
---           X"2" when page & '1'=TLB(2)(23 downto 15) else
---           X"3" when page & '1'=TLB(3)(23 downto 15) else
---           X"4" when page & '1'=TLB(4)(23 downto 15) else
---           X"5" when page & '1'=TLB(5)(23 downto 15) else
---           X"6" when page & '1'=TLB(6)(23 downto 15) else
---           X"7" when page & '1'=TLB(7)(23 downto 15) else
---           X"8";
---
---  entry <= TLB(TO_INTEGER(unsigned (index(2 downto 0))));
---  request <= (not P_RW) & P_RW & P_LI;
-
   i_vio <= i_act and
            (((not i_rw) and (not entry(10))) or                -- read
             ((    i_rw) and (not entry( 9))) or                -- write
             ((    i_li) and (not (entry(10) and entry(8)))));  -- fetch
-
-  -- i_vio <= not entry(9) when request="010" else    -- write
-  --          not entry(10) when request="100" else   -- read
-  --          not (entry(10) and entry(8));           -- fetch
 
   -- 物理アドレス
   P_ADDR_MEM(15 downto 8) <= entry(7 downto 0) when (i_act='1') else page;
@@ -200,38 +181,28 @@ begin
   process(P_CLK,P_RESET)
   begin
     if (P_RESET='0') then
-      P_BANK_MEM <= '1';                            -- デバッグ用に'1'
-      -- P_BANK_MEM <= '0';                            -- IPL ROM
-      i_en <= '0';
-      for I in TLB'range loop
-        TLB(I)<=(others => '0');
-      end loop;
-
+      P_BANK_MEM <= '0';                            -- IPL ROM
+      i_en <= '0';                                  -- MMU Enable
     elsif (P_CLK'event and P_CLK='1') then
-      if(P_EN='1' and P_IOW='1') then               -- 80h <= P_ADDR <=A9h
-        if(P_ADDR(5 downto 4)="10") then              -- A-h
+      if(P_EN='1' and P_IOW='1') then               -- IO[80h - A9h]
+        if(P_ADDR(5 downto 4)="10") then              -- Axh
           if(P_ADDR(3 downto 1)="000") then           -- A0h or A1h
             P_BANK_MEM <= P_DIN(0);
           elsif(P_ADDR(3 downto 1)="001") then        -- A2h or A3h
             i_en <= P_DIN(0);
-          elsif(P_ADDR(3 downto 1)="100") then        -- A8h or A9h
-            for I in TLB'range loop
-              TLB(I)<=(others => '0');
-            end loop;
           end if;
-        elsif(P_ADDR(1)='0') then                   -- 8-h or 9-h
+        elsif(P_ADDR(1)='0') then                     -- 8-h or 9-h(TLB entry)
           TLB(TO_INTEGER(unsigned(P_ADDR(4 downto 2))))(23 downto 16)
             <= P_DIN(7 downto 0);
         else
           TLB(TO_INTEGER(unsigned(P_ADDR(4 downto 2))))(15 downto 0)
             <= P_DIN;
         end if;
-
-      --ページヒット時のD,Rビットの書き換え
-      elsif(i_mis='0' and i_vio='0') then
-          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <=       -- D bit
-            entry(11) or i_rw;
-          TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= '1';  -- R bit
+      elsif(i_act='1' and
+            i_mis='0' and i_vio='0') then            -- TLB Hit
+        TLB(TO_INTEGER(unsigned(index(2 downto 0))))(11) <=       -- D bit
+          entry(11) or i_rw;
+        TLB(TO_INTEGER(unsigned(index(2 downto 0))))(12) <= '1';  -- R bit
       end if;
     end if;
   end process;
@@ -268,35 +239,5 @@ begin
             when (P_ADDR(1)='1' and P_ADDR(5)='1') else
 
             "00000000000000" & intr_cause;           --A4h 割り込み原因　下2桁
-
-
---relocation register
---begin
-  --process(P_RESET, P_CLK)
-  --begin
-    --if (P_RESET='0') then
-      --i_b <= "0000000000000000";
-      --i_l <= "0000000000000000";
-      --i_en <= '0';
-    --elsif (P_CLK'event and P_CLK='1') then
-      --if (P_EN='1' and P_IOW='1') then
-        --if (P_ADDR(2)='0') then
-          --i_en <= P_DIN(0);
-        --elsif (P_ADDR(1)='0') then
-          --i_b <= P_DIN;
-        --else
-          --i_l <= P_DIN;
-        --end if;
-      --end if;
-    --end if;
-  --end process;
-
-  --i_act <= (not P_PR) and (not P_STOP) and P_MR and i_en;
-  --i_vio <= '1' when (P_ADDR>=i_l and i_act='1') else '0';
-  --i_adr <= P_ADDR(0) and i_act and not P_BT;
-  --P_ADDR_MEM <= (P_ADDR + i_b) when (i_act='1') else P_ADDR;
-  --P_MR_MEM <= P_MR and (not i_vio);
-  --P_VIO_INT <= i_vio;
-  --P_ADR_INT <= i_adr;
 
 end Behavioral;

@@ -469,7 +469,7 @@ component TAC_MMU is
          P_BT_MEM   : out std_logic;                     -- byte access
          P_BANK_MEM : out std_logic;                     -- ipl bank
          P_DOUT_MEM : out std_logic_vector(15 downto 0); -- to memory
-         P_DIN_MEM  : in  std_logic_vector(15 downto 0)  -- form memory
+         P_DIN_MEM  : in  std_logic_vector(15 downto 0)  -- from memory
        );
 end component;
 
