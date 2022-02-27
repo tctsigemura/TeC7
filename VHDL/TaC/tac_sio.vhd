@@ -135,7 +135,7 @@ begin
             end if;
         end if;
      end process;
- 
+
      process (P_CLK, P_RESET)
      begin
          if (P_RESET='0') then
@@ -179,7 +179,7 @@ begin
          elsif (P_CLK'event and P_CLK='1') then
              I_RxD1   <= P_RxD;
              I_RxD2   <= I_RxD1;
-             
+
              if (Rx_Cnt1="0101000000000" and Rx_Cnt2="1001") then
                  Rx_Full <= '1';
              elsif (IOR_SIO_Dat='1') then

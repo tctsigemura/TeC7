@@ -2,7 +2,7 @@
 ; TaC IPL Source Code
 ;    Tokuyama kousen Educational Computer 16 bit Version
 ;
-; Copyright (C) 2009-2019 by
+; Copyright (C) 2009-2022 by
 ;                      Dept. of Computer Science and Electronic Engineering,
 ;                      Tokuyama College of Technology, JAPAN
 ;
@@ -19,6 +19,7 @@
 ;
 ; crt0.s : IPL(ROM版)のアセンブラ部分
 ;
+; 2022.02.25         : 32bit演算ルーチンを TaC-CPU V3 対応
 ; 2019.02.28         : wait1m を追加
 ; 2012.09.28         : '%' の使用を止める。(インデクスドを自動的にas--が変換)
 ; 2012.09.27         : as-- のバグ修正に伴い '%', '@' の使用間違えを訂正
@@ -114,23 +115,53 @@ _add32				; int[] add32(int[] dst, int[] src)
 
 ;; 32ビットかけ算ルーチン
 _mul32                          ; int[] _mul32(int[] dst, int src)
-        ld      g2,2,sp         ; ディスティネーション(アドレス)
-        ld      g0,2,g2         ; ディスティネーション下位ワード
-        mull    g0,4,sp         ; ソース
-        st      g1,0,g2         ; ディスティネーション上位ワード
-        st      g0,2,g2         ; ディスティネーション下位ワード
-        ld      g0,g2           ; ディスティネーションを返す
+        push    g3
+        ld      g0,4,sp     ; ディスティネーション(アドレス)
+        ld      g1,2,g0     ; ディスティネーション下位ワード(B)
+        ld      g2,#0       ; (g1,g2) <= (B,0)
+        ld      g3,#16      ; カウンタ
+.A1     ld      g0,#0       ; g0をとりあえず0にする
+        shll    g1,#1       ; g1 <<= 1
+        jnc     .A2         ; g1の最上位が1だったなら
+        ld      g0,6,sp     ;  g0にソースをロード
+.A2     shll    g2,#1       ; g2 <<= 1
+        jnc     .A3         ; キャリーがあったら
+        add     g1,#1       ;  g1 += 1
+.A3     add     g2,g0       ; g2 += g0
+        jnc     .A4         ; キャリーがあったら
+        add     g1,#1       ;  g1 += 1
+.A4     sub     g3,#1       ; 16回繰り返したか
+        jnz     .A1
+        ld      g0,4,sp     ; ディスティネーション(アドレス)
+        st      g1,0,g0     ; ディスティネーション上位ワード
+        st      g2,2,g0     ; ディスティネーション下位ワード
+        pop     g3
         ret
 
 ;; 32ビット割算ルーチン
 _div32                          ; int[] _div32(int[] dst, int src)
-        ld      g2,2,sp         ; ディスティネーション(アドレス)
-        ld      g0,2,g2         ; ディスティネーション下位ワード
-        ld      g1,0,g2         ; ディスティネーション上位ワード
-        divl    g0,4,sp         ; ソース
-        st      g1,2,g2         ; ディスティネーション下位ワード(余)
-        st      g0,0,g2         ; ディスティネーション上位ワード(商)
-        ld      g0,g2           ; ディスティネーションを返す
+        push    g3
+        ld      g0,4,sp     ; ディスティネーション(アドレス)
+        ld      g1,0,g0     ; ディスティネーション上位ワード
+        ld      g2,2,g0     ; ディスティネーション下位ワード
+        ld      g0,#17      ; (g1,g2)は被除数, g0はカウンタ
+        ld      g3,#0       ; g3は商
+.D1     cmp     g1,6,sp     ; 被除数から除数が引けるなら引く
+        jc      .D2         ;
+        sub     g1,6,sp     ;
+        add     g3,#1       ; 引いた時は商の最下位ビットを1にする
+.D2     sub     g0,#1       ; 17回繰り返したなら
+        jz      .D4         ;  終了
+        shll    g1,#1       ; 被除数を左にシフト
+        shll    g2,#1       ;
+        jnc     .D3         ;
+        add     g1,#1       ;
+.D3     shll    g3,#1       ; 商を左にシフト
+        jmp     .D1
+.D4     ld      g0,4,sp     ; ディスティネーション(アドレス)
+        st      g1,0,g0     ; 余りを上位ワードに格納
+        st      g3,2,g0     ; 商を下位ワードに格納
+        pop     g3
         ret
 
 ;;  1us 待つ

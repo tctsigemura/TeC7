@@ -2,7 +2,7 @@
 # TaC IPL Source Code
 #    Tokuyama kousen Educational Computer 16 bit Version
 #
-# Copyright (C) 2009-2020 by
+# Copyright (C) 2009-2022 by
 #                      Dept. of Computer Science and Electronic Engineering,
 #                      Tokuyama College of Technology, JAPAN
 #
@@ -19,6 +19,7 @@
 #
 # Makefile : IPL の makefile
 #
+# 2022.02.25           : .s ファイルを作ることも可能なMakefile
 # 2020.12.21 v4.4.3    : バージョンの表示を改良
 # 2019.08.29           : IPL0とIPL1を統合
 # 2019.02.28           : IPLをIPL0とIPL1に分離
@@ -56,6 +57,9 @@ UTILDIR=../../Util
 
 .s.o:
 	as-- $*.s
+
+.cmm.s:
+	cm2e -S ${CMFLAGS} $*.cmm
 
 .cmm.o:
 	cm2e ${CMFLAGS} $*.cmm

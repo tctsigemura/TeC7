@@ -77,7 +77,7 @@ architecture RTL of MODE is
               P_JP <= "0Z";                        -- output to jumper
             end if;
           elsif (i_fsm=TEMP) then                  -- DEMO mode candidate state
-            if (P_JP="01") then   
+            if (P_JP="01") then
               i_fsm <= DEMO1;                      --   DEMO mode 1
             else
               i_fsm <= DEMO2;                      --   DEMO mode 2

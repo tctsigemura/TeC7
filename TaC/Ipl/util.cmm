@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2019 by
+ * Copyright (C) 2009-2022 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,7 @@
 /*
  * util.cmm : TaC IPL 便利ルーチン
  *
+ * 2022.01.18             : TaC-CPU V3 対応(sjumpの機械語変更)
  * 2019.03.01             : IPLのバンク切り替えsjump()追加
  * 2019.02.28             : メッセージ検知FSM追加
  * 2017.05.11 v.4.0.0     : 新規作成
@@ -84,17 +85,18 @@ public void puthex(int x) {
 
 // バンクを切り替えてジャンプする
 /*
-0000 0b02       _swjp ld     g0,4,fp            ; arg1 (bank no)
-0002 b800 00f0        out    g0,0xf0            ; ipl bank register
-0006 0b03             ld     g0,6,fp            ; arg2 (jmp addr)
-0008 a6f0             jmp    0,g0
+0000 0b02       _swjp   ld      g0,4,fp         ; arg1 (bank no)
+0002 b800 00a0          out     g0,0xa0         ; ipl bank register
+0006 0b03               ld      g0,6,fp         ; arg2 (jmp addr)
+0008 a1f0 0000          jmp     0,g0
 */
-int[] swjp={ 0x0b02, 0xb800, 0x00f0, 0x0b03, 0xa6f0 };  // 上の機械語
+int[] swjp={ 0x0b02, 0xb800, 0x00a0, 
+             0x0b03, 0xa1f0, 0x0000 };        // 上の機械語
 int[] mem;
 
 public void sjump(int bank, int addr) {
   mem = _ItoA(HEAP);                          // 0xd000
-  for (int i=0; i<5; i=i+1) {                 // 上記の機械語をバンクの影響を
+  for (int i=0; i<6; i=i+1) {                 // 上記の機械語をバンクの影響を
     mem[i] = swjp[i];                         //   受けないアドレスにコピーする
   }
   jump(HEAP);                                 // そしてジャンプ

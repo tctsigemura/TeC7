@@ -55,9 +55,9 @@ entity TAC_PANEL is
          P_RW       : in  std_logic;                     -- read/write
          P_IR       : in  std_logic;                     -- i/o req.
          P_MR       : in  std_logic;                     -- memory req.
-         P_LI       : in  std_logic;                     -- load instruction
          P_HL       : in  std_logic;                     -- halt instruction
-         P_CON      : in  std_logic_vector(2 downto 0);  -- Console access
+         P_IDLE     : in  std_logic;                     -- idle state
+         P_CON      : in  std_logic_vector(1 downto 0);  -- Console access
          P_STOP     : out std_logic;                     -- stop the cpu
          P_RESET    : out std_logic;                     -- reset [OUTPUT]
 
@@ -148,7 +148,7 @@ begin  -- RTL
       p32ms <= Cnt(4) and not Cnt4D;              -- 32ms 周期のパルス
     end if;
   end process;
-    
+
   -- 押しボタン９個分の Debounce 回路
   process(P_CLK, P_RESET_IN)
   begin
@@ -309,12 +309,12 @@ begin  -- RTL
         WriteFF <= '1';
       elsif (P_AIN(7 downto 1)="1111111" and P_IR='1' and P_RW='0') then
         WriteFF <= '0';                     -- 実行中に i/o read FEH でクリア
-      elsif (P_CON="100") then
+      elsif (P_CON="01") then
         WriteFF <= '0';                     -- 停止中にIRに渡したらクリア
       end if;
     end if;
   end process;
-  
+
   -- FncReg decoder (F_DEC)
   FncReg(3 downto 0) <=
     "0000" when (Pos(4)='0' and WriteFF='0') else                -- Reg Read
@@ -347,9 +347,10 @@ begin  -- RTL
     elsif (P_CLK'event and P_CLK='1') then
       if (BtnDbnc(4)='1' or                             -- Btn4(STOP)
           P_HL='1' or                                   -- halt instruction
-          (P_STEP_SW='1' and P_MR='1') or               -- step
-          (P_BREAK_SW='1' and P_MR='1' and              -- break
-           P_AIN(15 downto 1)=AdrReg(15 downto 1))) then
+          (P_MR='1' and P_IDLE='0'  and                 -- step/break
+           (P_STEP_SW='1' or
+            (P_BREAK_SW='1' and
+             P_AIN(15 downto 1)=AdrReg(15 downto 1))))) then
         Run <= '0';
       elsif (BtnDbnc(5)='1') then                       -- Btn5(RUN)
         Run <= '1';
@@ -371,8 +372,8 @@ begin  -- RTL
       DatReg <= "0000000000000000";
     elsif (P_CLK'event and P_CLK='1') then
       if ((P_AIN(7 downto 0)="11111000" and P_IR='1' and P_RW='1') -- 実行中
-          or (P_CON="110" and (Pos<="01101" or Pos="01111"))       -- GR[Pos]
-          or (P_CON="111" and Pos="01110"))  then                  -- PC
+          or (P_CON="10" and (Pos<="01101" or Pos="01111"))        -- GR[Pos]
+          or (P_CON="11" and Pos="01110"))  then                   -- PC
         DatReg <= P_DIN;
       end if;
     end if;
@@ -384,17 +385,17 @@ begin  -- RTL
 
   P_DOUT <=
     ("000010" & (WriteFF and not Pos(4)) & i_cpu_pos & "0000")
-                                         when (P_CON="100")            else
+                                         when (P_CON="01")             else
     (P_DIN(7 downto 0) & P_DATA_SW)      when (P_CON(1)='1')           else
     ("000000000000" & FncReg         )   when (P_AIN(2 downto 1)="11") else
     ("000000000000" & Pos(3 downto 0))   when (P_AIN(2 downto 1)="10") else
     ( AdrReg(15 downto 1) & '0'      )   when (P_AIN(2 downto 1)="01") else
-    ("00000000" & P_DATA_SW          );    -- (P_AIN(2 downto 1)="00") 
-  
+    ("00000000" & P_DATA_SW          );    -- (P_AIN(2 downto 1)="00")
+
   -- DMA
   P_AOUT_DMA <= AdrReg(15 downto 1);
   P_DOUT_DMA <= P_DIN_DMA(7 downto 0) & P_DATA_SW;
-  P_RW_DMA   <= '1' when P_CON="100" and Pos(4)='1' and WriteFF='1' else '0';
+  P_RW_DMA   <= '1' when P_CON="01" and Pos(4)='1' and WriteFF='1' else '0';
 
 end RTL;
 

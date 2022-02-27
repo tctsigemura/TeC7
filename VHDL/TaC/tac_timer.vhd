@@ -62,7 +62,7 @@ begin
   P_INT <= I_INT_TMR_P and TMR_Int_Ena;
   P_DOUT <= TMR_CNT when (P_ADDR='0') else
             TMR_Int & "000000000000000";
-            
+
   process (P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -83,7 +83,7 @@ begin
         end if;
       end if;
 
-      -- 
+      --
       if (I_INT_TMR_P='1') then
         TMR_Int <= '1';
       elsif (P_EN='1' and P_IOR='1') then

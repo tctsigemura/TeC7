@@ -142,7 +142,7 @@ begin
     threshold => 7)
     port map (P_CLK, P_RESET, i_rx_fll, i_rx_wrt, i_rx_sft,
               i_rx_emp, i_rx_red, i_rx_dat);
-  
+
   -- Address decoder
   i_en_cmd <= '1' when (P_ADDR="10" and P_EN='1') else '0';
   i_iow_cmd <= P_IOW and i_en_cmd;
@@ -155,11 +155,11 @@ begin
   i_en_ctl <= '1' when (P_ADDR="01" and P_EN='1') else '0';
   i_iow_ctl <= P_IOW and i_en_ctl;
   i_ior_sta <= P_IOR and i_en_ctl;
-  
+
   i_en_ram <= '1' when (P_ADDR="11" and P_EN='1') else '0';
   i_iow_ram <= P_IOW and i_en_ram;
 --i_ior_ram <= P_IOR and i_en_ram;
-  
+
   -- Data Bus
   P_DOUT <= ("0000" & i_cmd) when i_ior_cmd='1' else
             i_rx_dat when i_ior_dat='1' else
@@ -171,7 +171,7 @@ begin
   P_HW  <= i_cmd(2);
   i_cts <= (not i_cmd(3)) or P_CTS;     -- ハードウェアフロー制御OFFなら常時ON
   P_RTS <= (not i_cmd(3)) or i_rts;     -- ハードウェアフロー制御OFFなら常時ON
-    
+
   process (P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -196,8 +196,8 @@ begin
       end if;
     end if;
   end process;
-    
-  -- Debounce 
+
+  -- Debounce
   process (P_CLK, P_RESET)
   begin
     if (P_CLK'event and P_CLK='1') then
@@ -210,7 +210,7 @@ begin
   -- Tx
   P_TXD <= i_tx_out or (not i_tx_ena);
   P_INT_TxD <= (not i_tx_fll) and i_tx_ei;
-  
+
   process (P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -225,7 +225,7 @@ begin
       end if;
     end if;
   end process;
- 
+
   process (P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -272,7 +272,7 @@ begin
     elsif (P_CLK'event and P_CLK='1') then
       if (i_ior_dat='1') then
         i_rx_red <= '1';
-      else 
+      else
         i_rx_red <= '0';
       end if;
     end if;
@@ -320,5 +320,5 @@ begin
       end if;
     end if;
   end process;
-  
+
 end RTL;

@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011 - 2019 by
+-- Copyright (C) 2011 - 2021 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 
 --
+-- 2021.12.31 : バンクの切換えFFをMMUに移動
 -- 2019.08.28 : IPLを4KiB*2構成から8KiB*1構成に変更
 -- 2019.07.30 : Mem1k のアドレス範囲，アドレスビット数のバグ訂正
 -- 2019.02.28 : IPLを3バンク化
@@ -40,16 +41,14 @@ use ieee.std_logic_textio.all;
 entity TAC_RAM is
   port (
     P_CLK    : in  std_logic;
-    P_RESET  : in  std_logic;
-    P_IOE    : in  std_logic;                          -- I/O Enable
-    P_IOW    : in  std_logic;                          -- I/O Write
-    -- for CPU
+    -- for MMU
     P_AIN1   : in  std_logic_vector(15 downto 0);      -- Byte Addressing
     P_DIN1   : in  std_logic_vector(15 downto 0);
     P_DOUT1  : out std_logic_vector(15 downto 0);
     P_RW1    : in  std_logic;
     P_MR1    : in  std_logic;
     P_BT     : in  std_logic;
+    P_BANK   : in  std_logic;
     -- for DMA
     P_AIN2   : in  std_logic_vector(14 downto 0);      -- Word Addressing
     P_DIN2   : in  std_logic_vector(15 downto 0);
@@ -89,7 +88,7 @@ architecture BEHAVE of TAC_RAM is
   shared variable memB1L : Mem8kB;                             -- odd  address
   signal memB1     : std_logic_vector(15 downto 0);
   signal memB1_dma : std_logic_vector(15 downto 0);
-  
+
   -- Bank2(C000H-DFFFH)
   shared variable memB2H : Mem4kB;                             -- even address
   shared variable memB2L : Mem4kB;                             -- odd  address
@@ -102,13 +101,10 @@ architecture BEHAVE of TAC_RAM is
   signal memB3     : std_logic_vector(15 downto 0);
   signal memB3_dma : std_logic_vector(15 downto 0);
 
-  -- IPL bank register
-  signal iplBank   : std_logic;                                -- 0:IPL, 1:RAM
-
   -- BankIPL(E000H-FFFFH)
   shared variable memBIHL : Mem4kw := read_file("tac_ram.txt");
   signal memBI     : std_logic_vector(15 downto 0);
-  
+
   -- CPU
   signal csB0   : std_logic;                          -- CS Bank0
   signal csB1   : std_logic;                          -- CS Bank1
@@ -119,7 +115,7 @@ architecture BEHAVE of TAC_RAM is
   signal weB1   : std_logic;                          -- WE Bank1
   signal weB2   : std_logic;                          -- WE Bank2
   signal weB3   : std_logic;                          -- WE Bank3
-    
+
   signal high   : std_logic;                          -- High Byte
   signal low    : std_logic;                          -- Low  Byte
 
@@ -133,21 +129,8 @@ architecture BEHAVE of TAC_RAM is
   signal weB1_dma   : std_logic;                      -- WE Bank1
   signal weB2_dma   : std_logic;                      -- WE Bank2
   signal weB3_dma   : std_logic;                      -- WE Bank3
-  
-  begin
-    -- IPL bank register
-    process(P_RESET, P_CLK)
-    begin
-      if (P_RESET='0') then
---        iplBank <= '0';                               -- IPL0
-        iplBank <= '1';                               -- ！！デバッグ用！！
-      elsif (P_CLK'event and P_CLK='1') then
-        if (P_IOE='1' and P_IOW='1') then
-          iplBank <= P_DIN1(0);
-        end if;
-      end if;
-    end process;
 
+  begin
     -- bank select
     csB0 <= (not P_AIN1(15));                         -- 0000H - 7FFFH
     csB1 <=  P_AIN1(15) and (not P_AIN1(14));         -- 8000H - BFFFH
@@ -160,10 +143,10 @@ architecture BEHAVE of TAC_RAM is
     P_DOUT1 <= memB0 when (csB0='1')                 -- 0000H - 7FFFH
           else memB1 when (csB1='1')                 -- 8000H - BFFFH
           else memB2 when (csB2='1')                 -- C000H - DFFFH
-          else memBI when (csB3='1' and iplBank='0') -- E000H - FFFFH(ROM)
+          else memBI when (csB3='1' and P_BANK='0')  -- E000H - FFFFH(ROM)
           else memB3 when (csB3='1')                 -- E000H - FFFFH(RAM)
           else "0000000000000000";
- 
+
     -- write control
     weB0  <= csB0 and P_MR1 and P_RW1;
     weB1  <= csB1 and P_MR1 and P_RW1;
