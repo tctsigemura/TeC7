@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2021 by
+-- Copyright (C) 2002-2022 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -19,6 +19,8 @@
 --
 -- tec7.vhd : TeC7 Top Level
 --
+-- 2022.02.27 : RESETモードではコンソールを無効にする
+--              （組立て途中でのファーム書込みとRN4020の初期化を可能にする）
 -- 2021.11.20 : 90度遅れの49.152MHzを廃止
 -- 2019.07.26 : IBUFG の警告を消す
 -- 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
@@ -338,7 +340,8 @@ begin
   i_in(2) <= RIGHT_SW when i_tec_ena='0' else i_tec_ctl(0);
   i_in(1) <= LEFT_SW when i_tec_ena='0' else i_tec_ctl(1);
 
-  i_in_tec <= "000000000000000000000000000" when i_mode="001" else i_in;
+  i_in_tec <= "000000000000000000000000000"
+               when (i_mode="001") or (i_mode="111") else i_in;
   i_in_tac <= i_in when i_mode="001" else "000000000000000000000000000";
 
   -- OUTPUT
