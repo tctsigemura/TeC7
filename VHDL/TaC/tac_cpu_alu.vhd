@@ -150,9 +150,9 @@ begin
     -- フラグ
     P_OVERFLOW <=
       not (P_A(15) xor P_B(15)) and (I_OUT(15) xor P_A(15))
-        when P_OP1="00011" else
+        when P_OP1="00011" else                              -- ADD
       (P_A(15) xor P_B(15)) and (I_OUT(15) xor P_A(15))
-        when P_OP1="00100" else
+        when P_OP1="00100" or P_OP1="00101" else             -- SUB, CMP
       '0';
     P_CARRY <= I_OUT(16);
     P_ZERO <= '1' when I_OUT(15 downto 0) = (15 downto 0 => '0') else '0';
