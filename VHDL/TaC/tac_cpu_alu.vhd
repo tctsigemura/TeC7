@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2021 by
+-- Copyright (C) 2002-2022 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -84,8 +84,7 @@ begin
 
     I_DIVMOD <= '1' when P_OP1="01011" or P_OP1="01100" else '0';
 
-    I_OUT <= '0' & P_B                 when P_OP1="00001"            -- LD
-        else ('0' & P_A) + P_B         when P_OP1="00011"            -- ADD
+    I_OUT <= ('0' & P_A) + P_B         when P_OP1="00011"            -- ADD
         else ('0' & P_A) - P_B         when P_OP1(4 downto 1)="0010" -- SUB,CMP
         else '0' & (P_A and P_B)       when P_OP1="00110"            -- AND
         else '0' & (P_A or P_B)        when P_OP1="00111"            -- OR
@@ -98,9 +97,7 @@ begin
         -- シフト命令では CARRY は 1 ビットシフトの時だけ正しい値になる
         else P_A(15) & I_SHL           when P_OP1(4 downto 1)="1000" -- SHL?
         else P_A(0)  & I_SHR           when P_OP1(4 downto 1)="1001" -- SHR?
-        else '0' & P_B                 when P_OP1="10110" or         -- IN
-                                             P_OP1="11000"           -- PUSH
-        else (others => '0');
+        else '0' & P_B;                                 -- LD, IN, POP, RETI
 
     -- 左シフト
     I_S1   <= P_A(14 downto  0) & "0"        when P_B(0)='1' else P_A;
