@@ -159,6 +159,7 @@ signal I_FLAG: Word;              -- FLAG
 signal I_FLAG_E   : std_logic;    -- Interrupt Enable
 signal I_FLAG_P   : std_logic;    -- Privilege
 signal I_FLAG_I   : std_logic;    -- IO Privilege
+signal I_FLAG_U   : std_logic;    -- User defined
 signal I_FLAG_V   : std_logic;    -- Over Flow
 signal I_FLAG_C   : std_logic;    -- Carry
 signal I_FLAG_S   : std_logic;    -- Sign
@@ -330,7 +331,7 @@ begin
   I_SP <= I_REG_SSP when I_FLAG_P='1' else I_REG_USP;
 
   -- FLAGを16bitにまとめる
-  I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & '0'
+  I_FLAG <= "00000000" & I_FLAG_E & I_FLAG_P & I_FLAG_I & I_FLAG_U
                        & I_FLAG_V & I_FLAG_C & I_FLAG_S & I_FLAG_Z;
 
   -- GR[Rd]
@@ -462,6 +463,7 @@ begin
       I_FLAG_E <= '0';
       I_FLAG_P <= '1';
       I_FLAG_I <= '0';
+      I_FLAG_U <= '0';
       I_FLAG_V <= '0';
       I_FLAG_C <= '0';
       I_FLAG_S <= '0';
@@ -476,6 +478,7 @@ begin
           I_FLAG_P <= I_ALU_OUT(6);
           I_FLAG_I <= I_ALU_OUT(5);
         end if;
+        I_FLAG_U <= I_ALU_OUT(4);
         I_FLAG_V <= I_ALU_OUT(3);
         I_FLAG_C <= I_ALU_OUT(2);
         I_FLAG_S <= I_ALU_OUT(1);
