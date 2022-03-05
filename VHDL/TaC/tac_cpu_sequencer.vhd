@@ -223,7 +223,7 @@ begin
                               P_OP1(4 downto 1)="1011")) or         --   IN/OUT
                             I_STATE=S_ALU1 or I_STATE=S_ST1 else
                  "110" when I_STATE=S_INTR3 or I_STATE=S_INTR4 or   -- PC<-Din
-                            I_STATE=S_RETI2 or I_STATE=S_RET or
+                            I_STATE=S_RETI1 or I_STATE=S_RET or
                             (I_STATE=S_CON3 and P_OP2(1 downto 0)="11") else
                  "111" when (I_STATE=S_DEC2 and                     -- PC<-EA
                              P_OP1="10100" and I_JMP_GO='1') or     --   JMP
@@ -242,7 +242,7 @@ begin
   P_LOAD_DR <= '1' when I_NEXT=S_DEC1 or
                         (I_STATE=S_DEC1 and P_OP2/="101") or       -- Imm4 以外
                         (I_STATE=S_DEC2 and P_OP1/="10101") or     -- CALL 以外
-                        I_STATE=S_RETI1 or
+                        I_STATE=S_RETI2 or
                         I_STATE=S_CON2  else '0';
 
   -- ADD, SUB, ..., SHRL ではフラグが変化する
