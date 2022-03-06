@@ -24,5 +24,8 @@ L2	in	g3,0xf8		; g3<=DSW
 	and	g3,#0x0002	; g3[1]==0 ?
 	jz	L2
 
+	ld	g2,#'A'		; g2<=0041
+	ld	g1,#0x0009	; g1<=0009
+	out	g2,@g1		; SIO-DATA<='A'
 	halt
 
