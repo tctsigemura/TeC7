@@ -25,22 +25,19 @@
 # $Id$
 #
 
-kernel.bin : crt0.o kernel.o util.o console.o
-	ld-- kernel crt0.o kernel.o util.o console.o > kernel.sym
+#SIO=RN4020
+SIO=FT232RL
+
+kernel.bin : crt0.o kernel.o
+	ld-- kernel crt0.o kernel.o > kernel.sym
 	objbin-- 0x0000 kernel.bin kernel > kernel.map
 
 crt0.o : crt0.s
 	as-- crt0.s
 
-kernel.o : kernel.cmm util.hmm
-	cm2e -K -c kernel.cmm
-
-util.o : util.cmm util.hmm
-	cm2e -K -c util.cmm
-
-console.o : console.cmm console.hmm
-	cm2e -K -c console.cmm
+kernel.o : kernel.cmm crt0.hmm
+	cm2e -D${SIO} -K -c kernel.cmm
 
 clean :
-	rm -f kernel.bin kernel *.o kernel.s util.s *.lst *.sym *.map *~
+	rm -f kernel.bin kernel *.o kernel.s *.lst *.sym *.map *~
 
