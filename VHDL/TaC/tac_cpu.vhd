@@ -277,7 +277,8 @@ begin
   P_IR   <= I_IR;
   P_RW   <= I_RW;
   P_PR   <= I_FLAG_P;
-  P_BT   <= '1' when I_INST_OP2="111" else '0';
+  P_BT   <= '1' when I_MR='1' and I_LOAD_IR='0' and
+                     I_INST_OP2="111" else '0';
   P_LI   <= I_LOAD_IR;
   P_EI   <= I_FLAG_E;
   P_IDLE <= I_ALU_BUSY or P_WAIT;
