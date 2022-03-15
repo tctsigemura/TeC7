@@ -312,7 +312,7 @@ begin
                "00000000" & P_DIN(15 downto 8)          when others;
 
   --- MUX B
-  process(I_INST_OP1(4 downto 3), I_INST_OP2)
+  process(I_INST_OP1(4 downto 3), I_INST_OP2, I_RX, I_REG_DR)
   begin
     if (I_INST_OP1(4 downto 3)/="11" and I_INST_OP2="100") then
       I_ALU_B <= I_RX;
