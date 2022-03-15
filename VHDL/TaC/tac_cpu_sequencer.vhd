@@ -262,6 +262,7 @@ begin
                 "001" when I_STATE=S_DEC1 and                      -- PC+2
                            (I_NEXT=S_DEC2 or I_NEXT=S_ALU1) else
                 "100" when I_NEXT=S_POP or I_NEXT=S_RET or         -- SP
+                           I_NEXT=S_RETI1 or
                            I_STATE=S_RET or I_STATE=S_RETI2 else
                 "101" when I_STATE=S_RETI1 else                    -- SP+2
                 "110" when I_STATE=S_INTR1 or I_STATE=S_INTR2 or   -- SP-2

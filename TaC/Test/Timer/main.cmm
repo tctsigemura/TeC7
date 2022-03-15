@@ -84,7 +84,12 @@ interrupt int7() { intNum = 107; }
 interrupt int8() { intNum = 108; }
 interrupt int9() { intNum = 109; }
 interrupt intA() { intNum = 110; }
-interrupt intB() { intNum = 111; }
+interrupt intB() { intNum = 111;
+                   putstr("\nadr=");
+                   puthex(in(0x00a2));
+                   putstr("\nres=");
+                   puthex(in(0x00a4));
+                   halt();}
 interrupt intC() { intNum = 112; }
 interrupt intD() { intNum = 113; }
 interrupt intE() { intNum = 114; }
@@ -114,12 +119,13 @@ public void main() {
   out(0x0004,    300);                   // タイマー1,周期 300ms
   out(0x0006, 0x8001);                   // タイマー1,スタート
   out(0x000a, 0x0040);                   // sio受信割込み許可
-  setPri(0x00c0);                        // 割込み許可
 
   putstr("Int test start\n");
 
   for(;;) {
+    setPri(0x00c0);                      // 割込み許可
     wait(100);                           // 100ms に一度
+    setPri(0x0040);                      // 割込み禁止
     putch('.');
     if (intNum != 100) {
       puthex(intNum-100);
