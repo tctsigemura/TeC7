@@ -104,8 +104,12 @@ interrupt intB() { intFlgB = true;
                    puthex(in(0x00a2));
                    putstr("\nres=");
                    puthex(in(0x00a4));
-                   halt();}
-interrupt intC() { intFlgC = true; }
+                   halt();
+                 }
+interrupt intC() { intFlgC = true;
+                   putstr("\ndivZero\n");
+                   halt();
+                 }
 interrupt intD() { intFlgD = true; }
 interrupt intE() { intFlgE = true; }
 interrupt intF() { intFlgF = true; }
@@ -160,7 +164,12 @@ public void main() {
     } else if (intFlg5) {
       intFlg5 = false;
       putstr("-5-");
-      putch(chr(in(0x008)));
+      char c = chr(in(0x0008));
+      int zero = 0;
+      if (c=='z') {
+        puthex(ord(c)/zero);
+      }
+      putch(c);
     } else if (intFlg6) {
       intFlg6 = false;
       putstr("-6-");
