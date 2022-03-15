@@ -71,29 +71,44 @@ void wait(int n) {
 }
 
 // ここからスタート
-int intNum = 100;
+boolean intFlg0;
+boolean intFlg1;
+boolean intFlg2;
+boolean intFlg3;
+boolean intFlg4;
+boolean intFlg5;
+boolean intFlg6;
+boolean intFlg7;
+boolean intFlg8;
+boolean intFlg9;
+boolean intFlgA;
+boolean intFlgB;
+boolean intFlgC;
+boolean intFlgD;
+boolean intFlgE;
+boolean intFlgF;
 
-interrupt int0() { intNum = 100; }
-interrupt int1() { intNum = 101; }
-interrupt int2() { intNum = 102; }
-interrupt int3() { intNum = 103; }
-interrupt int4() { intNum = 104; }
-interrupt int5() { intNum = 105; }
-interrupt int6() { intNum = 106; }
-interrupt int7() { intNum = 107; }
-interrupt int8() { intNum = 108; }
-interrupt int9() { intNum = 109; }
-interrupt intA() { intNum = 110; }
-interrupt intB() { intNum = 111;
+interrupt int0() { intFlg0 = true; }
+interrupt int1() { intFlg1 = true; }
+interrupt int2() { intFlg2 = true; }
+interrupt int3() { intFlg3 = true; }
+interrupt int4() { intFlg4 = true; }
+interrupt int5() { intFlg5 = true; }
+interrupt int6() { intFlg6 = true; }
+interrupt int7() { intFlg7 = true; }
+interrupt int8() { intFlg8 = true; }
+interrupt int9() { intFlg9 = true; }
+interrupt intA() { intFlgA = true; }
+interrupt intB() { intFlgB = true;
                    putstr("\nadr=");
                    puthex(in(0x00a2));
                    putstr("\nres=");
                    puthex(in(0x00a4));
                    halt();}
-interrupt intC() { intNum = 112; }
-interrupt intD() { intNum = 113; }
-interrupt intE() { intNum = 114; }
-interrupt intF() { intNum = 115; }
+interrupt intC() { intFlgC = true; }
+interrupt intD() { intFlgD = true; }
+interrupt intE() { intFlgE = true; }
+interrupt intF() { intFlgF = true; }
 
 public void main() {
   int[] Vector = _ItoA(0xffe0);
@@ -127,12 +142,55 @@ public void main() {
     wait(100);                           // 100ms に一度
     setPri(0x0040);                      // 割込み禁止
     putch('.');
-    if (intNum != 100) {
-      puthex(intNum-100);
-      if (intNum == 105) {               // SIO 受信
-        putch(chr(in(0x008)));
-      }
-      intNum = 100;
+    if (intFlg0) {
+      intFlg0 = false;
+      putstr("-0-");
+    } else if (intFlg1) {
+      intFlg1 = false;
+      putstr("-1-");
+    } else if (intFlg2) {
+      intFlg2 = false;
+      putstr("-2-");
+    } else if (intFlg3) {
+      intFlg3 = false;
+      putstr("-3-");
+    } else if (intFlg4) {
+      intFlg4 = false;
+      putstr("-4-");
+    } else if (intFlg5) {
+      intFlg5 = false;
+      putstr("-5-");
+      putch(chr(in(0x008)));
+    } else if (intFlg6) {
+      intFlg6 = false;
+      putstr("-6-");
+    } else if (intFlg7) {
+      intFlg7 = false;
+      putstr("-7-");
+    } else if (intFlg8) {
+      intFlg8 = false;
+      putstr("-8-");
+    } else if (intFlg9) {
+      intFlg9 = false;
+      putstr("-9-");
+    } else if (intFlgA) {
+      intFlgA = false;
+      putstr("-A-");
+    } else if (intFlgB) {
+      intFlgB = false;
+      putstr("-B-");
+    } else if (intFlgC) {
+      intFlgC = false;
+      putstr("-C-");
+    } else if (intFlgD) {
+      intFlgD = false;
+      putstr("-D-");
+    } else if (intFlgE) {
+      intFlgE = false;
+      putstr("-E-");
+    } else if (intFlgF) {
+      intFlgF = false;
+      putstr("-F-");
     }
   }
 }
