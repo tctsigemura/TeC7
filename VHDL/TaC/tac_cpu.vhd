@@ -155,7 +155,7 @@ signal I_REG_USP : Word;  -- USP
 signal I_REG_PC  : Word;  -- PC
 
 -- フラグ
-signal I_FLAG: Word;              -- FLAG
+signal I_FLAG     : Word;         -- FLAG
 signal I_FLAG_E   : std_logic;    -- Interrupt Enable
 signal I_FLAG_P   : std_logic;    -- Privilege
 signal I_FLAG_I   : std_logic;    -- IO Privilege
@@ -166,8 +166,8 @@ signal I_FLAG_S   : std_logic;    -- Sign
 signal I_FLAG_Z   : std_logic;    -- Zero
 
 -- 内部レジスタ
-signal I_REG_DR  : Word;                              -- DR
-signal I_REG_TMP : Word;                              -- TMP
+signal I_REG_DR      : Word;                          -- DR
+signal I_REG_TMP     : std_logic_vector(7 downto 0);  -- TMP
 signal I_INST_OP1    : std_logic_vector(4 downto 0);  -- 命令の OP1
 signal I_INST_OP2    : std_logic_vector(2 downto 0);  -- 命令の OP2
 signal I_INST_RD     : std_logic_vector(3 downto 0);  -- 命令の Rd
@@ -302,7 +302,7 @@ begin
               I_RD                            when "100",
               I_RD(7 downto 0) & "00000000"   when "101",
               I_FLAG                          when "110",
-              I_REG_TMP                       when others;
+              "00000000" & I_REG_TMP          when others;
 
   --- MUX W
   with I_SELECT_W select
@@ -514,7 +514,7 @@ begin
       I_REG_TMP <= (others => '0');
     elsif (P_CLK'event and P_CLK='1') then
       if (I_LOAD_TMP='1') then
-        I_REG_TMP <= I_FLAG;
+        I_REG_TMP <= I_FLAG(7 downto 0);
       end if;
     end if;
   end process;
