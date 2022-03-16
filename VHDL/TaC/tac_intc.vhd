@@ -56,7 +56,7 @@ signal intInpD : std_logic_vector(15 downto 0);
 
 -- signal
 signal intSnd  : std_logic_vector(15 downto  0);
-signal intMsk  : std_logic_vector(14 downto  0);
+signal intMsk  : std_logic_vector(15 downto  1);
 
 begin
 
@@ -68,7 +68,7 @@ begin
       intInpD <= (others => '0');
       intReg  <= (others => '0');
     elsif (P_CLK'event and P_CLK='1') then
-      intInp  <= P_INT_BIT;
+      intInp  <= P_INT_BIT(9 downto 0) & P_INT_BIT(15 downto 10);
       intInpD <= intInp;
       intReg  <= (intReg and not intSnd) or
                  (intInp and (intInpD xor intInp));
@@ -76,32 +76,30 @@ begin
   end process;
 
   -- select send signal
-  intMsk <= ('0' & intMsk(14 downto 1)) or intReg(15 downto 1);
-  intSnd <= intReg and (not ("0" & intMsk)) when (P_VR='1') else
+  intMsk <= (intMsk(14 downto 1) & '0') or intReg(14 downto 0);
+  intSnd <= intReg and (not (intMsk & '0')) when (P_VR='1') else
             (others => '0');
 
   -- to cpu
-  P_INTR  <= '1' when intMsk(9)='1' or                          -- exception
-                      ((intMsk(0) or intReg(0)) and P_EI)='1'   -- interrupt
-             else '0';
+  P_INTR  <= intMsk(6) or ((intMsk(15) or intReg(15)) and P_EI);
   P_DOUT(15 downto 5) <= "11111111111";
   P_DOUT(4 downto 1) <=
-            "1111" when (intReg(15) = '1') else  -- Int15(SVC)
-            "1110" when (intReg(14) = '1') else  -- Int14(InvInst)
-            "1101" when (intReg(13) = '1') else  -- Int13(PriVio)
-            "1100" when (intReg(12) = '1') else  -- Int12(ZeroDiv)
-            "1011" when (intReg(11) = '1') else  -- Int11(MemVio)
-            "1010" when (intReg(10) = '1') else  -- Int10(TlbMiss)
-            "1001" when (intReg( 9) = '1') else  -- Int9 (Timer0)
-            "1000" when (intReg( 8) = '1') else  -- Int8 (Timer1)
-            "0111" when (intReg( 7) = '1') else  -- Int7 (RN4020 Rx)
-            "0110" when (intReg( 6) = '1') else  -- Int6 (RN4020 Tx)
-            "0101" when (intReg( 5) = '1') else  -- Int5 (FT232 Rx)
-            "0100" when (intReg( 4) = '1') else  -- Int4 (FT232 Tx)
-            "0011" when (intReg( 3) = '1') else  -- Int3 (TeC Tx)
-            "0010" when (intReg( 2) = '1') else  -- Int2 (TeC Rx)
-            "0001" when (intReg( 1) = '1') else  -- Int1 (uSD)
-            "0000"; --  (intReg( 0) = '1') else  -- Int0 (PIO)
+            "1010" when (intReg( 0) = '1') else  -- Int10(TlbMiss)
+            "1011" when (intReg( 1) = '1') else  -- Int11(MemVio)
+            "1100" when (intReg( 2) = '1') else  -- Int12(ZeroDiv)
+            "1101" when (intReg( 3) = '1') else  -- Int13(PriVio)
+            "1110" when (intReg( 4) = '1') else  -- Int14(InvInst)
+            "1111" when (intReg( 5) = '1') else  -- Int15(SVC)
+            "0000" when (intReg( 6) = '1') else  -- Int0 (Timer0)
+            "0001" when (intReg( 7) = '1') else  -- Int1 (Timer1)
+            "0010" when (intReg( 8) = '1') else  -- Int2 (RN4020 Rx)
+            "0011" when (intReg( 9) = '1') else  -- Int3 (RN4020 Tx)
+            "0100" when (intReg(10) = '1') else  -- Int4 (FT232 Rx)
+            "0101" when (intReg(11) = '1') else  -- Int5 (FT232 Tx)
+            "0110" when (intReg(12) = '1') else  -- Int6 (TeC Tx)
+            "0111" when (intReg(13) = '1') else  -- Int7 (TeC Rx)
+            "1000" when (intReg(14) = '1') else  -- Int8 (uSD)
+            "1001"; --  (intReg(15) = '1') else  -- Int9 (PIO)
   P_DOUT(0) <= '0';
 end RTL;
 

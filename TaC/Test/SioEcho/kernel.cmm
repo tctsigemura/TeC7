@@ -17,7 +17,7 @@
 #ifdef RN4020
 #define DATA 0x0028
 #define CTRL 0x002a
-#define VECT 6
+#define VECT 2
 #else
 #define DATA 0x0008
 #define CTRL 0x000a
@@ -189,8 +189,8 @@ void command() {
 
 public void main() {
   int[] vect   = _ItoA(0xffe0);      // 割込みベクタの配列
-  vect[VECT]   = addrof(sioTrs);     // sio送信ベクタの初期化
-  vect[VECT+1] = addrof(sioRcv);     // sio受信ベクタの初期化
+  vect[VECT  ] = addrof(sioRcv);     // sio受信ベクタの初期化
+  vect[VECT+1] = addrof(sioTrs);     // sio送信ベクタの初期化
 
   initIO();                          // IO の初期化
   setPri(KERN|EI);                   // 割込み許可

@@ -6,9 +6,9 @@ start	halt
 	in	fp,0xfa		; fp<=AdrReg
 	ld	g11,#0x00fc	; g11<=00fc
 	in	g10,%g11	; g10<=RSW
-	in	g9,@g11		; g9<=0000
+;;	in	g9,@g11		; g9<=0000
 	add	g11,#1		; g11<=00fd
-	in	g8,@g11		; g8<=RSW
+;;	in	g8,@g11		; g8<=RSW
 	halt			;
 
 	ld	g7,#0x1234	; g7<=1234
@@ -26,6 +26,6 @@ L2	in	g3,0xf8		; g3<=DSW
 
 	ld	g2,#'A'		; g2<=0041
 	ld	g1,#0x0009	; g1<=0009
-	out	g2,@g1		; SIO-DATA<='A'
+;;	out	g2,@g1		; SIO-DATA<='A'
 	halt
 

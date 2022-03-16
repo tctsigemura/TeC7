@@ -161,16 +161,16 @@ public void main() {
     } else if (intFlg4) {
       intFlg4 = false;
       putstr("-4-");
-    } else if (intFlg5) {
-      intFlg5 = false;
-      putstr("-5-");
       char c = chr(in(0x0008));
       int zero = 0;
       if (c=='z') {
         puthex(ord(c)/zero);
       }
       putch(c);
-    } else if (intFlg6) {
+    } else if (intFlg5) {
+      intFlg5 = false;
+      putstr("-5-");
+   } else if (intFlg6) {
       intFlg6 = false;
       putstr("-6-");
     } else if (intFlg7) {
