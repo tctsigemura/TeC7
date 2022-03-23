@@ -1,19 +1,9 @@
-.SUFFIXES:
-.SUFFIXES: .tex .pdf
-
-PDFS = manual.pdf
-
-%.pdf : %.tex *.sty
-	lualatex $*.tex
-#	lualatex $*.tex
-#	dvipdfmx $*.dvi
-#	open $*.pdf
+PDFS = Fig/TacInst.pdf \
+       Fig/TeC7.pdf Fig/TeC.pdf Fig/kakubu.pdf Fig/TaC.pdf \
+       Fig/Console.pdf Fig/Jumper.pdf Fig/Spi.pdf Fig/TeC7dPcb.pdf
 
 all : ${PDFS}
-
-manual.pdf : manual.tex chap?.tex app?.tex *.sty Fig/TacInst.pdf \
-             Fig/TeC7.pdf Fig/TeC.pdf Fig/kakubu.pdf Fig/TaC.pdf \
-             Fig/Console.pdf Fig/Jumper.pdf Fig/Spi.pdf Fig/TeC7dPcb.pdf
+	latexmk -interaction=nonstopmode -lualatex manual
 
 Fig/TacInst.pdf : ../Doc/Arch/TaC命令表.pdf
 	pdfcrop ../Doc/Arch/TaC命令表.pdf Fig/TacInst.pdf
