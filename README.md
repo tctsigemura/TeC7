@@ -96,8 +96,6 @@ TaC上では
 |     |
 |     + Ipl     Ipl(uSDカードから kernel.bin を読み込む)
 |     |
-|     + Mcode   マイクロプログラム
-|     |
 |     + Test    TaC の I/O 動作テスト等で使用するプログラム
 |
 + Util          TeC,TaC両方のIPL,Mcodeの生成に必要なツール
