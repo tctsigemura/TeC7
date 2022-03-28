@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2021 by
+-- Copyright (C) 2002-2022 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 -- TaC/tac_panel.vhd : TaC Console Panel
 --
+-- 2022.03.28 : SETA, INCA, DECAをMD, MM以外を選択時も操作可能にする
 -- 2021.11.19 : TaC-CPU V3 対応
 -- 2019.08.30 : 命令フェッチだけでなくデータのアクセスでもBREAKする
 -- 2019.08.30 : MA 選択時も WRITE ができるように変更
@@ -108,7 +109,6 @@ architecture RTL of TAC_PANEL is
   signal G0     : std_logic;                      -- Pos=G0
   signal Md     : std_logic;                      -- Pos=MD
   signal Ma     : std_logic;                      -- Pos=MA
-  signal Mm     : std_logic;                      -- Pos=MD or Pos=MA
   signal Run    : std_logic;                      -- run Flip/Flop
   signal FncReg : std_logic_vector( 3 downto 0);  -- console function reg.
   signal WriteFF: std_logic;                      -- write Flip/Flop
@@ -169,9 +169,9 @@ begin  -- RTL
                     & (not Run and not Ma)        -- (->)
                     & (not Run)                   -- (Run)
                     & Run                         -- (Stop)
-                    & (not Run and Mm)            -- (SetA)
-                    & (not Run and Mm)            -- (IncA)
-                    & (not Run and Mm)            -- (DecA)
+                    & (not Run)                   -- (SetA)
+                    & (not Run)                   -- (IncA)
+                    & (not Run)                   -- (DecA)
                     & (not Run));                 -- (Write)
         BtnDly1 <= P_RESET_SW & P_RCCW_SW         -- 押しボタンの入力を
                    & P_RCW_SW & P_RUN_SW          --  クロックに
@@ -257,7 +257,6 @@ begin  -- RTL
   G0 <= '1' when (Pos="00000") else '0';
   Md <= '1' when (Pos="10000") else '0';
   Ma <= '1' when (Pos="10001") else '0';
-  Mm <= Md or Ma;
   process(P_CLK)
   begin
     if (P_CLK'event and P_CLK='1') then
