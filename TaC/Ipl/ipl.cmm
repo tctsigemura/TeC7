@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2021 by
+ * Copyright (C) 2009-2022 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,8 @@
 /*
  * ipl0.cmm : C-- 言語版の TaC IPL
  *
+ * 2022.01.17 v4.5.0    : TaC-CPU V3 対応
+ *                        32bit 積・商 ソフトウェア化, I/O アドレス変更
  * 2020.07.18 v4.4.2    : TWRITEに入る際のバッファクリア忘れバグ訂正
  * 2020.03.05 v4.4.0    : Bluetoothからもtwriteができるようにする
  * 2019.09.09           : TaCモードでSETAとRESETの同時押しで"kernel0.bin"を起動
@@ -308,7 +310,7 @@ public void main() {
   putstr("(build date : ");
   putstr( DATE );
   putstr(")\n");
-  putstr("Copyright(c) 2009-2021 Tokuyama College of Technology\n");
+  putstr("Copyright(c) 2009-2022 Tokuyama College of Technology\n");
   putstr("All rights reserved.\n\n");
 
   int mode = in(0x1e);
@@ -326,3 +328,4 @@ public void main() {
       halt();                                 // ここまで来たらTaCを停止する
   }
 }
+

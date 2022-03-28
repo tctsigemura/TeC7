@@ -2,7 +2,7 @@
 ; TaC Test Source Code
 ;    Tokuyama kousen Educational Computer 16 bit Version
 ;
-; Copyright (C) 2009-2013 by
+; Copyright (C) 2009-2022 by
 ;                      Dept. of Computer Science and Electronic Engineering,
 ;                      Tokuyama College of Technology, JAPAN
 ;
@@ -19,6 +19,7 @@
 ;
 ; crt0.s : テストプログラムのアセンブラ部分
 ;
+; 2022.05.06         : TeC-CPU V3 対応
 ; 2013.01.07         : TeC-CPU V2 対応
 ; 2012.01.11         : 初期バージョン
 ;
@@ -28,75 +29,6 @@
 start	ld	sp,#0xe000	; 主記憶 58kb
 	call	_main
 	halt			; リスタート
-
-; 1us 待つ
-; 1us  = 20ns * 50 = 50ステート
-; call = 6ステート、残り = 44 ステート
-_wait1u	ld	g0,g0		; 4ステート、残り = 40ステート
-	ld	g0,g0		; 4ステート、残り = 36ステート
-	ld	g0,g0		; 4ステート、残り = 32ステート
-	ld	g0,g0		; 4ステート、残り = 28ステート
-	ld	g0,g0		; 4ステート、残り = 24ステート
-	ld	g0,g0		; 4ステート、残り = 20ステート
-	ld	g0,g0		; 4ステート、残り = 16ステート
-	ld	g0,g0		; 4ステート、残り = 12ステート
-	no			; 3ステート、残り =  9ステート
-	no			; 3ステート、残り =  6ステート
-	ret			; 6ステート、残り =  0ステート
-	
-; 10us 待つ
-_wait10u
-	call	_wait1u
-	call	_wait1u
-	call	_wait1u
-	call	_wait1u
-	call	_wait1u
-	call	_wait1u
-	call	_wait1u
-	call	_wait1u
-	call	_wait1u		; 9us
-	ld	g0,g0		; 4ステート、残り = 46ステート
-	ld	g0,g0		; 4ステート、残り = 42ステート
-	ld	g0,g0		; 4ステート、残り = 38ステート
-	ld	g0,g0		; 4ステート、残り = 34ステート
-	ld	g0,g0		; 4ステート、残り = 30ステート
-	ld	g0,g0		; 4ステート、残り = 26ステート
-	ld	g0,g0		; 4ステート、残り = 22ステート
-	ld	g0,g0		; 4ステート、残り = 18ステート
-	no			; 3ステート、残り = 15ステート
-	no			; 3ステート、残り = 12ステート
-	no			; 3ステート、残り =  9ステート
-	no			; 3ステート、残り =  6ステート
-	ret			; 6ステート、残り =  0ステート
-
-; 100us 待つ
-_wait100u
-	call	_wait10u
-	call	_wait10u
-	call	_wait10u
-	call	_wait10u
-	call	_wait10u
-	call	_wait10u
-	call	_wait10u
-	call	_wait10u
-	call	_wait10u
-	call	_wait10u
-	ret
-
-; 1ms 待つ
-; (88ステート(1.8us)超過)
-_wait1m
-	call	_wait100u
-	call	_wait100u
-	call	_wait100u
-	call	_wait100u
-	call	_wait100u
-	call	_wait100u
-	call	_wait100u
-	call	_wait100u
-	call	_wait100u
-	call	_wait100u
-	ret
 
 ;; ワードを I/O ポートから入力する
 _in                             ; int in(int p);
@@ -128,3 +60,4 @@ _setPri                         ; プロセッサの割り込みレベルを変�
         push    g0              ; 新しい状態をスタックに積み
         ld      g0,flag         ; 古いフラグの値を返す準備をする
         reti                    ; reti は flag と PC を同時に pop する
+

@@ -11,8 +11,18 @@
  *              (SIO 割込みが C-- ルーチンから扱えることを確認)
  */
 
-#include "util.hmm"
+#include "crt0.hmm"
 #define  BSIZE   256
+
+#ifdef RN4020
+#define DATA 0x0028
+#define CTRL 0x002a
+#define VECT 2
+#else
+#define DATA 0x0008
+#define CTRL 0x000a
+#define VECT 4
+#endif
 
 /*
  * SIO 等で使用できるリングバッファと管理ルーチン
@@ -72,12 +82,11 @@ boolean trsIdle;                          // トランスミッタがアイド�
 // SIO 送信割込み処理ルーチン
 interrupt sioTrs() {
   if (ISEmpty(trsBuf)) {                  // 送信すべきデータがないなら
-    out(0x000a,0x0040);                   // 送信割込み禁止
+    out(CTRL,0x0040);                     // 送信割込み禁止
     trsIdle = true;
   } else {                                // そうでなければ
     int c = ord(getBuf(trsBuf));          // 送信バッファから一文字取り出す
-    out(0x0008,c);                        // データを送信
-//  putCh(chr(c));                        // 画面にも(デバッグ用)
+    out(DATA,c);                          // データを送信
   }
 }
 
@@ -85,9 +94,8 @@ interrupt sioTrs() {
 void putSio(char c) {
   int r = setPri(KERN|DI);                // 割込み禁止状態で
   if (trsIdle) {                          // トランスミッタはアイドル状態
-    out(0x0008,ord(c));                   // 1. 送信を始める    （順序重要）
-    out(0x000a,0x00c0);                   // 2. 割込みを許可する（順序重要）
-//  putCh(c);                             // 画面にも(デバッグ用)
+    out(DATA,ord(c));                     // 1. 送信を始める    （順序重要）
+    out(CTRL,0x00c0);                     // 2. 割込みを許可する（順序重要）
     trsIdle = false;                      // トランスミッタは動作中
   } else {
     putBuf(trsBuf, c);                    // 送信バッファに１文字追加
@@ -98,7 +106,7 @@ void putSio(char c) {
 // 受信関係
 boolean enterFlag;                        // エンターが入力された
 
-// SIO / PS/2 から入力された文字をバッファに格納する
+// SIO から入力された文字をバッファに格納する
 void rcvData(char c) {
   if (0x0020<=ord(c) && ord(c)<=0x007e) { // 印刷可能な ASCII 文字なら
     if(putBuf(rcvBuf, c))                 // バッファへ転記
@@ -129,13 +137,7 @@ void rcvData(char c) {
 
 // SIO 受信割込み処理ルーチン
 interrupt sioRcv() {
-  char c = chr(in(0x0008));               // 受信データを入力する
-  rcvData(c);
-}
-
-// PS/2 受信割込み処理ルーチン
-interrupt ps2Rcv() {
-  char c = chr(in(0x000c));               // 受信データを入力する
+  char c = chr(in(DATA));                // 受信データを入力する
   rcvData(c);
 }
 
@@ -171,9 +173,8 @@ char[] _buf2 = array(BSIZE);
 void initIO() {
   rcvBuf.buf = _buf1;
   trsBuf.buf = _buf2;
-  while ((in(0x000a)&0x80)==0x00){}  // トランスミッタが空になるのを待つ
-  out(0x000a,0x0040);                // SIO受信割込み許可、送信割込み禁止
-//out(0x000e,0x0040);                // PS2受信割込み許可、送信割込み禁止
+  while ((in(CTRL)&0x80)==0x00){}    // トランスミッタが空になるのを待つ
+  out(CTRL,0x0040);                  // SIO受信割込み許可、送信割込み禁止
   trsIdle   = true;                  // トランスミッタはアイドル状態
   enterFlag = false;                 // 入力は完了していない
 }
@@ -187,14 +188,11 @@ void command() {
 }
 
 public void main() {
-  int[] vect = _ItoA(0xffe0);        // 割込みベクタの配列
-  vect[4] = addrof(sioRcv);          // #4(sio受信)ベクタの初期化
-  vect[5] = addrof(sioTrs);          // #5(sio送信)ベクタの初期化
-//vect[6] = addrof(ps2Rcv);          // #6(PS/2受信)ベクタの初期化
+  int[] vect   = _ItoA(0xffe0);      // 割込みベクタの配列
+  vect[VECT  ] = addrof(sioRcv);     // sio受信ベクタの初期化
+  vect[VECT+1] = addrof(sioTrs);     // sio送信ベクタの初期化
 
   initIO();                          // IO の初期化
-  utilInit();
-
   setPri(KERN|EI);                   // 割込み許可
 
   putSioStr("TaC-OS(^^;;;\tVer.0.0.0\r\n");

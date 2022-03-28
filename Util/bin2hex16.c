@@ -68,7 +68,7 @@ void copyFile(char *fname, int size) {
 
   while (len > 0 && (ch=get16(fp))!=EOF) {
     printf("%04x %04x\n", addr, ch);
-    addr++;
+    addr+=2;
     len--;
   }
 
@@ -79,7 +79,7 @@ void copyFile(char *fname, int size) {
 
   while (size-- > 0) {
     printf("%04x %04x\n", addr, 0);
-    addr++;
+    addr+=2;
   }
     
   fclose(fp);

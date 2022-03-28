@@ -1,0 +1,168 @@
+/*
+ * TaC Test Source Code
+ *    Tokuyama kousen Educational Computer 16bit Ver.
+ *
+ * Copyright (C) 2009-2022 by
+ *                      Dept. of Computer Science and Electronic Engineering,
+ *                      Tokuyama College of Technology, JAPAN
+ *
+ *   上記著作権者は，Free Software Foundation によって公開されている GNU 一般公
+ * 衆利用許諾契約書バージョン２に記述されている条件を満たす場合に限り，本ソース
+ * コード(本ソースコードを改変したものを含む．以下同様)を使用・複製・改変・再配
+ * 布することを無償で許諾する．
+ *
+ *   本ソースコードは＊全くの無保証＊で提供されるものである。上記著作権者および
+ * 関連機関・個人は本ソースコードに関して，その適用可能性も含めて，いかなる保証
+ * も行わない．また，本ソースコードの利用により直接的または間接的に生じたいかな
+ * る損害に関しても，その責任を負わない．
+ *
+ *
+ */
+
+/*
+ * main.cmm : テストプログラムの main
+ *
+ * 2022.03.06 v.2.0     : TeC-CPU V3 対応
+ * 2013.01.07 v.1.0     : TeC-CPU V2 対応
+ * 2012.01.11 v.0.0     : 初期バージョン
+ *
+ * $Id$
+ *
+ */
+
+#include "util.h"
+
+void putSIO(char c) {                       // SIO への出力
+  while((in(0x0a) & 0x80)==0)
+    ;
+  out(0x08, ord(c));
+}
+
+// 1文字表示ルーチン
+void putch(char c) {                 // SIO へ出力する
+  if (c=='\n') putSIO('\r');
+  putSIO(c);
+}
+
+// 文字列出力
+void putstr(char[] str) {
+  for (int i=0; str[i]!='\0'; i=i+1)
+    putch(str[i]);
+}
+
+// １文字文字入力ルーチン
+char getch() {
+  while((in(0x0a) & 0x40)==0)
+    ;
+  return chr(in(0x08));
+}
+
+// 16進数出力
+char[] hstr = "0123456789abcdef";
+void puthex(int x) {
+  putch(hstr[(x>>12)&0x000f]);
+  putch(hstr[(x>>8 )&0x000f]);
+  putch(hstr[(x>>4 )&0x000f]);
+  putch(hstr[(x    )&0x000f]);
+}
+ 
+interrupt int0() { putstr("\n0\n"); halt(); } 
+interrupt int1() { putstr("\n1\n"); halt(); }
+interrupt int2() { putstr("\n2\n"); halt(); }
+interrupt int3() { putstr("\n3\n"); halt(); }
+interrupt int4() { putstr("\n4\n"); halt(); }
+interrupt int5() { putstr("\n5\n"); halt(); }
+interrupt int6() { putstr("\n6\n"); halt(); }
+interrupt int7() { putstr("\n7\n"); halt(); }
+interrupt int8() { putstr("\n8\n"); halt(); }
+interrupt int9() { putstr("\n9\n"); halt(); }
+
+int mode;
+interrupt intA() { putstr("\nA\n");   // TLB miss
+  int p = in(0xa6);   // ページ番号
+  puthex(p);
+  putstr("=page\n");
+  int m = (mode << 8) | 0x8000;
+
+  if (p==0x0000) {
+    // p => f (00 => 80)
+    out(0x80, 0x00);        // 0000 0000 pppp pppp = 0000 0000 0000 0000
+    out(0x82, m | 0x80);    // V**R DRWX ffff ffff = 1000 0mmm 1000 0000
+   } else if (p==0x0001) {
+    // p => f (01 => 81)
+    out(0x84, 0x01);        // 0000 0000 pppp pppp = 0000 0000 0000 0001
+    out(0x86, m | 0x81);    // V**R DRWX ffff ffff = 1000 0mmm 1000 0001
+  } else if (p==0x0002) {
+    // p => f (02 => 82)
+    out(0x9c, 0x02);        // 0000 0000 pppp pppp = 0000 0000 0000 0010
+    out(0x9e, m | 0x82);    // V**R DRWX ffff ffff = 1000 0mmm 1000 0010
+  } else {
+    putstr("panic\n");
+    putstr("TLB0=");puthex(in(0x80));putstr(":");puthex(in(0x82));putstr("\n");
+    putstr("TLB1=");puthex(in(0x84));putstr(":");puthex(in(0x86));putstr("\n");
+    putstr("TLB7=");puthex(in(0x9c));putstr(":");puthex(in(0x9e));putstr("\n");
+    halt();
+  }
+}
+interrupt intB() { putstr("\nB\n");
+  puthex(in(0xa4));
+  putstr("=badAddr/memVio\n");
+  puthex(in(0xa2));
+  putstr("=falutAddr\n");
+  halt();
+}
+interrupt intC() { putstr("\nC\n"); halt(); }
+interrupt intD() { putstr("\nD\n"); halt(); }
+interrupt intE() { putstr("\nE\n"); halt(); }
+interrupt intF() { putstr("\nF\n"); halt(); }
+
+// ここからスタート
+public void main() {
+  int[] Vector = _ItoA(0xffe0);
+  Vector[0] = addrof(int0);
+  Vector[1] = addrof(int1);
+  Vector[2] = addrof(int2);
+  Vector[3] = addrof(int3);
+  Vector[4] = addrof(int4);
+  Vector[5] = addrof(int5);
+  Vector[6] = addrof(int6);
+  Vector[7] = addrof(int7);
+  Vector[8] = addrof(int8);
+  Vector[9] = addrof(int9);
+  Vector[10]= addrof(intA);
+  Vector[11]= addrof(intB);
+  Vector[12]= addrof(intC);
+  Vector[13]= addrof(intD);
+  Vector[14]= addrof(intE);
+  Vector[15]= addrof(intF);
+
+  putstr("MMU test start\n");
+  putstr("type rwx mode\n");
+  putstr("---=0, --x=1, -w-=2, -wx=3, r--=4, r-x=5, rw-=6, rwx=7 ");
+  mode = ord(getch()) - ord('0');
+  putstr("\n");
+  puthex(mode);
+  putstr("\n");
+
+  // MMUの初期化(クリア)
+  for (int i=0; i<16; i=i+1) {
+    out(0x80+i, 0x0000);
+  }
+  out(0xa2, 0x0001);   // MMU 有効化
+
+  // フレーム初期化（NO命令で埋める)
+  int[] Mem = _ItoA(0x8000);
+  for (int i=0; i<0x0100; i=i+1) {
+     Mem[i] = 0x0000;
+  }
+  Mem[0] = 0x0800; Mem[1] = 0x0000;     // ld g0,0x0000
+  Mem[2] = 0x1000; Mem[3] = 0x0100;     // st g0,0x0100
+  Mem[4] = 0x0810; Mem[5] = 0x0100;     // ld g1,0x0100
+  Mem[6] = 0x1000; Mem[7] = 0x01fe;     // st g0,0x01fe
+  Mem[8] = 0x1000; Mem[9] = 0x0200;     // st g0,0x0200
+  Mem[10]= 0x1000; Mem[11]= 0x0300;     // st g0,0x0300  (panic)
+
+  // ユーザモードで実行開始
+  setJmp(0x0000, 0x0080);
+
+}

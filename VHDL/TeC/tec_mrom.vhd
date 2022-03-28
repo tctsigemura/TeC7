@@ -55,7 +55,7 @@ architecture BEHAVE of TEC_MROM is
 
     signal mem : memory := read_file("tec_mrom.txt");
 
-  begin    
+  begin
     process(P_CLK, P_RESET)
     begin
       if (P_RESET='0') then    -- make distribute RAM
