@@ -136,7 +136,7 @@ begin
   IOW <= P_IR and P_RW;
   IOR <= P_IR and not P_RW;
   with P_ADDR select
-    DEC_OUT <= 
+    DEC_OUT <=
     "0000000000001" when "0000",
     "0000000000010" when "0001",
     "0000000000100" when "0010",
@@ -232,7 +232,7 @@ begin
       end if;
     end if;
   end process;
- 
+
   process (P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
@@ -361,7 +361,7 @@ begin
       end if;
     end if;
   end process;
-  
+
   -- ADC
   P_ADC_REF <= ADC_CNT(10 downto 3);
   process (P_CLK, P_RESET)
@@ -404,7 +404,7 @@ begin
       end if;
     end if;
   end process;
-        
+
   -- I/O ポート
   process (P_CLK, P_RESET)
   begin
@@ -421,7 +421,7 @@ begin
       end if;
     end if;
   end process;
-  
+
   -- Data Bus の出力選択
   P_DOUT <= P_DATA_SW when (P_ADDR="0000") else
             P_DATA_SW when (P_ADDR="0001") else

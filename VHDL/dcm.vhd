@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2019 by
+-- Copyright (C) 2002-2021 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -19,6 +19,7 @@
 --
 -- dcm.vhd : クロック生成
 --
+-- 2021.11.20 : 90度遅れの49.152MHzを廃止
 -- 2019.08.27 : 新規作成
 --
 
@@ -28,31 +29,20 @@ use IEEE.std_logic_UNSIGNED.ALL;
 
 entity DCM is
     Port ( P_CLK_IN      : in    std_logic;  -- 9.8304MHz
-           P_49_152MHz0  : out   std_logic;
-           P_49_152MHz90 : out   std_logic;
+           P_49_152MHz   : out   std_logic;
            P_2_4576MHz   : out   std_logic;
            P_LOCKED      : out   std_logic
          );
 end DCM;
 
 architecture Behavioral of DCM is
-  signal i_49_152MHz     : std_logic;
   signal i_locked_tac    : std_logic;
-  signal i_locked_delay  : std_logic;
   signal i_locked_tec    : std_logic;
 
   component DCM_TAC
     Port ( CLK_IN1       : in    std_logic;
            CLK_OUT1      : out   std_logic;
            LOCKED        : out   std_logic
-         );
-  end component;
-
-  component DELAY90
-    Port ( CLK_IN1           : in     std_logic;
-           CLK_OUT1          : out    std_logic;
-           CLK_OUT2          : out    std_logic;
-           LOCKED            : out    std_logic
          );
   end component;
 
@@ -63,19 +53,11 @@ architecture Behavioral of DCM is
          );
   end component;
 
-
 begin
   DCM_TAC1 : DCM_TAC
     port map ( CLK_IN1  => P_CLK_IN,
-               CLK_OUT1 => i_49_152MHz,
+               CLK_OUT1 => P_49_152MHz,
                LOCKED   => i_locked_tac
-             );
-				 
-  DELAY : DELAY90
-    port map ( CLK_IN1  => i_49_152MHz,
-               CLK_OUT1 => P_49_152MHz0,
-               CLK_OUT2 => P_49_152MHz90,
-               LOCKED   => i_locked_delay
              );
 
   DCM_TEC1 : DCM_TEC
@@ -84,6 +66,6 @@ begin
                LOCKED   => i_locked_tec
              );
 
-    P_LOCKED <= i_locked_tac and i_locked_delay and i_locked_tec;
+    P_LOCKED <= i_locked_tac and i_locked_tec;
 
 end Behavioral;

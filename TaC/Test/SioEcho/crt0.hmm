@@ -56,7 +56,7 @@ public int    _aCmp(void[] a, void[] b);            // アドレスの大小比�
 public void[] _args();                              // 関数の引数配列を返す
 public int[]  _add32(int[] dst, int[] src);         // 32bit の加算ルーチン
 public int[]  _sub32(int[] dst, int[] src);         // 32bit の減算ルーチン
-public int[]  _mul32(int[] dst, int src);           // 32bit の乗算ルーチン
-public int[]  _div32(int[] dst, int src);           // 32bit の除算ルーチン
+//public int[]  _mul32(int[] dst, int src);           // 32bit の乗算ルーチン
+//public int[]  _div32(int[] dst, int src);           // 32bit の除算ルーチン
 #define ld32(dst,h,l) ((dst)[0]=(h),(dst)[1]=(l))   // 32bit のデータのロード
 #define st32(h,l,src) ((h)=(src)[0],(l)=(src)[1])   // 32bit のデータのストア

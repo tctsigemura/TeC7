@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2019 by
+-- Copyright (C) 2002-2022 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,8 @@
 --
 -- TaC/tac_panel.vhd : TaC Console Panel
 --
+-- 2022.03.28 : SETA, INCA, DECAをMD, MM以外を選択時も操作可能にする
+-- 2021.11.19 : TaC-CPU V3 対応
 -- 2019.08.30 : 命令フェッチだけでなくデータのアクセスでもBREAKする
 -- 2019.08.30 : MA 選択時も WRITE ができるように変更
 -- 2019.08.05 : パワーオン時に「プ」音を鳴らすために，起動後にリセットし直す
@@ -54,10 +56,17 @@ entity TAC_PANEL is
          P_RW       : in  std_logic;                     -- read/write
          P_IR       : in  std_logic;                     -- i/o req.
          P_MR       : in  std_logic;                     -- memory req.
-         P_LI       : in  std_logic;                     -- load instruction
          P_HL       : in  std_logic;                     -- halt instruction
+         P_IDLE     : in  std_logic;                     -- idle state
+         P_CON      : in  std_logic_vector(1 downto 0);  -- Console access
          P_STOP     : out std_logic;                     -- stop the cpu
          P_RESET    : out std_logic;                     -- reset [OUTPUT]
+
+         -- DMA BUS
+         P_AOUT_DMA : out std_logic_vector(14 downto 0);
+         P_DIN_DMA  : in  std_logic_vector(15 downto 0);
+         P_DOUT_DMA : out std_logic_vector(15 downto 0);
+         P_RW_DMA   : out std_logic;
 
          -- console switchs(inputs)
          P_DATA_SW  : in std_logic_vector(7 downto 0);   -- data sw.
@@ -100,7 +109,6 @@ architecture RTL of TAC_PANEL is
   signal G0     : std_logic;                      -- Pos=G0
   signal Md     : std_logic;                      -- Pos=MD
   signal Ma     : std_logic;                      -- Pos=MA
-  signal Mm     : std_logic;                      -- Pos=MD or Pos=MA
   signal Run    : std_logic;                      -- run Flip/Flop
   signal FncReg : std_logic_vector( 3 downto 0);  -- console function reg.
   signal WriteFF: std_logic;                      -- write Flip/Flop
@@ -122,7 +130,11 @@ architecture RTL of TAC_PANEL is
   signal RptCnt2: std_logic_vector(2 downto 0);   -- リピート間隔タイマ
   -- ロータリースイッチの位置表示LEDの点灯パターン
   signal i_leds     : std_logic_vector( 8 downto 0); -- LED
-  
+  -- (address, data LED) に表示する内容
+  signal i_disp     : std_logic_vector(15 downto 0); -- 16bitの表示内容
+  -- CPUに送るレジスタ番号
+  signal i_cpu_pos  : std_logic_vector(4 downto 0);
+
 begin  -- RTL
   -- スイッチのサンプリング用 32ms 周期パルスと 500Hz 方形波を作る
   process(P_CLK)
@@ -136,7 +148,7 @@ begin  -- RTL
       p32ms <= Cnt(4) and not Cnt4D;              -- 32ms 周期のパルス
     end if;
   end process;
-    
+
   -- 押しボタン９個分の Debounce 回路
   process(P_CLK, P_RESET_IN)
   begin
@@ -157,9 +169,9 @@ begin  -- RTL
                     & (not Run and not Ma)        -- (->)
                     & (not Run)                   -- (Run)
                     & Run                         -- (Stop)
-                    & (not Run and Mm)            -- (SetA)
-                    & (not Run and Mm)            -- (IncA)
-                    & (not Run and Mm)            -- (DecA)
+                    & (not Run)                   -- (SetA)
+                    & (not Run)                   -- (IncA)
+                    & (not Run)                   -- (DecA)
                     & (not Run));                 -- (Write)
         BtnDly1 <= P_RESET_SW & P_RCCW_SW         -- 押しボタンの入力を
                    & P_RCW_SW & P_RUN_SW          --  クロックに
@@ -245,7 +257,6 @@ begin  -- RTL
   G0 <= '1' when (Pos="00000") else '0';
   Md <= '1' when (Pos="10000") else '0';
   Ma <= '1' when (Pos="10001") else '0';
-  Mm <= Md or Ma;
   process(P_CLK)
   begin
     if (P_CLK'event and P_CLK='1') then
@@ -296,11 +307,13 @@ begin  -- RTL
       if (BtnDbnc(0)='1') then              -- Btn0(WRITE)
         WriteFF <= '1';
       elsif (P_AIN(7 downto 1)="1111111" and P_IR='1' and P_RW='0') then
-        WriteFF <= '0';                     -- i/o read FEH
+        WriteFF <= '0';                     -- 実行中に i/o read FEH でクリア
+      elsif (P_CON="01") then
+        WriteFF <= '0';                     -- 停止中にIRに渡したらクリア
       end if;
     end if;
   end process;
-  
+
   -- FncReg decoder (F_DEC)
   FncReg(3 downto 0) <=
     "0000" when (Pos(4)='0' and WriteFF='0') else                -- Reg Read
@@ -333,9 +346,10 @@ begin  -- RTL
     elsif (P_CLK'event and P_CLK='1') then
       if (BtnDbnc(4)='1' or                             -- Btn4(STOP)
           P_HL='1' or                                   -- halt instruction
-          (P_STEP_SW='1' and P_LI='1' and P_MR='1') or  -- step
-          (P_BREAK_SW='1' and P_MR='1' and              -- break
-           P_AIN(15 downto 1)=AdrReg(15 downto 1))) then
+          (P_MR='1' and P_IDLE='0'  and                 -- step/break
+           (P_STEP_SW='1' or
+            (P_BREAK_SW='1' and
+             P_AIN(15 downto 1)=AdrReg(15 downto 1))))) then
         Run <= '0';
       elsif (BtnDbnc(5)='1') then                       -- Btn5(RUN)
         Run <= '1';
@@ -344,24 +358,43 @@ begin  -- RTL
   end process;
 
   -- (address, data) LED
-  P_A_LED <= DatReg(15 downto 8);
-  P_D_LED <= DatReg( 7 downto 0);
+  i_disp  <= AdrReg(15 downto 1) & '0'  when Pos="10001" else   -- MA  選択時
+             P_DIN_DMA when Pos="10000" else                    -- MD  選択時
+             DatReg;                           -- 他を選択時，または，実行中
+  P_A_LED <= i_disp(15 downto 8);
+  P_D_LED <= i_disp( 7 downto 0);
+
+  -- DatReg
   process(Reset, P_CLK)
   begin
     if (Reset='0') then
       DatReg <= "0000000000000000";
     elsif (P_CLK'event and P_CLK='1') then
-      if (P_AIN(7 downto 0)="11111000" and P_IR='1' and P_RW='1') then
+      if ((P_AIN(7 downto 0)="11111000" and P_IR='1' and P_RW='1') -- 実行中
+          or (P_CON="10" and (Pos<="01101" or Pos="01111"))        -- GR[Pos]
+          or (P_CON="11" and Pos="01110"))  then                   -- PC
         DatReg <= P_DIN;
       end if;
     end if;
   end process;
 
   -- DOUT
+  i_cpu_pos <= "10000" when Pos="01110" else     -- PC
+                Pos;                             -- G0..FLAG
+
   P_DOUT <=
-    ("000000000000" & FncReg         ) when (P_AIN(2 downto 1)="11") else
-    ("000000000000" & Pos(3 downto 0)) when (P_AIN(2 downto 1)="10") else
-    ( AdrReg(15 downto 1) & '0'      ) when (P_AIN(2 downto 1)="01") else
-    ("00000000" & P_DATA_SW          );  -- (P_AIN(2 downto 1)="00") 
-  
+    ("000010" & (WriteFF and not Pos(4)) & i_cpu_pos & "0000")
+                                         when (P_CON="01")             else
+    (P_DIN(7 downto 0) & P_DATA_SW)      when (P_CON(1)='1')           else
+    ("000000000000" & FncReg         )   when (P_AIN(2 downto 1)="11") else
+    ("000000000000" & Pos(3 downto 0))   when (P_AIN(2 downto 1)="10") else
+    ( AdrReg(15 downto 1) & '0'      )   when (P_AIN(2 downto 1)="01") else
+    ("00000000" & P_DATA_SW          );    -- (P_AIN(2 downto 1)="00")
+
+  -- DMA
+  P_AOUT_DMA <= AdrReg(15 downto 1);
+  P_DOUT_DMA <= P_DIN_DMA(7 downto 0) & P_DATA_SW;
+  P_RW_DMA   <= '1' when P_CON="01" and Pos(4)='1' and WriteFF='1' else '0';
+
 end RTL;
+

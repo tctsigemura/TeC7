@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2021 by
+-- Copyright (C) 2002-2022 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -19,8 +19,9 @@
 --
 -- tec7.vhd : TeC7 Top Level
 --
--- 2021.06.29 : RESETモードではコンソールを無効にする
+-- 2022.02.27 : RESETモードではコンソールを無効にする
 --              （組立て途中でのファーム書込みとRN4020の初期化を可能にする）
+-- 2021.11.20 : 90度遅れの49.152MHzを廃止
 -- 2019.07.26 : IBUFG の警告を消す
 -- 2019.04.13 : TeC7d 用に RN4020_CON 追加，RN4020_SW 削除
 -- 2019.02.09 : マイクロSDカードの挿入を検知できるようにする
@@ -108,8 +109,7 @@ signal i_mode        : std_logic_vector (2 downto 0);  -- mode
 signal i_locked      : std_logic;
 signal i_2_4576MHz   : std_logic;
 signal i_9_8304MHz   : std_logic;
-signal i_49_152MHz0  : std_logic;
-signal i_49_152MHz90 : std_logic;
+signal i_49_152MHz   : std_logic;
 
 signal i_in          : std_logic_vector(27 downto 1);
 signal i_in_tec      : std_logic_vector(27 downto 1);
@@ -144,8 +144,7 @@ signal i_tec_ena     : std_logic;
 
 component DCM
     Port ( P_CLK_IN      : in    std_logic;  -- 9.8304MHz
-           P_49_152MHz0  : out   std_logic;
-           P_49_152MHz90 : out   std_logic;
+           P_49_152MHz   : out   std_logic;
            P_2_4576MHz   : out   std_logic;
            P_LOCKED      : out   std_logic
          );
@@ -197,7 +196,7 @@ component TEC
            -- SIO
            P_SIO_RXD  : in    std_logic;                      -- SIO Receive
            P_SIO_TXD  : out   std_logic;                      -- SIO Transmit
-            
+
            -- PIO
            P_EXT_IN   : in   std_logic_vector (7 downto 0);
            P_ADC_REF  : out  std_logic_vector (7 downto 0);
@@ -207,8 +206,7 @@ component TEC
 end component;
 
 component TAC
-    Port ( P_CLK0     : in std_logic;                         -- 49.152MHz 0'
-           P_CLK90    : in std_logic;                         -- 49.152MHz 90'
+    Port ( P_CLK      : in std_logic;                         -- 49.152MHz
            P_MODE     : in std_logic_vector(2 downto 0);      -- 0:TeC,1:TaC,
            P_RESET    : in std_logic;                         -- 2,3:Demo1,2
 
@@ -286,13 +284,12 @@ end component;
 begin
   IBUFG1 : IBUFG
     port map ( O => i_9_8304MHz, I => CLK_IN );
-     
+
   DCM1 : DCM
-    port map ( P_CLK_IN      => i_9_8304MHz,
-               P_49_152MHz0  => i_49_152MHz0,
-               P_49_152MHz90 => i_49_152MHz90,
-               P_2_4576MHz   => i_2_4576MHz,
-               P_LOCKED      => i_locked
+    port map ( P_CLK_IN    => i_9_8304MHz,
+               P_49_152MHz => i_49_152MHz,
+               P_2_4576MHz => i_2_4576MHz,
+               P_LOCKED    => i_locked
              );
 
   -- Determin TeC/TaC/DEMO1/DEMO2/RESET mode
@@ -305,9 +302,9 @@ begin
              );
 
   -- Synchronize TaC reset with TaC clock
-  process(i_49_152MHz0)
+  process(i_49_152MHz)
     begin
-      if (i_49_152MHz0'event and i_49_152MHz0='1') then
+      if (i_49_152MHz'event and i_49_152MHz='1') then
         i_reset_tac <= i_reset_tec;
       end if;
     end process;
@@ -315,7 +312,7 @@ begin
   -- FT232RL
     i_ft_txd    <= FT232RL_TXD;
     FT232RL_RXD <= i_ft_rxd;
-  
+
   -- RN4020
     i_rn_tx    <= RN4020_TX;
     RN4020_RX  <= i_rn_rx;
@@ -324,7 +321,7 @@ begin
     RN4020_CTS <= not i_rn_cts;
     RN4020_HW  <= i_rn_hw;
     i_rn_rts   <= not RN4020_RTS;
-  
+
   -- I/O Switch (select TeC/TaC)
   -- INPUT
   i_in(27 downto 24) <= EXT_INOUT;
@@ -344,15 +341,15 @@ begin
   i_in(1) <= LEFT_SW when i_tec_ena='0' else i_tec_ctl(1);
 
   i_in_tec <= "000000000000000000000000000"
-              when (i_mode="001") or (i_mode="111") else i_in;
+               when (i_mode="001") or (i_mode="111") else i_in;
   i_in_tac <= i_in when i_mode="001" else "000000000000000000000000000";
-  
+
   -- OUTPUT
   EXT_INOUT <= "ZZZZ" when i_out(48)='0' else i_out(47 downto 44);
   EXT_OUT <= i_out(43 downto 36);
   ADC_REF <= i_out(35 downto 28);
   ADDR_LED <= not i_out(27 downto 20);
-  DATA_LED <= not i_out(19 downto 12);  
+  DATA_LED <= not i_out(19 downto 12);
   RUN_LED <= not i_out(11);
   C_LED <= not i_out(10);
   S_LED <= not i_out(9);
@@ -371,7 +368,7 @@ begin
          P_RESET    => i_reset_tec,                         -- CLK が有効
          P_MODE     => i_mode(1 downto 0),                  -- 0:TeC 1:TaC
          P_CLK      => i_2_4576MHz,                         -- 2.4576MHz
-            
+
          -- CONSOLE(INPUT)
          P_DATA_SW  => i_in_tec(19 downto 12),              -- DATA  SW
          P_RESET_SW => i_in_tec(11),                        -- RESET SW
@@ -414,8 +411,7 @@ begin
 
   TAC1 : TAC
     port map (
-         P_CLK0     => i_49_152MHz0,                        -- 49.152MHz 0'
-         P_CLK90    => i_49_152MHz90,                       -- 49.152MHz 90'
+         P_CLK      => i_49_152MHz,                         -- 49.152MHz
          P_MODE     => i_mode,                              -- 0:TeC 1:TaC
          P_RESET    => i_reset_tac,
 
@@ -465,7 +461,7 @@ begin
          -- TEC
          P_TEC_RXD  => i_tec_rxd,                       -- SIO Receive
          P_TEC_TXD  => i_tec_txd,                       -- SIO Transmit
-         
+
          -- FT232RL
          P_FT232RL_RXD => i_ft_rxd,
          P_FT232RL_TXD => i_ft_txd,

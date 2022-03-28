@@ -137,22 +137,8 @@ __sub32                     ; int[] _sub32(int[] dst, int[] src);
         ret
 
 ;; 32ビットかけ算ルーチン
-__mul32                     ; int[] _mul32(int[] dst, int src)
-        ld      g2,2,sp     ; ディスティネーション(アドレス)
-        ld      g0,2,g2     ; ディスティネーション下位ワード
-        mull    g0,4,sp     ; ソース
-        st      g1,0,g2     ; ディスティネーション上位ワード
-        st      g0,2,g2     ; ディスティネーション下位ワード
-        ld      g0,g2       ; ディスティネーションを返す
-        ret
+;__mul32                     ; int[] _mul32(int[] dst, int src)
 
 ;; 32ビット割算ルーチン
-__div32                     ; int[] _div32(int[] dst, int src)
-        ld      g2,2,sp     ; ディスティネーション(アドレス)
-        ld      g0,2,g2     ; ディスティネーション下位ワード
-        ld      g1,0,g2     ; ディスティネーション上位ワード
-        divl    g0,4,sp     ; ソース
-        st      g1,2,g2     ; ディスティネーション下位ワード(余)
-        st      g0,0,g2     ; ディスティネーション上位ワード(商)
-        ld      g0,g2       ; ディスティネーションを返す
-        ret
+;__div32                     ; int[] _div32(int[] dst, int src)
+

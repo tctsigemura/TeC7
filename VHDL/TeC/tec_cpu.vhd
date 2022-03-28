@@ -55,7 +55,7 @@ entity TEC_CPU is
          P_G2D   : out std_logic_vector(7 downto 0);     -- G2 out
          P_SPD   : out std_logic_vector(7 downto 0);     -- SP out
          P_PCD   : out std_logic_vector(7 downto 0);     -- PC out
-         
+
          P_MODE  : in  std_logic                         -- DEMO MODE
         );
 end TEC_CPU;
@@ -107,7 +107,7 @@ signal I_RRD : std_logic_vector(7 downto 0);  -- Read  Data
 
 -- レジスタ
 signal I_DR  : std_logic_vector(7 downto 0);  -- DR
-signal I_OPR : std_logic_vector(7 downto 0);  -- OPR 
+signal I_OPR : std_logic_vector(7 downto 0);  -- OPR
 signal I_AR  : std_logic_vector(7 downto 0);  -- AR
 signal I_MPC : std_logic_vector(6 downto 0);  -- MPC
 signal I_OP  : std_logic_vector(3 downto 0);  -- IR の OP
@@ -337,7 +337,7 @@ begin
     case M_JP is
       when JMP_NO  => I_MPCLD <= '0';           -- No
                       I_MPCAB <= 'X';
-      when JMP_ALL => I_MPCLD <= '1';           -- JMP    
+      when JMP_ALL => I_MPCLD <= '1';           -- JMP
                       I_MPCAB <= '0';
       when JMP_OP  => I_MPCLD <= '1';           -- JOP
                       I_MPCAB <= '1';
@@ -358,7 +358,7 @@ begin
                       end if;
     end case;
   end process;
-    
+
   process(P_CLK, P_RESET)
   begin
     if (P_RESET='0') then
