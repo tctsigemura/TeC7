@@ -1,34 +1,36 @@
 \chapter{{\tac}の周辺装置}
+\label{io}
 
 {\tac}は，\figref{TaCBlk}に示したように，
 コンソール，MMU，割り込みコントローラ，タイマー，
 入出力装置などの周辺装置を持っている．
-これらには，付録\ref{appTac}，
-\figref{tacMap}のI/Oマップに掲載されているポートを通して，
+これらには，\figref{tacMap}のI/Oマップに掲載されたポートを通して，
 IN，OUT機械語命令でアクセスする．
-本章では，周辺装置の使用方法を解説する．
+以下では，周辺装置の使用方法を解説する．
+なお，特別な説明がないレジスタ等はリセット時に`0'で初期化される．
 
 %-----------------------------------------
 \section{タイマー}
+\label{timer}
 Timer0，Timer1の２チャンネルのインターバルタイマーが使用できる．
 タイマーは16ビットのカウンタと16ビットの周期レジスタ等から構成される．
 
 \begin{center}
   \small\begin{tabular}{| r | c | c || c | c |}\hline
     \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c||}{IN}
     & \multicolumn{2}{c|}{OUT}
     \\\cline{2-5}
          & 上位バイト & 下位バイト & 上位バイト & 下位バイト
     \\\hline\hline
-    00h  &  \multicolumn{2}{| c||}{Timer0カウンタ}
-         &  \multicolumn{2}{| c |}{Timer0周期レジスタ} \\\hline
-    02h  &  \multicolumn{2}{| c||}{Timer0フラグ}
-         &  \multicolumn{2}{| c |}{Timer0制御}     \\\hline
-    04h  &  \multicolumn{2}{| c||}{Timer1カウンタ}
-         &  \multicolumn{2}{| c |}{Timer1周期レジスタ} \\\hline
-    06h  &  \multicolumn{2}{| c||}{Timer1フラグ}
-         &  \multicolumn{2}{| c |}{Timer1制御}     \\\hline
+    00h  &  \multicolumn{2}{ c||}{Timer0カウンタ}
+         &  \multicolumn{2}{ c |}{Timer0周期レジスタ} \\\hline
+    02h  &  \multicolumn{2}{ c||}{Timer0フラグ}
+         &  \multicolumn{2}{ c |}{Timer0制御}     \\\hline
+    04h  &  \multicolumn{2}{ c||}{Timer1カウンタ}
+         &  \multicolumn{2}{ c |}{Timer1周期レジスタ} \\\hline
+    06h  &  \multicolumn{2}{ c||}{Timer1フラグ}
+         &  \multicolumn{2}{ c |}{Timer1制御}     \\\hline
   \end{tabular}
 \end{center}
 
@@ -38,8 +40,10 @@ Timer0，Timer1の２チャンネルのインターバルタイマーが使用�
   タイマー動作中は1ms毎にカウントアップされ，
   カウンタの値と周期レジスタの値が一致するとゼロにリセットされる．
   リセットされる時，CPUに割り込みを発生する．
+  コンソールからCPUを停止している間はカウンタも停止する．
 \item[周期レジスタ]
-  周期レジスタに書き込んだ値がカウンタのリセットされる周期を決める．
+  周期レジスタに書き込んだ値によって，
+  カウンタがリセットされる周期が決まる．
   単位はミリ秒である．
 \item[フラグ]（\texttt{F0000000 00000000}）
   カウンタの値と周期レジスタの値が一致すると\texttt{F}に`1'がセットされる．
@@ -55,12 +59,12 @@ Timer0，Timer1の２チャンネルのインターバルタイマーが使用�
 \section{FT232RL（シリアルI/O）}
 USBシリアル変換IC（FT232RL）を通してPCと通信を行うことができる．
 変調速度は9,600ボーに固定されており変更することはできない．
-送信・受信それぞれで割り込みを発生することができる．
+送信・受信の両方で割り込みを発生することができる．
 
 \begin{center}
   \small\begin{tabular}{| r | c | c || c | c |}\hline
     \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c||}{IN}
     & \multicolumn{2}{c|}{OUT}
     \\\cline{2-5}
          & 上位バイト & 下位バイト & 上位バイト & 下位バイト
@@ -91,12 +95,12 @@ USBシリアル変換IC（FT232RL）を通してPCと通信を行うことがで
 \section{TeC（シリアルI/O）}
 TeCとシリアルデータ通信ができる．
 変調速度は9,600ボーに固定されており変更することはできない．
-送信・受信それぞれで割り込みを発生することができる．
+送信・受信の両方で割り込みを発生することができる．
 
 \begin{center}
   \small\begin{tabular}{| r | c | c || c | c |}\hline
     \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c||}{IN}
     & \multicolumn{2}{c|}{OUT}
     \\\cline{2-5}
          & 上位バイト & 下位バイト & 上位バイト & 下位バイト
@@ -130,19 +134,19 @@ TeCとシリアルデータ通信ができる．
 \begin{center}
   \small\begin{tabular}{| r | c | c || c | c |}\hline
     \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c||}{IN}
     & \multicolumn{2}{c|}{OUT}
     \\\cline{2-5}
          & 上位バイト & 下位バイト & 上位バイト & 下位バイト
     \\\hline\hline
     10h  &  00 & ステータス
          &  -  & 制御 \\\hline
-    12h  &  \multicolumn{2}{|c||}{メモリアドレス}
-         &  \multicolumn{2}{|c| }{メモリアドレス}     \\\hline
-    14h  &  \multicolumn{2}{|c||}{セクタアドレス上位}
-         &  \multicolumn{2}{|c| }{セクタアドレス上位} \\\hline
-    16h  &  \multicolumn{2}{|c||}{セクタアドレス下位}
-         &  \multicolumn{2}{|c| }{セクタアドレス下位} \\\hline
+    12h  &  \multicolumn{2}{c||}{メモリアドレス}
+         &  \multicolumn{2}{c| }{メモリアドレス}     \\\hline
+    14h  &  \multicolumn{2}{c||}{セクタアドレス上位}
+         &  \multicolumn{2}{c| }{セクタアドレス上位} \\\hline
+    16h  &  \multicolumn{2}{c||}{セクタアドレス下位}
+         &  \multicolumn{2}{c| }{セクタアドレス下位} \\\hline
   \end{tabular}
 \end{center}
 
@@ -163,6 +167,7 @@ TeCとシリアルデータ通信ができる．
   格納するバッファのメモリアドレスを設定する．
   ホストコントローラはCPUの力を借りることなく，
   メモリとマイクロSDの間でデータの転送を行う．
+  バッファサイズは512バイト，バッファアドレスは偶数でなければならない．
 \item[セクタアドレス上位]
   データを読み書きするセクタのLBA（Logical Block Addressing）方式の
   32ビットのアドレスの上位16ビットである．
@@ -178,7 +183,7 @@ TeCとシリアルデータ通信ができる．
 \begin{center}
   \small\begin{tabular}{| r | c | c || c | c |}\hline
     \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c||}{IN}
     & \multicolumn{2}{c|}{OUT}
     \\\cline{2-5}
          & 上位バイト & 下位バイト & 上位バイト & 下位バイト
@@ -200,12 +205,11 @@ TeCとシリアルデータ通信ができる．
     \figref{TeC7Photo}の入出力ポートコネクタ左にピン配置が印刷されている．
   }の8ビットの入力値を読み取る
 \item[出力ポート]
-  入出力ポートの\texttt{O7}〜\texttt{O0}の8ビットに値を出力する．
-  下位2ビットはSPIインタフェースの出力とXORがとられる．
+  入出力ポートの\texttt{O7}〜\texttt{O0}の8ビットに出力する値を設定する．
 \item[ADC参照電圧]
-  {\tecS}基板上のADコンバータ回路の参照電圧を決定する．
+  プリント基板上のADコンバータ回路の参照電圧を決定する．
   {\tac}モードでは，ADコンバータはソフトウェアで制御する必要がある．
-  リセット時は\texttt{0x80}がセットされている．
+  リセット時は\texttt{0x80}がセットされる．
 \item[出力ポート上位]（\texttt{M000 VVVV}）
   \texttt{M}を`1'にすると
   入力ポートの\texttt{I7}〜\texttt{I4}が出力ポートに切り換わる．
@@ -238,7 +242,7 @@ CSをインアクティブにしなければならない．
 \begin{center}
   \small\begin{tabular}{| r | c | c || c | c |}\hline
     \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c||}{IN}
     & \multicolumn{2}{c|}{OUT}
     \\\cline{2-5}
          & 上位バイト & 下位バイト & 上位バイト & 下位バイト
@@ -259,7 +263,7 @@ CSをインアクティブにしなければならない．
   シフトレジスタが動作中に\texttt{B(Busy)}ビットが`1'になる．
 \item[SCLK周期]
   SPIのSCLKの周波数を決める．
-  SCLK周波数は96kHz〜24.576MHz範囲で細かく設定できる．
+  SCLK周波数は96kHz〜24.576MHzの範囲で細かく設定できる．
   書き込む値を$N$とすると周波数は次の式で計算できる．
 
   \centerline{$SCLK周波数 = 24.576 \div ( N + 1 ) MHz$}
@@ -267,7 +271,7 @@ CSをインアクティブにしなければならない．
 
 \begin{center}
   \small\begin{tabular}{ r | r }\hline\hline
-  \multicolumn{1}{c|}{N} & \multicolumn{1}{|c}{SCLK周波数（MHz）} \\\hline
+  \multicolumn{1}{c|}{N} & \multicolumn{1}{c}{SCLK周波数（MHz）} \\\hline
   0   & 24.576 \\
 %  1   & 12.288 \\
   3   &  6.144 \\
@@ -284,13 +288,13 @@ CSをインアクティブにしなければならない．
 \section{入力ポート割り込み}
 入出力ポートの\texttt{I7}〜\texttt{I0}を監視し，
 入力が変化した時に割り込みを発生することができる．
-監視対象のビット全ての論理和をとり，
+監視対象ビット全ての論理和をとり，
 結果が`0'から`1'に変化する時に割り込みが発生する．
 
 \begin{center}
   \small\begin{tabular}{| r | c | c || c | c |}\hline
     \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c||}{IN}
     & \multicolumn{2}{c|}{OUT}
     \\\cline{2-5}
          & 上位バイト & 下位バイト & 上位バイト & 下位バイト
@@ -311,19 +315,19 @@ CSをインアクティブにしなければならない．
 \end{description}
 
 複数のビットを同時に監視する際は，
-「監視対象のビット全ての論理和をとり，
+「監視対象ビット全ての論理和をとり，
 結果が`0'から`1'に変化する時に割り込みが発生する．」ことを考慮し，
-適切に\texttt{MASK}と\texttt{XOR}の設定を操作する必要がある．
+適切な順序で\texttt{MASK}と\texttt{XOR}を操作する必要がある．
 
 %-----------------------------------------
 \section{RN4020アダプタ}
-Blutetoothモジュール（RN4020）を接続するインタフェースである．
+Bluetoothモジュール（RN4020）を接続するインタフェースである．
 TeC7aにはない．
 
 \begin{center}
   \small\begin{tabular}{| r | c | c || c | c |}\hline
     \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c||}{IN}
     & \multicolumn{2}{c|}{OUT}
     \\\cline{2-5}
          & 上位バイト & 下位バイト & 上位バイト & 下位バイト
@@ -358,16 +362,17 @@ TeC7aにはない．
   \texttt{H}はRN4020の\|WAKE_HW|ピンを制御する．
   \texttt{C}はRN4020の\|CMD/MLDP|ピンを制御する．
   \texttt{S}はRN4020の\|WAKE_SW|ピンを制御する．
+  \texttt{S}にはリセット時に`1'が設定される．
 \item[接続状況]（\texttt{RRRR RRRC}）
   \texttt{R}はリセットされないメモリである．
-  RESETボタンが押され{\tac}が再起動しても以前の状態を維持している．
+  RESETボタンが押され{\tac}が再起動しても以前の状態を維持する．
   \texttt{C}の意味は，TeC7b，TeC7cとTeC7dで異なる．
   \begin{itemize}
-  \item TeC7b，TeC7cの場合\texttt{C}はRESETされない1ビットのメモリである．
+  \item TeC7b，TeC7cの場合，\texttt{C}はRESETされない1ビットのメモリである．
     IPLプログラムとOSはRN4020からの受信データを監視し，
     BlueTerminal（\url{https://github.com/tctsigemura/BlueTerminal}）との
-    接続確立・切断が発生したことを判定し\texttt{C}に接続状態を書き込む．
-  \item TeC7dの場合\texttt{C}はRN4020の
+    接続・切断を判定し\texttt{C}に接続状態を書き込む．
+  \item TeC7dの場合，\texttt{C}はRN4020の
     \texttt{CONNECTION LED}ピンの状態を反映する．
     このビットへの書き込みはできない．（無視される．）
   \end{itemize}
@@ -385,7 +390,7 @@ TeC7aにはない．
 \begin{center}
   \small\begin{tabular}{| r | c | c || c | c |}\hline
     \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c||}{IN}
     & \multicolumn{2}{c|}{OUT}
     \\\cline{2-5}
          & 上位バイト & 下位バイト & 上位バイト & 下位バイト
@@ -411,10 +416,8 @@ TeC7aにはない．
   {\tec}コンソールの一番下の八つのスイッチを操作する．
   各ビットの意味は下の表の通りである．
 \item[スイッチ状態]（\texttt{0000 00RS}）
-  \texttt{R}はRESETボタンが押されているか，
-  \texttt{S}はSETAボタンが押されているかを表す．
-  {\tec}モードでRESETボタンだけが押されても{\tac}はリセットされない．
-  {\tec}モードで{\tac}をリセットするにはRESETとSETAボタンを同時に押す．
+  \texttt{R}はRESETボタン，
+  \texttt{S}はSETAボタンが押されていることを表す．
 \item[制御]（\texttt{I000 0JKL}）
   \texttt{I}は\figref{TeC7Blk}のMUX1を操作し，
   TeCアダプタの機能を有効にするビットである．
@@ -425,7 +428,7 @@ TeC7aにはない．
 
 \begin{center}
   \small\begin{tabular}{c | l}\hline\hline
-  ビット     & \multicolumn{1}{|c}{スイッチ}\\\hline
+  ビット     & \multicolumn{1}{c}{スイッチ}\\\hline
   \texttt{A} & BREAK \\
   \texttt{B} & STEP  \\
   \texttt{C} & RUN   \\
@@ -441,51 +444,6 @@ TeC7aにはない．
   \end{tabular}
 \end{center}
 
-\newpage
-%-----------------------------------------
-\section{MMU（Memroy Management Unit）}
-リロケーションレジスタ方式のMMUが使用できる．
-MMUが働くのはユーザモードで実行中だけである．
-
-\begin{center}
-  \small\begin{tabular}{| r | c | c || c | c |}\hline
-    \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
-    & \multicolumn{2}{c|}{OUT}
-    \\\cline{2-5}
-         & 上位バイト & 下位バイト & 上位バイト & 下位バイト
-    \\\hline\hline
-    F0h  &  00 & 00
-         &  -  & IPL切離し \\\hline
-    F2h  &  00 & 00
-         &  -  & MMU有効化 \\\hline
-    F4h  &  00 & 00
-         &  \multicolumn{2}{| c|}{ベースレジスタ} \\\hline
-    F6h  &  00 & 00
-         &  \multicolumn{2}{| c|}{リミットレジスタ} \\\hline
-  \end{tabular}
-\end{center}
-
-\begin{description}
-\item[IPL切離し]（\texttt{0000 000I}）
-  \texttt{I}に`1'を書き込むと，
-  メモリ空間最後の8KiBに配置されたIPL（ROM）が切り離されRAMに置き換わる．
-  これによりメモリ空間64KiB全てがRAMになる．
-  なお，{\tac}がリセットされると\texttt{I}は`0'になる．
-\item[MMU有効化]（\texttt{0000 000E}）
-  \texttt{E}に`1'を書き込むとMMUが有効になる．
-  MMUが有効になるとリロケーションレジスタ方式のアドレス変換がされる．
-  また，「不正（奇数）アドレス」，「メモリ保護違反」を監視するようになり，
-  MMUが割込みを発生するようになる．
-  なお，{\tac}がリセットされると\texttt{E}は`0'になる．
-\item[ベースレジスタ]
-  リロケーションレジスタのベースレジスタである．
-  ユーザメモリが配置される物理メモリの開始アドレスを格納する．
-\item[リミットレジスタ]
-  リロケーションレジスタのベースレジスタである．
-  ユーザメモリ空間のサイズを格納する．
-\end{description}
-
 %-----------------------------------------
 \section{コンソール}
 {\tac}モードでプログラム実行中は，
@@ -494,14 +452,14 @@ MMUが働くのはユーザモードで実行中だけである．
 \begin{center}
   \small\begin{tabular}{| r | c | c || c | c |}\hline
     \multirow{2}{*}{番地}
-    & \multicolumn{2}{|c||}{IN}
+    & \multicolumn{2}{c||}{IN}
     & \multicolumn{2}{c|}{OUT}
     \\\cline{2-5}
          & 上位バイト & 下位バイト & 上位バイト & 下位バイト
     \\\hline\hline
     F8h  &  00 & データSW
-         &  \multicolumn{2}{| c |}{データレジスタ} \\\hline
-    FAh  &  \multicolumn{2}{| c||}{アドレスレジスタ}
+         &  \multicolumn{2}{c|}{データレジスタ} \\\hline
+    FAh  &  \multicolumn{2}{c||}{アドレスレジスタ}
          &  - & - \\\hline
     FCh  &  00 & ロータリーSW
          &  - & - \\\hline
@@ -522,3 +480,5 @@ MMUが働くのはユーザモードで実行中だけである．
 \item[機能レジスタ]
   このポートからWRITEスイッチが押されたことを知ることができる．
 \end{description}
+
+

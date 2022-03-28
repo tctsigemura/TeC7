@@ -5,7 +5,7 @@
 %------------------------------------------------------------------------------
 \documentclass[a4paper,11pt,twocolumn]{ltjsbook}      % lualatex の場合
 \usepackage{mySty}
-\newcommand{\ver}{Ver. 1.0.1}
+\newcommand{\ver}{Ver. 2.0.0}
 %------------------------------------------------------------------------------
 % はじまり
 \begin{document}
@@ -24,7 +24,7 @@
 ~
 \vfill
 \begin{flushleft}
-Copyright \copyright ~~ 2019 - 2020 by \\
+Copyright \copyright ~~ 2019 - 2022 by \\
 Dept. of Computer Science and Electronic Engineering, \\
 Tokuyama College of Technology, JAPAN
 \end{flushleft}
@@ -54,6 +54,8 @@ Tokuyama College of Technology, JAPAN
 \include{chap1} % 概要（モードなど）
 \include{chap2} % 操作方法
 \include{chap3} % TaCのアーキテクチャ
+\include{chap4} % TaCの周辺装置
+\include{chap5} % TaCの機械語命令
 
 \appendix       % 付録
 \include{appA}  % TaCの命令表・メモリマップ・I/Oマップ
@@ -70,11 +72,13 @@ Tokuyama College of Technology, JAPAN
 \large{\textbf{{\tecS} ハードウェアマニュアル \ver}} \\
 \\
 % 発行年月　２０１９年９月　\ver \\ %1.0.0
-　発行年月　２０２０年３月　\ver \\
+% 発行年月　２０２０年３月　\ver \\ %1.0.1
+　発行年月　２０２２年３月　\ver \\ %2.0.0
+
 　発　　行　独立行政法人国立高等専門学校機構 \\
 　　　　　　徳山工業高等専門学校 \\
 　　　　　　情報電子工学科　重村哲至 \\
-　　　　　　〒745-8585 山口県周南市学園台 \\
+　　　　　　〒745-8585 山口県周南市学園台3538 \\
 　　　　　　sigemura@tokuyama.ac.jp \\
 }}
 \end{center}

@@ -1,0 +1,1003 @@
+\chapter{{\tac}の機械語命令}
+
+\newcommand{\twoWord}[7]{
+\texttt{\tabcolsep=0cm
+  \begin{tabular}{| wc{24mm} | wc{12mm} | wc{12mm} | wc{48mm} |}
+    \multicolumn{1}{c}{\footnotesize OP(8)}  &
+    \multicolumn{1}{c}{\footnotesize #1(4)}  &
+    \multicolumn{1}{c}{\footnotesize #2(4)}  &
+    \multicolumn{1}{c}{\footnotesize #3(16)} \\\hline
+    #4 & #5 & #6 & #7 \\\hline
+  \end{tabular}}
+}
+
+\newcommand{\oneWord}[5]{
+\texttt{\tabcolsep=0cm
+  \begin{tabular}{| wc{24mm} | wc{12mm} | wc{12mm} |}
+    \multicolumn{1}{c}{\footnotesize OP(8)}  &
+    \multicolumn{1}{c}{\footnotesize #1(4)}  &
+    \multicolumn{1}{c}{\footnotesize #2(4)}  \\\hline
+    #3 & #4 & #5 \\\hline
+  \end{tabular}}
+}
+
+\newcommand{\opCode}[3]{
+\texttt{\tabcolsep=0cm
+  \begin{tabular}{| wc{24mm} | wc{12mm} | wc{12mm} |}
+    \hline #1 & #2 & #3 \\\hline
+  \end{tabular}}
+}
+
+{\tac}の機械語命令一覧を\figref{tacInst}に，
+機械語命令の命令フォーマット一覧を\figref{tacFormat}に示す．
+
+%================================================
+\section{命令フォーマットとアドレッシングモード}
+{\tac}は\figref{tacFormat}に示す
+10種類の命令フォーマットの機械語命令を持つ．
+
+\figref{tacFormat}「命令コード一覧」から分かるように，
+LDからSHRLまでの範囲の命令は，
+%「ダイレクト」，「インデクスド」，「イミディエイト」，「FP相対」，
+%「レジスタレジスタ」，「ショートイミディエイト」，
+%「レジスタインダイレクト」，「バイト・レジスタインダイレクト」の
+8種類の命令フォーマット（アドレッシングモード）を利用できる．
+これらの命令では，第１バイトの上位5ビットで命令の種類，
+下位3ビットで命令フォーマットを指定する．
+命令フォーマットを指定することは，
+アドレッシングモードを指定することでもある．
+
+JMP，CALL命令は，
+「ダイレクト」と「インデクスド」の2種類の
+命令フォーマット（アドレッシングモード）が利用できる．
+IN，OUT命令は，
+「ダイレクト」と「レジスタインダイレクト」の
+2種類の命令フォーマット（アドレッシングモード）が利用できる．
+PUSH，POP命令は，「レジスタ」命令フォーマットを用いる．
+RET，RETI，SVC命令は，「オペランドなし」命令フォーマットを用いる．
+
+%===============================================
+\subsection{ダイレクト}
+下の命令フォーマットに示す2ワード（4バイト）の命令である．
+\texttt{OP}の上位5ビット（\texttt{oooo o}）が命令の種類，
+下位3ビット（\texttt{000}）が「ダイレクトモード」であることを表現している．
+
+\texttt{Rd}の4ビット（\texttt{dddd}）でディスティネーションレジスタを指定する．
+この4ビットの意味は\figref{tacFormat}の「\texttt{Rd/Rs/Rx}」の通りである．
+\texttt{Rx}の4ビットは使用しないので\texttt{0000}とする．
+\texttt{Dsp}の16ビット（\texttt{aaaa aaaa aaaa aaaa}）が
+直接に実効アドレスを表現する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OP Rd,A}
+
+\item[命令フォーマット：] % 2ワード命令である．\\
+\twoWord{Rd}{Rx}{Dsp}{oooo o000}{dddd}{0000}{aaaa aaaa aaaa aaaa}
+
+\item[使用例：] ディスティネーションレジスタにG3，
+ソースオペランドに1234H番地のデータを指定したLD命令の例である．
+LD命令の場合，\texttt{OP}の上位5ビット\texttt{oooo o}は\texttt{0000 1}になる．
+\texttt{Rd}にはG3を表す\texttt{0011}を指定する．
+1234H番地のデータがG3レジスタにロードされる． \\
+ニーモニック： \texttt{LD G3,0x1234} \\
+命令コード：
+\twoWord{Rd}{Rx}{Dsp}{0000 1000}{0011}{0000}{0001 0010 0011 0100}
+\end{description}
+
+%===============================================
+\subsection{インデクスド}
+下の命令フォーマットに示す2ワード（4バイト）の命令である．
+\texttt{OP}の上位5ビット（\texttt{oooo o}）が命令の種類，
+下位3ビット（\texttt{001}）が
+「インデクスドモード」であることを表現している．
+
+\texttt{Rd}の4ビット（\texttt{dddd}）でディスティネーションレジスタを指定する．
+\texttt{Rx}の4ビット（\texttt{xxxx}）はインデクスレジスタを指定する．
+これら4ビットの意味は\figref{tacFormat}の「\texttt{Rd/Rs/Rx}」の通りである．
+\texttt{Dsp}の16ビット（\texttt{aaaa aaaa aaaa aaaa}）で指定したアドレスに，
+\texttt{Rx}で指定したインデクスレジスタの内容を足したものが実効アドレスになる．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OP Rd,A,Rx}
+
+\item[命令フォーマット：] % 2ワード命令である．\\
+\twoWord{Rd}{Rx}{Dsp}{oooo o001}{dddd}{xxxx}{aaaa aaaa aaaa aaaa}
+
+\item[使用例：] ディスティネーションレジスタにG1，
+インデクスレジスタにG2，アドレスに1234H番地を指定した例である．
+1234HにG2の値を加えて求めた番地のデータがG1レジスタにロードされる． \\
+ニーモニック： \texttt{LD G1,0x1234,G2} \\
+命令コード：
+\twoWord{Rd}{Rx}{Dsp}{0000 1001}{0001}{0010}{0001 0010 0011 0100}
+\end{description}
+
+%===============================================
+\subsection{イミディエイト}
+下の命令フォーマットに示す2ワード（4バイト）の命令である．
+\texttt{OP}の上位5ビット（\texttt{oooo o}）が命令の種類，
+下位3ビット（\texttt{010}）が
+「イミディエイトモード」であることを表現している．
+
+\texttt{Rd}の4ビット（\texttt{dddd}）でディスティネーションレジスタを指定する．
+この4ビットの意味は\figref{tacFormat}の「\texttt{Rd/Rs/Rx}」の通りである．
+\texttt{Rx}の4ビットは使用しないので\texttt{0000}とする．
+\texttt{Imm}の16ビット（\texttt{iiii iiii iiii iiii}）に即値データを格納する．
+\texttt{Imm}に格納した値がデータとして使用される．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OP Rd,\#Imm}
+
+\item[命令フォーマット：] % 2ワード命令である．\\
+\twoWord{Rd}{Rx}{Imm}{oooo o010}{dddd}{0000}{iiii iiii iiii iiii}
+
+\item[使用例：] ディスティネーションレジスタにSP，
+即値データに1234Hを指定した例である．
+1234HがSPレジスタにロードされる． \\
+ニーモニック： \texttt{LD SP,\#0x1234} \\
+命令コード：
+\twoWord{Rd}{Rx}{Imm}{0000 1010}{1101}{0000}{0001 0010 0011 0100}
+\end{description}
+
+%===============================================
+\subsection{FP相対}
+下の命令フォーマットに示す1ワード（2バイト）の命令である．
+\texttt{OP}の上位5ビット（\texttt{oooo o}）が命令の種類，
+下位3ビット（\texttt{011}）が「FP相対モード」であることを表現している．
+
+\texttt{Rd}の4ビット（\texttt{dddd}）でディスティネーションレジスタを指定する．
+この4ビットの意味は\figref{tacFormat}の「\texttt{Rd/Rs/Rx}」の通りである．
+\texttt{Offs}の4ビット（\texttt{ffff}）に4ビット符号付きオフセットを格納する．
+$FP + Offs * 2$が実効アドレスになる．
+\texttt{Offs}に格納できる値は$-8 \sim +7$の範囲なので，
+その2倍の$-16 \sim +14$の範囲の偶数オフセットが有効である．
+
+ニーモニックは
+インデクスレジスタに\texttt{FP}を使用した
+「インデクスドモード」の場合と同じであるが，
+アセンブラがオフセットの値によって自動的に「FP相対モード」を選択する．
+このアドレッシングモードは，
+スタックフレーム内のローカル変数や関数引数をアクセスするために都合が良い．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OP Rd,Offs*2,FP}
+
+\item[命令フォーマット：] % 1ワード命令である．\\
+\oneWord{Rd}{Offs}{oooo o011}{dddd}{ffff}
+
+\item[使用例：] ディスティネーションレジスタにG3，
+オフセットに$-2$を指定した例である．
+$FP - 4$番地のデータがG3にロードされる．
+オフセットは実行時に2倍にされるので，
+\texttt{Offs}には$-4$ではなく$-2$が格納される． \\
+ニーモニック： \texttt{LD G3,-4,FP}\\
+命令コード：
+\oneWord{Rd}{Offs}{0000 1011}{0011}{1110}
+\end{description}
+
+%===============================================
+\subsection{レジスタレジスタ}
+下の命令フォーマットに示す1ワード（2バイト）の命令である．
+\texttt{OP}の上位5ビット（\texttt{oooo o}）が命令の種類，
+下位3ビット（\texttt{100}）が「レジスタレジスタモード」である
+ことを表現している．
+
+\texttt{Rd}の4ビット（\texttt{dddd}）でディスティネーションレジスタ，
+\texttt{Rs}の4ビット（\texttt{ssss}）でソースレジスタを指定する．
+これら4ビットの意味は\figref{tacFormat}の「\texttt{Rd/Rs/Rx}」の通りである．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OP Rd,Rs}
+
+\item[命令フォーマット：] % 1ワード命令である．\\
+\oneWord{Rd}{Rs}{oooo o100}{dddd}{ssss}
+
+\item[使用例：] ディスティネーションレジスタG3に
+ソースレジスタG5の値をロードする例である． \\
+ニーモニック： \texttt{LD G3,G5}\\
+命令コード：
+\oneWord{Rd}{Rs}{0000 1100}{0011}{0101}
+\end{description}
+
+%===============================================
+\subsection{ショートイミディエイト}
+下の命令フォーマットに示す1ワード（2バイト）の命令である．
+\texttt{OP}の上位5ビット（\texttt{oooo o}）が命令の種類，
+下位3ビット（\texttt{101}）が「ショートイミディエイトモード」である
+ことを表現している．
+
+\texttt{Rd}の4ビット（\texttt{dddd}）でディスティネーションレジスタを指定する．
+この4ビットの意味は\figref{tacFormat}の「\texttt{Rd/Rs/Rx}」の通りである．
+\texttt{Imm4}の4ビット（\texttt{iiii}）に符号付き即値を格納する．
+\texttt{Imm4}に格納できる値の範囲は$-8 \sim +7$である．
+
+ニーモニックは「イミディエイトモード」の場合と同じであるが，
+アセンブラが即値の値によって自動的に「ショートイミディエイトモード」を選択する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OP Rd,\#Imm4}
+
+\item[命令フォーマット：] % 1ワード命令である．\\
+\oneWord{Rd}{Imm4}{oooo o101}{dddd}{iiii}
+
+\item[使用例：] ディスティネーションレジスタG3に
+$-1$（\texttt{0xffff}）を格納する例である．\\
+ニーモニック： \texttt{LD G3,\#-1}\\
+命令コード：
+\oneWord{Rd}{Imm4}{0000 1101}{0011}{1111}
+\end{description}
+
+%===============================================
+\subsection{レジスタインダイレクト}
+下の命令フォーマットに示す1ワード（2バイト）の命令である．
+\texttt{OP}の上位5ビット（\texttt{oooo o}）が命令の種類，
+下位3ビット（\texttt{110}）が「レジスタインダイレクトモード」である
+ことを表現している．
+
+\texttt{Rd}の4ビット（\texttt{dddd}）でディスティネーションレジスタ，
+\texttt{Rx}の4ビット（\texttt{xxxx}）でインデクスレジスタを指定する．
+これら4ビットの意味は\figref{tacFormat}の「\texttt{Rd/Rs/Rx}」の通りである．
+インデクスレジスタの値が実効アドレスになる．
+下に示すように2通りのニーモニックが使用できる．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OP Rd,\%Rx} または \texttt{OP Rd,0,Rx}
+
+\item[命令フォーマット：] % 1ワード命令である．\\
+\oneWord{Rd}{Rx}{oooo o110}{dddd}{xxxx}
+
+\item[使用例：] ディスティネーションレジスタG3に
+G7レジスタの内容番地のデータを格納する例である．\\
+ニーモニック： \texttt{LD G3,\%G7}\\
+命令コード：
+\oneWord{Rd}{Rx}{0000 1110}{0011}{0111}
+\end{description}
+
+%===============================================
+\subsection{バイト・レジスタインダイレクト}
+下の命令フォーマットに示す1ワード（2バイト）の命令である．
+\texttt{OP}の上位5ビット（\texttt{oooo o}）が命令の種類，
+下位3ビット（\texttt{111}）が「バイト・レジスタインダイレクトモード」である
+ことを表現している．
+
+\texttt{Rd}の4ビット（\texttt{dddd}）でディスティネーションレジスタ，
+\texttt{Rx}の4ビット（\texttt{xxxx}）でインデクスレジスタを指定する．
+これら4ビットの意味は\figref{tacFormat}の「\texttt{Rd/Rs/Rx}」の通りである．
+インデクスレジスタの値が実効アドレスになる．
+
+このアドレッシングモードがバイトデータを扱うことができる唯一のものである．
+実効アドレスのバイトデータがソースオペランドとして用いられる．
+ST命令ではディスティネーションレジスタの下位8ビットが
+実効アドレスのバイトに格納される．
+それ以外の命令では，
+実効アドレスのバイト上位に\texttt{00H}を補い16ビットデータに変換して，
+ソースオペランドの値とする．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OP Rd,@Rx}
+
+\item[命令フォーマット：] % 1ワード命令である．\\
+\oneWord{Rd}{Rx}{oooo o111}{dddd}{xxxx}
+
+\item[使用例：] ディスティネーションレジスタG3に
+G7レジスタの内容番地のデータを格納する例である．\\
+ニーモニック： \texttt{LD G3,@G7}\\
+命令コード：
+\oneWord{Rd}{Rx}{0000 1111}{0011}{0111}
+\end{description}
+
+%===============================================
+\subsection{レジスタ}
+下の命令フォーマットに示す1ワード（2バイト）の命令である．
+PUSH命令とPOP命令だけがこのフォーマットを用いる．
+
+\texttt{OP}の8ビット（\texttt{oooo oooo}）が命令の種類，
+\texttt{Rd}の4ビット（\texttt{dddd}）でディスティネーションレジスタを指定する．
+\texttt{Rd}の4ビットの意味は
+\figref{tacFormat}の「\texttt{Rd/Rs/Rx}」の通りである．
+\texttt{Rx}は使用しないので\texttt{0000}にする．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OP Rd}
+
+\item[命令フォーマット：] % 1ワード命令である．\\
+\oneWord{Rd}{Rx}{oooo oooo}{dddd}{0000}
+
+\item[使用例：] ディスティネーションレジスタG3に
+値を読み出すPOP命令の例である．\\ 
+POP命令の\texttt{OP}は\texttt{1100 0100}である．\\
+ニーモニック： \texttt{POP G3}\\
+命令コード：
+\oneWord{Rd}{Rx}{1100 0100}{0011}{0000}
+\end{description}
+
+%===============================================
+\subsection{オペランドなし}
+下の命令フォーマットに示す1ワード（2バイト）の命令である．
+NO，RET，RETI，SVC，HALT命令がこのフォーマットを用いる．
+
+\texttt{OP}の8ビット（\texttt{oooo oooo}）が命令の種類を表す．
+\texttt{Rd}と\texttt{Rx}は使用しないので\texttt{0000}にする．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OP}
+
+\item[命令フォーマット：] % 1ワード命令である．\\
+\oneWord{Rd}{Rx}{oooo oooo}{0000}{0000}
+
+\item[使用例：] HALT命令の例である．\\ 
+ニーモニック： \texttt{HALT}\\
+命令コード：
+\oneWord{Rd}{Rx}{1111 1111}{0000}{0000}
+\end{description}
+
+%===============================================
+\section{機械語命令}
+
+{\tac}は\figref{tacInst}に示す機械語命令を実行することができる．
+同じ機械語命令でも，
+アドレッシングモードによって1ワードの場合と2ワードの場合がある．
+以下では各命令について次の項目を説明する．
+
+\begin{description}
+\item[オペコード：]
+機械語命令の第1ワード（16ビット）を説明している．
+オペコードに\texttt{EA}が含まれる場合は，
+アドレッシングモードによって，
+その部分の意味が変化することを表す．
+
+\item[操作内容：]
+命令の動作を短く記述している．
+\texttt{EA}は
+アドレッシングモードにより決まった実効アドレスの意味，
+\texttt{[EA]}は
+アドレッシングモードにより決まった実効アドレスの内容の意味である．
+
+\item[アドレッシングモード：]
+命令で使用できるアドレッシングモードの一覧である．
+
+\item[フラグ変化：]
+命令がフラグをどのように変化させるかを説明している．
+なお，\texttt{Rd}にFLAGを指定した場合は，
+フラグ変化なしの命令でもFLAGが変化することがある．
+例えばLD命令（\texttt{LD FLAG,\#0xFF}など）でFLAGに値をロードすることができる．
+特権モードでは8ビットすべてのビットを変化させることができるが，
+I/O特権モードとユーザモードでは\texttt{EPI}の3ビットを変化させることはできない．
+
+\item[ニーモニック：]
+アセンブリ言語での記述方法を表している．
+\texttt{EA}は，
+アドレッシングモードによって記述方法が異なる部分を表している．
+例えばLD命令のニーモニックは\texttt{LD Rd,EA}と記載されているが，
+実際は\texttt{LD G0,0x1234}，\texttt{LD G0,0x1234,G1}，
+\texttt{LD G0,\#0x1234}などの記述ができる．
+\end{description}
+
+%===============================================
+\subsection{NO（No Operation）命令}
+何もしない命令である．
+3ステートの時間を消費するのでタイミングを合わせる目的で利用できる．
+
+\begin{description}
+\item[ニーモニック：] \texttt{NO}
+\item[オペコード：] \opCode{0000 0000}{0000}{0000}
+\item[操作内容：] なし
+\item[命令フォーマット：] オペランドなし
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{LD（Load）命令}
+ソースオペランドのデータをディスティネーションレジスタにロードする．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{LD Rd,EA}
+\item[オペコード：] \opCode{0000 1mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{ST（Store）命令}
+レジスタのデータをメモリオペランドにストアする．
+メモリオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{ST Rd,EA}
+\item[オペコード：] \opCode{0001 0mmm}{Rd}{EA}
+\item[操作内容：] \|[EA]←Rd|
+\item[命令フォーマット：] ダイレクト，インデクスド，FP相対，
+レジスタインダイレクト，バイト・レジスタインダイレクト
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{ADD（Add）命令}
+ソースオペランドのデータをディスティネーションレジスタに加える．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{ADD Rd,EA}
+\item[オペコード：] \opCode{0001 1mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd+[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{VCSZ}が変化
+\end{description}
+
+%===============================================
+\subsection{SUB（Subtract）命令}
+ソースオペランドのデータをディスティネーションレジスタから引く．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{SUB Rd,EA}
+\item[オペコード：] \opCode{0010 0mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd-[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{VCSZ}が変化
+\end{description}
+
+%===============================================
+\subsection{CMP（Compare）命令}
+ソースオペランドのデータとディスティネーションレジスタを比較する．
+フラグはSUB命令と同じ変化をする．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{CMP Rd,EA}
+\item[オペコード：] \opCode{0010 1mmm}{Rd}{EA}
+\item[操作内容：] \|Rd-[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{VCSZ}が変化
+\end{description}
+
+%===============================================
+\subsection{AND（Logical And）命令}
+ソースオペランドのデータとディスティネーションレジスタの
+ビットごとの論理積を計算しディスティネーションレジスタに格納する．
+V，Cフラグはいつも`0'になる．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{AND Rd,EA}
+\item[オペコード：] \opCode{0011 0mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd＆[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{SZ}が変化，\texttt{VC}は`0'になる
+\end{description}
+
+%===============================================
+\subsection{OR（Logical Or）命令}
+ソースオペランドのデータとディスティネーションレジスタの
+ビットごとの論理和を計算しディスティネーションレジスタに格納する．
+V，Cフラグはいつも`0'になる．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OR Rd,EA}
+\item[オペコード：] \opCode{0011 1mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd｜[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{SZ}が変化，\texttt{VC}は`0'になる
+\end{description}
+
+%===============================================
+\subsection{XOR（Logical Xor）命令}
+ソースオペランドのデータとディスティネーションレジスタの
+ビットごとの排他的論理和を計算しディスティネーションレジスタに格納する．
+V，Cフラグはいつも`0'になる．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{XOR Rd,EA}
+\item[オペコード：] \opCode{0100 0mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd⊕[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{SZ}が変化，\texttt{VC}は`0'になる
+\end{description}
+
+TaCにはNOT命令がないが，
+「\texttt{XOR Rd,\#-1}」が「\texttt{NOT Rd}」の代用になる．
+
+%===============================================
+\subsection{ADDS（Add with Scale）命令}
+ソースオペランドのデータの2倍の値をディスティネーションレジスタに加える．
+ワード配列のアドレス計算用の命令である．
+Vフラグはいつも`0'になる．
+Cフラグは意味のない変化をする．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{ADDS Rd,EA}
+\item[オペコード：] \opCode{0100 1mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd+[EA]×2|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{SZ}が変化，\texttt{V}は`0'，
+\texttt{C}は不定になる
+\end{description}
+
+%===============================================
+\subsection{MUL（Multiply）命令}
+ソースオペランドとディスティネーションレジスタの積を計算する．
+16ビットの符号なし掛け算命令である．
+V，Cフラグはいつも`0'になる．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{MUL Rd,EA}
+\item[オペコード：] \opCode{0101 0mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd×[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{SZ}が変化，\texttt{VC}は`0'になる．
+\end{description}
+
+%===============================================
+\subsection{DIV（Divide）命令}
+ソースオペランドでディスティネーションレジスタの値を割った商を計算する．
+16ビットの符号なし割り算命令である．
+V，Cフラグはいつも`0'になる．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{DIV Rd,EA}
+\item[オペコード：] \opCode{0101 1mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd÷[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{SZ}が変化，\texttt{VC}は`0'になる．
+\end{description}
+
+%===============================================
+\subsection{MOD（Modulo）命令}
+ソースオペランドでディスティネーションレジスタの値を割った余りを計算する．
+16ビットの符号なし剰余算命令である．
+V，Cフラグはいつも`0'になる．
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{MOD Rd,EA}
+\item[オペコード：] \opCode{0110 0mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd％[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{SZ}が変化，\texttt{VC}は`0'になる．
+\end{description}
+
+%===============================================
+\subsection{SHLA（Shift Left Arithmetic）命令}
+ディスティネーションレジスタの値を
+ソースオペランドの下位4ビットで表現されるビット数（0〜15）だけ左にシフトする．
+シフトの結果，下位側に新しく生じるビットはすべて`0'になる．
+Vフラグはいつも`0'，Cフラグはシフトする前の値の最上位ビットと同じ値になる．
+
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{SHLA Rd,EA}
+\item[オペコード：] \opCode{1000 0mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd<<[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{CSZ}が変化，\texttt{V}は`0'になる．
+\end{description}
+
+%===============================================
+\subsection{SHLL（Shift Left Logical）命令}
+SHLA命令と全く同じ動作をする命令である．
+
+\begin{description}
+\item[ニーモニック：] \texttt{SHLL Rd,EA}
+\item[オペコード：] \opCode{1000 1mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd<<[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{CSZ}が変化，\texttt{V}は`0'になる．
+\end{description}
+
+%===============================================
+\subsection{SHRA（Shift Right Arithmetic）命令}
+ディスティネーションレジスタの値を
+ソースオペランドの下位4ビットで表現されるビット数（0〜15）だけ右にシフトする．
+シフトの結果，上位側に新しく生じるビットには，
+シフト前の最上位ビットの値がコピーされる．
+Vフラグはいつも`0'に，Cフラグはシフトする前の値の最下位ビットと同じ値になる．
+
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{SHRA Rd,EA}
+\item[オペコード：] \opCode{1001 0mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd>>[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{CSZ}が変化，\texttt{V}は`0'になる．
+\end{description}
+
+%===============================================
+\subsection{SHRL（Shift Right Logical）命令}
+ディスティネーションレジスタの値を
+ソースオペランドの下位4ビットで表現されるビット数（0〜15）だけ右にシフトする．
+シフトの結果，上位側に新しく生じるビットはすべて`0'になる．
+Vフラグはいつも`0'に，Cフラグはシフトする前の値の最下位ビットと同じ値になる．
+
+ソースオペランドはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{SHRL Rd,EA}
+\item[オペコード：] \opCode{1001 1mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←Rd>>>[EA]|
+\item[命令フォーマット：] ダイレクトからバイト・インダイレクトの8種類
+\item[フラグ変化：] 計算結果により\texttt{CSZ}が変化，\texttt{V}は`0'になる．
+\end{description}
+
+%===============================================
+\subsection{JZ（Jump on Zero）命令}
+Zフラグが`1'の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JZ EA}
+\item[オペコード：] \opCode{1010 0mmm}{0000}{EA}
+\item[操作内容：] \|if (Z=1) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JC（Jump on Carry）命令}
+Cフラグが`1'の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JC EA}
+\item[オペコード：] \opCode{1010 0mmm}{0001}{EA}
+\item[操作内容：] \|if (C=1) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JM（Jump on Minus）命令}
+Sフラグが`1'の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JM EA}
+\item[オペコード：] \opCode{1010 0mmm}{0010}{EA}
+\item[操作内容：] \|if (S=1) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JO（Jump on Overflow）命令}
+Vフラグが`1'の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JO EA}
+\item[オペコード：] \opCode{1010 0mmm}{0011}{EA}
+\item[操作内容：] \|if (V=1) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JGT（Jump on Greater Than）命令}
+直前の計算が符号付き演算だと仮定し，
+結果が0より大きい場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JGT EA}
+\item[オペコード：] \opCode{1010 0mmm}{0100}{EA}
+\item[操作内容：] \|if (>0) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JGE（Jump on Greater or Equal）命令}
+直前の計算が符号付き演算だと仮定し，
+結果が0以上の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JGE EA}
+\item[オペコード：] \opCode{1010 0mmm}{0101}{EA}
+\item[操作内容：] \|if (≧0) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JLE（Jump on Less or Equal）命令}
+直前の計算が符号付き演算だと仮定し，
+結果が0以下の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JLE EA}
+\item[オペコード：] \opCode{1010 0mmm}{0110}{EA}
+\item[操作内容：] \|if (≦0) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JLT（Jump on Less Than）命令}
+直前の計算が符号付き演算だと仮定し，
+結果が0より小さい場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JLT EA}
+\item[オペコード：] \opCode{1010 0mmm}{0111}{EA}
+\item[操作内容：] \|if (<0) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JNZ（Jump on Non Zero）命令}
+Zフラグが`0'の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JNZ EA}
+\item[オペコード：] \opCode{1010 0mmm}{1000}{EA}
+\item[操作内容：] \|if (Z=0) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JNC（Jump on Non Carry）命令}
+Cフラグが`0'の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JNC EA}
+\item[オペコード：] \opCode{1010 0mmm}{1001}{EA}
+\item[操作内容：] \|if (C=0) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JNM（Jump on Non Minus）命令}
+Sフラグが`0'の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JNM EA}
+\item[オペコード：] \opCode{1010 0mmm}{1010}{EA}
+\item[操作内容：] \|if (S=0) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JNO（Jump on Non Overflow）命令}
+Vフラグが`0'の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JNO EA}
+\item[オペコード：] \opCode{1010 0mmm}{1011}{EA}
+\item[操作内容：] \|if (O=0) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JHI（Jump on Higher）命令}
+直前の計算が符号なし演算だと仮定し，
+結果が0より大きい場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JHI EA}
+\item[オペコード：] \opCode{1010 0mmm}{1100}{EA}
+\item[操作内容：] \|if (>0) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JLS（Jump on Lower or Same）命令}
+直前の計算が符号なし演算だと仮定し，
+結果が0以下の場合のみジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JLS EA}
+\item[オペコード：] \opCode{1010 0mmm}{1110}{EA}
+\item[操作内容：] \|if (≦0) PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{JMP（Jump）命令}
+無条件にジャンプする．
+ジャンプ先はアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{JMP EA}
+\item[オペコード：] \opCode{1010 0mmm}{1111}{EA}
+\item[操作内容：] \|PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{CALL（Call）命令}
+サブルーチンを呼び出す．
+まず，CALL命令の次の命令のアドレスをスッタックにPUSHし，
+次にサブルーチンにジャンプする．
+サブルーチンのアドレスはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{CALL EA}
+\item[オペコード：] \opCode{1010 1mmm}{0000}{EA}
+\item[操作内容：] \|SP←SP-2, [SP]←PC, PC←EA|
+\item[命令フォーマット：] ダイレクト，インデクスド
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{IN（Input）命令}
+レジスタにI/O空間から16ビットのデータを読む．
+I/Oアドレスはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+この命令は\emph{特権命令}である．
+特権モードとI/O特権モードで実行できる．
+ユーザモードで使用すると「特権違反例外」が発生する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{IN Rd,EA}
+\item[オペコード：] \opCode{1011 0mmm}{Rd}{EA}
+\item[操作内容：] \|Rd←IO[EA]|
+\item[命令フォーマット：] ダイレクト，レジスタインダイレクト
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{OUT（Output）命令}
+レジスタの16ビットデータをI/O空間に書き込む．
+I/Oアドレスはアドレッシングモードにより決定される．
+\texttt{OP}の下位3ビット（\texttt{mmm}）でアドレッシングモードを指定する．
+
+この命令は\emph{特権命令}である．
+特権モードとI/O特権モードで実行できる．
+ユーザモードで使用すると「特権違反例外」が発生する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{OUT Rd,EA}
+\item[オペコード：] \opCode{1011 1mmm}{Rd}{EA}
+\item[操作内容：] \|IO[EA]←Rd|
+\item[命令フォーマット：] ダイレクト，レジスタインダイレクト
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{PUSH（Push Register）命令}
+レジスタの16ビットデータをスタックにPUSHする．
+まず，SPを2減じる．
+次にSPが示す番地に，指定されたレジスタのデータを書き込む．
+
+\begin{description}
+\item[ニーモニック：] \texttt{PUSH Rd}
+\item[オペコード：] \opCode{1100 0000}{Rd}{0000}
+\item[操作内容：] \|SP←SP-2, [SP]←Rd|
+
+\item[命令フォーマット：] レジスタ
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{POP（Pop Register）命令}
+スタックの16ビットデータをレジスタにPOPする．
+まず，SPが示す番地のデータを指定されたレジスタ読み込む．
+次に，SPに2を加える．
+
+\begin{description}
+\item[ニーモニック：] \texttt{POP Rd}
+\item[オペコード：] \opCode{1100 0100}{Rd}{0000}
+\item[操作内容：] \|Rd←[SP], SP←SP+2|
+\item[命令フォーマット：] レジスタ
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{RET（Return from Subroutine）命令}
+サブルーチンから戻る．
+まず，SPが示す番地のデータをPCに読み込む．
+次に，SPに2を加える．
+
+\begin{description}
+\item[ニーモニック：] \texttt{RET}
+\item[オペコード：] \opCode{1101 0000}{0000}{0000}
+\item[操作内容：] \|PC←[SP], SP←SP+2|
+\item[命令フォーマット：] オペランドなし
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{RETI（Return from Interrupt）命令}
+割込みハンドラから戻る．
+まず，SPが示す番地のデータをFLAGに読み込む．
+次に，SPに2を加える．
+更に，SPが示す番地のデータをPCに読み込む．
+最後にもう一度，SPに2を加える．
+
+多くのCPUでRETI命令は特権命令かも知れないが，
+TaCのRETI命令は\emph{非特権命令}である．
+特権モードで実行した場合はフラグの全ビットを変更することができるが，
+I/O特権モードとユーザモードで実行した場合は，
+\texttt{EPI}の3ビットは変更されない．
+
+\begin{description}
+\item[ニーモニック：] \texttt{RETI}
+\item[オペコード：] \opCode{1101 0100}{1111}{0000}
+\item[操作内容：] \|FLAG←[SP], SP←SP+2, PC←[SP], SP←SP+2|
+\item[命令フォーマット：] オペランドなし
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{SVC（Supervisor Call）命令}
+システムコールを発行する．
+この命令を実行すると「SVC例外」が発生する．
+
+\begin{description}
+\item[ニーモニック：] \texttt{SVC}
+\item[オペコード：] \opCode{1111 0000}{0000}{0000}
+\item[操作内容：] SVC例外を発生
+\item[命令フォーマット：] オペランドなし
+\item[フラグ変化：] なし
+\end{description}
+
+%===============================================
+\subsection{HALT（Halt）命令}
+CPUを停止する．
+この命令をは\emph{特権命令}である．
+特権モード以外で実行すると「特権違反例外」が発生する．．
+
+\begin{description}
+\item[ニーモニック：] \texttt{HALT}
+\item[オペコード：] \opCode{1111 1111}{0000}{0000}
+\item[操作内容：] CPUを停止
+\item[命令フォーマット：] オペランドなし
+\item[フラグ変化：] なし
+\end{description}
+

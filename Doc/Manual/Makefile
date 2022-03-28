@@ -1,12 +1,13 @@
-PDFS = Fig/TacInst.pdf \
+PDFS = Fig/TacInst-crop.pdf \
        Fig/TeC7.pdf Fig/TeC.pdf Fig/kakubu.pdf Fig/TaC.pdf \
        Fig/Console.pdf Fig/Jumper.pdf Fig/Spi.pdf Fig/TeC7dPcb.pdf
 
 all : ${PDFS}
-	latexmk -interaction=nonstopmode -lualatex manual
+	latexmk -lualatex manual
+#	latexmk -interaction=nonstopmode -lualatex manual
 
-Fig/TacInst.pdf : ../Doc/Arch/TaC命令表.pdf
-	pdfcrop ../Doc/Arch/TaC命令表.pdf Fig/TacInst.pdf
+Fig/TacInst-crop.pdf : ../Arch/TaC命令表.pdf
+	pdfcrop ../Arch/TaC命令表.pdf Fig/TacInst-crop.pdf
 
 Fig/kakubu.pdf : Keynote/kakubu.pdf
 	pdfcrop Keynote/kakubu.pdf Fig/kakubu.pdf
@@ -29,9 +30,10 @@ Fig/Jumper.pdf : Keynote/Jumper.pdf
 Fig/Spi.pdf : Keynote/Spi.pdf
 	pdfcrop Keynote/Spi.pdf Fig/Spi.pdf
 
-Fig/TeC7dPcb.pdf : ../Doc/PCB/TeC7d.pdf
-	pdfcrop ../Doc/PCB/TeC7d.pdf Fig/TeC7dPcb.pdf
+Fig/TeC7dPcb.pdf : ../PCB/TeC7d.pdf
+	pdfcrop ../PCB/TeC7d.pdf Fig/TeC7dPcb.pdf
 
 clean :
-	rm -f *.log *.aux *.dvi *.out *.toc *.vrb *.snm *.nav *~
+	rm -f *.log *.aux *.dvi *.out *.toc *.vrb *.snm *.nav \
+        *.fls *.fdb_latexmk *~
 
