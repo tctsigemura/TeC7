@@ -72,17 +72,19 @@ TaC上では
 |
 + TeC7.msc      コンパイル済みのTeC7の設計データ
 |
-+ Manual        TeC7 のマニュアル（manual.pdf）
++ VHDL          TeC7 VHDL ソース
 |
 + Doc +         ドキュメント
 |     |
 |     + Arch    TeC, TaC の命令表
 |     |
+|     + Manual  TeC7 のマニュアル（manual.pdf）
+|     |
 |     + PCB     TeC7 の回路図，ピンコネ
 |     |
 |     + Photos  TeC7 の写真
 |     |
-|     + VHDL    TeC7 のブロック図・タイミング図等
+|     + VHDL    TeC7 の設計に関する資料（ブロック図，ステートマシン図など）
 |
 + TeC +         TeCモード関連のユーティリティ等
 |     |
@@ -100,7 +102,7 @@ TaC上では
 |
 + Util          TeC,TaC両方のIPL,Mcodeの生成に必要なツール
 |
-+ VHDL          TeC7 VHDL ソース
++ Case          TeC7 ケースのラベル
 |
 + VERSION       バージョン
 |
