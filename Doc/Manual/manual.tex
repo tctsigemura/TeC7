@@ -1,0 +1,86 @@
+%------------------------------------------------------------------------------
+%
+% TeC7 ハードウェアマニュアル
+%
+%------------------------------------------------------------------------------
+\documentclass[a4paper,11pt,twocolumn]{ltjsbook}      % lualatex の場合
+\usepackage{mySty}
+\newcommand{\ver}{Ver. 2.0.0}
+%------------------------------------------------------------------------------
+% はじまり
+\begin{document}
+\frontmatter
+%------------------------------------------------------------------------------
+% 表紙
+\title{{\tecS} ハードウェアマニュアル \ver}
+\author{徳山工業高等専門学校\\情報電子工学科}
+\date{}
+\maketitle
+
+%------------------------------------------------------------------------------
+% 著作権表示
+\thispagestyle{empty}
+\onecolumn
+~
+\vfill
+\begin{flushleft}
+Copyright \copyright ~~ 2019 - 2022 by \\
+Dept. of Computer Science and Electronic Engineering, \\
+Tokuyama College of Technology, JAPAN
+\end{flushleft}
+
+\vspace{0.8cm}
+本ドキュメントはCC-BY-SA 4.0 ライセンスによって許諾されています。
+
+% 本ドキュメントは
+% CC-BY-SA 3.0 de ライセンス，
+% CC-BY-SA 4.0 ライセンス
+% で許諾された著作物を含みます．
+
+% （CC-BY-SA 3.0 de ライセンス全文は
+% \url{https://creativecommons.org/licenses/by-sa/3.0/de/}で，
+% CC-BY-SA 4.0 ライセンス全文は
+% \url{https://creativecommons.org/licenses/by-sa/4.0/deed.ja}で確認できます．）
+
+%------------------------------------------------------------------------------
+% 目次
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+% 本文
+%\twocolumn
+\mainmatter
+
+\include{chap1} % 概要（モードなど）
+\include{chap2} % 操作方法
+\include{chap3} % TaCのアーキテクチャ
+\include{chap4} % TaCの周辺装置
+\include{chap5} % TaCの機械語命令
+
+\appendix       % 付録
+\include{appA}  % TaCの命令表・メモリマップ・I/Oマップ
+
+%------------------------------------------------------------------------------
+% 発行元
+\backmatter
+\pagestyle{empty}
+\onecolumn
+~
+\vfill\vfill\vfill
+\begin{center}
+\fbox{\parbox{10cm}{ \vspace{0.3cm}
+\large{\textbf{{\tecS} ハードウェアマニュアル \ver}} \\
+\\
+% 発行年月　２０１９年９月　\ver \\ %1.0.0
+% 発行年月　２０２０年３月　\ver \\ %1.0.1
+　発行年月　２０２２年３月　\ver \\ %2.0.0
+
+　発　　行　独立行政法人国立高等専門学校機構 \\
+　　　　　　徳山工業高等専門学校 \\
+　　　　　　情報電子工学科　重村哲至 \\
+　　　　　　〒745-8585 山口県周南市学園台3538 \\
+　　　　　　sigemura@tokuyama.ac.jp \\
+}}
+\end{center}
+\vfill
+\end{document}

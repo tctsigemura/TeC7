@@ -167,7 +167,7 @@ begin
       end if;
     end if;
   end process;
-  
+
 -- 操作音
   P_SPK <= (Slnt or P_2_4kHz) and Pi;             -- 音が継続中は 2.4kHz
 
@@ -202,7 +202,7 @@ begin
   P_SEL <= Pos;                                   -- 外部端子に接続
   G0 <= '1' when Pos="000" else '0';              -- G0 表示中
   Mm <= '1' when Pos="101" else '0';              -- メモリ表示中
-  
+
   process(P_CLK)
   begin
     if (P_CLK'event and P_CLK='1') then
@@ -243,7 +243,7 @@ begin
 
 -- アドレス LED 関連
   P_A_LED <= Addr when Mm='1' else "00000000";    -- 外部端子に接続
-  
+
   process(P_CLK, Rst)
   begin
     if (Rst='1') then

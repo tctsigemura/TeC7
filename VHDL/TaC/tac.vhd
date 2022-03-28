@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011-2019 by
+-- Copyright (C) 2011-2021 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,8 @@
 --
 -- TaC/tac.vhd : TaC Top Level Source Code
 --
+-- 2021.11.20 : 90度遅れの49.152MHzを廃止
+-- 2021.11.19 : TaC-CPU V3 対応
 -- 2019.12.19 : CPU停止時（コンソール動作時）はアドレス変換禁止
 -- 2019.08.27 : PIO からの割込み機能追加
 -- 2019.08.26 : SPI機能の追加のため，PIOのアドレスを18h-1Fhから18h-27hに変更
@@ -56,8 +58,7 @@ use UNISIM.vcomponents.all;
 
 entity TAC is
   port (
-         P_CLK0       : in   std_logic;                      -- 49.1520MHz 0'
-         P_CLK90      : in   std_logic;                      -- 49.1520MHz 90'
+         P_CLK        : in   std_logic;                      -- 49.1520MHz
          P_MODE       : in   std_logic_vector(2 downto 0);   -- 0:TeC,1:TaC
          P_RESET      : in   std_logic;                      --   2,3:DEMO1,2
 
@@ -150,19 +151,29 @@ signal i_mr             : std_logic;
 signal i_ir             : std_logic;
 signal i_rw             : std_logic;
 signal i_bt             : std_logic;
-signal i_int_bit        : std_logic_vector(11 downto 0);
+signal i_int_bit        : std_logic_vector(15 downto 0);
 signal i_pr             : std_logic;
-signal i_cpu_mr         : std_logic;
+signal i_ei             : std_logic;
+signal i_idle           : std_logic;
+signal i_wait           : std_logic;
+signal i_con            : std_logic_vector(1 downto 0);
 
 -- address bus
 signal i_addr           : std_logic_vector(15 downto 0);
-signal i_cpu_addr       : std_logic_vector(15 downto 0);
+
+-- mmu - memory bus
+signal i_addr_ram       : std_logic_vector(15 downto 0);
+signal i_mr_ram         : std_logic;
+signal i_rw_ram         : std_logic;
+signal i_bt_ram         : std_logic;
+signal i_bank_ram       : std_logic;
+signal i_din_ram        : std_logic_vector(15 downto 0);
+signal i_dout_ram       : std_logic_vector(15 downto 0);
 
 -- data bus
 signal i_dout_cpu       : std_logic_vector(15 downto 0);
 signal i_din_cpu        : std_logic_vector(15 downto 0);
 signal i_dout_panel     : std_logic_vector(15 downto 0);
-signal i_dout_ram       : std_logic_vector(15 downto 0);
 signal i_dout_tmr       : std_logic_vector(15 downto 0);
 signal i_dout_intc      : std_logic_vector(15 downto 0);
 signal i_dout_spi       : std_logic_vector(15 downto 0);
@@ -173,6 +184,7 @@ signal i_dout_pio       : std_logic_vector( 7 downto 0);
 signal i_dout_tmr0      : std_logic_vector(15 downto 0);
 signal i_dout_tmr1      : std_logic_vector(15 downto 0);
 signal i_dout_tec       : std_logic_vector( 7 downto 0);
+signal i_dout_mmu       : std_logic_vector(15 downto 0);
 
 -- address decoder
 signal i_ior            : std_logic;
@@ -186,14 +198,26 @@ signal i_en_tmr0        : std_logic;
 signal i_en_tmr1        : std_logic;
 signal i_en_tec         : std_logic;
 signal i_en_mmu         : std_logic;
-signal i_en_ram         : std_logic;
+signal i_en_panel       : std_logic;
 
--- bus for DMA
-signal i_addr_dma       : std_logic_vector(14 downto 0);
-signal i_dout_dma       : std_logic_vector(15 downto 0);
+-- ram dma bus
+signal i_ain_ram_dma    : std_logic_vector(14 downto 0);
 signal i_dout_ram_dma   : std_logic_vector(15 downto 0);
-signal i_rw_dma         : std_logic;
-signal i_mr_dma         : std_logic;
+signal i_din_ram_dma    : std_logic_vector(15 downto 0);
+signal i_rw_ram_dma     : std_logic;
+signal i_mr_ram_dma     : std_logic;
+
+-- panel dma bus
+signal i_aout_panel_dma : std_logic_vector(14 downto 0);
+signal i_dout_panel_dma : std_logic_vector(15 downto 0);
+signal i_rw_panel_dma   : std_logic;
+
+-- spi dma bus
+signal i_aout_spi_dma   : std_logic_vector(14 downto 0);
+signal i_dout_spi_dma   : std_logic_vector(15 downto 0);
+signal i_rw_spi_dma     : std_logic;
+signal i_mr_spi_dma     : std_logic;
+signal i_idle_spi_dma   : std_logic;
 
 component TAC_INTC is
   port (
@@ -202,16 +226,16 @@ component TAC_INTC is
 
          P_DOUT     : out std_logic_vector(15 downto 0);
          P_VR       : in  std_logic;
+         P_EI       : in  std_logic;
          P_INTR     : out std_logic;
 
-         P_INT_BIT  : in  std_logic_vector(11 downto 0)
+         P_INT_BIT  : in  std_logic_vector(15 downto 0)
        );
 end component;
 
 component TAC_CPU
   port (
-         P_CLK0     : in  std_logic;                       -- Clock
-         P_CLK90    : in  std_logic;
+         P_CLK      : in  std_logic;                       -- Clock
          P_RESET    : in  std_logic;                       -- Reset
 
          P_ADDR     : out std_logic_vector(15 downto 0);   -- ADDRESS BUS
@@ -226,8 +250,17 @@ component TAC_CPU
          P_HL       : out std_logic;                       -- Halt instruction
          P_BT       : out std_logic;                       -- Byte Access
          P_PR       : out std_logic;                       -- Privilege Mode
+         P_EI       : out std_logic;                       -- Enable Interrupt
+         P_SVC      : out std_logic;                       -- Super Visor Call
+         P_ZDIV     : out std_logic;                       -- Zero Division
+         P_PRIVIO   : out std_logic;                       -- Privilege Vio.
+         P_INVINST  : out std_logic;                       -- Invalid Inst.
+         P_IDLE     : out std_logic;                       -- Idle state
+         P_CON      : out std_logic_vector(1 downto 0);    -- Console access
          P_INTR     : in  std_logic;                       -- Intrrupt
-         P_STOP     : in  std_logic                        -- Bus Request
+         P_WAIT     : in  std_logic;                       -- Wait Request
+         P_STOP     : in  std_logic;                       -- Bus Request
+         P_TLBMISS  : in  std_logic                        -- MMU TLB miss
        );
 end component;
 
@@ -244,10 +277,17 @@ component TAC_PANEL
          P_RW       : in  std_logic;                       -- read/write
          P_IR       : in  std_logic;                       -- i/o req.
          P_MR       : in  std_logic;                       -- memory req.
-         P_LI       : in  std_logic;                       -- load instruction
          P_HL       : in  std_logic;                       -- halt instruction
+         P_IDLE     : in  std_logic;                       -- idle state
+         P_CON      : in  std_logic_vector(1 downto 0);    -- Console access
          P_STOP     : out std_logic;                       -- stop the cpu
          P_RESET    : out std_logic;                       -- reset [OUTPUT]
+
+         -- DMA BUS
+         P_AOUT_DMA : out std_logic_vector(14 downto 0);
+         P_DIN_DMA  : in  std_logic_vector(15 downto 0);
+         P_DOUT_DMA : out std_logic_vector(15 downto 0);
+         P_RW_DMA   : out std_logic;
 
          -- console switchs(inputs)
          P_DATA_SW  : in std_logic_vector(7 downto 0);     -- data sw.
@@ -283,16 +323,14 @@ end component;
 component TAC_RAM
   port (
          P_CLK    : in  std_logic;
-         P_RESET  : in  std_logic;
-         P_IOE    : in  std_logic;                         -- I/O Enable
-         P_IOW    : in  std_logic;                         -- I/O Write
-         -- for CPU
+         -- for MMU
          P_AIN1   : in  std_logic_vector(15 downto 0);
          P_DIN1   : in  std_logic_vector(15 downto 0);
          P_DOUT1  : out std_logic_vector(15 downto 0);
          P_RW1    : in  std_logic;
          P_MR1    : in  std_logic;
          P_BT     : in  std_logic;
+         P_BANK   : in  std_logic;
          -- for DMA
          P_AIN2   : in  std_logic_vector(14 downto 0);
          P_DIN2   : in  std_logic_vector(15 downto 0);
@@ -326,15 +364,16 @@ component TAC_SPI
          P_IOR     : in  STD_LOGIC;
          P_IOW     : in  STD_LOGIC;
          P_INT     : out std_logic;
-         P_ADDR : in  std_logic_vector (1 downto 0);
-         P_DIN : in  std_logic_vector (15 downto 0);
-         P_DOUT : out  std_logic_vector (15 downto 0);
+         P_ADDR    : in  std_logic_vector (1 downto 0);
+         P_DIN     : in  std_logic_vector (15 downto 0);
+         P_DOUT    : out std_logic_vector (15 downto 0);
 
-         P_ADDR_DMA : out  std_logic_vector (14 downto 0);
+         P_ADDR_DMA : out std_logic_vector (14 downto 0);
          P_DIN_DMA  : in  std_logic_vector (15 downto 0);
          P_DOUT_DMA : out std_logic_vector (15 downto 0);
          P_RW_DMA   : out std_logic;
          P_MR_DMA   : out std_logic;
+         P_IDLE_DMA : out std_logic;
 
          P_SCLK     : out STD_LOGIC;
          P_DI       : in  STD_LOGIC;
@@ -405,18 +444,32 @@ end component;
 component TAC_MMU is
   Port ( P_CLK      : in  std_logic;
          P_RESET    : in  std_logic;
-         P_EN       : in  std_logic;
-         P_IOW      : in  std_logic;
-         P_MMU_MR   : in  std_logic;
-         P_BT       : in  std_logic;                     -- Byte access
+         P_EN       : in  std_logic;                     -- i/o enable
+         P_IOR      : in  std_logic;                     -- i/o read
+         P_IOW      : in  std_logic;                     -- i/o write
+
+         P_LI       : in  std_logic;                     -- inst. fetch(exec)
          P_PR       : in  std_logic;                     -- Privilege mode
-         P_STOP     : in  std_logic;                     -- Panel RUN F/F
-         P_VIO_INT  : out std_logic;                     -- Segment Violation
-         P_ADR_INT  : out std_logic;                     -- Bad Address
-         P_MR       : out std_logic;
-         P_ADDR     : out std_logic_vector(15 downto 0); -- Physical address
-         P_MMU_ADDR : in  std_logic_vector(15 downto 0); -- Virtual address
-         P_DIN      : in  std_logic_vector(15 downto 0)
+         P_WAIT     : out std_logic;                     -- Wait Request
+         P_VIO_INT  : out std_logic;                     -- MemVio/BadAdr inter
+         P_TLB_INT  : out std_logic;                     -- TLB miss inter
+
+         -- from cpu
+         P_ADDR     : in  std_logic_vector(15 downto 0); -- Virtual address
+         P_MR       : in  std_logic;                     -- Memory Request
+         P_RW       : in  std_logic;                     -- read/write
+         P_BT       : in  std_logic;                     -- byte access
+         P_DIN      : in  std_logic_vector(15 downto 0); -- Memory/IO data
+         P_DOUT     : out std_logic_vector(15 downto 0); -- Memory/IO data
+
+         -- to memory
+         P_ADDR_MEM : out std_logic_vector(15 downto 0); -- Physical address
+         P_MR_MEM   : out std_logic;                     -- Memory Request
+         P_RW_MEM   : out std_logic;                     -- read/write
+         P_BT_MEM   : out std_logic;                     -- byte access
+         P_BANK_MEM : out std_logic;                     -- ipl bank
+         P_DOUT_MEM : out std_logic_vector(15 downto 0); -- to memory
+         P_DIN_MEM  : in  std_logic_vector(15 downto 0)  -- from memory
        );
 end component;
 
@@ -447,11 +500,11 @@ begin
   -- CNT16 (1kHz のパルスを発生する)
   i_1kHz <= '1' when (i_cnt16=49151) else '0';
 
-  process(P_CLK0, P_RESET)
+  process(P_CLK, P_RESET)
     begin
       if (P_RESET='0') then
         i_cnt16 <= "0000000000000000";
-      elsif (P_CLK0'event and P_CLK0='1') then
+      elsif (P_CLK'event and P_CLK='1') then
         if (i_1kHz='1') then
           i_cnt16 <= "0000000000000000";
         else
@@ -463,11 +516,12 @@ begin
   -- Interrupt controller
   TAC_INTC1 : TAC_INTC
     port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
 
          P_DOUT     => i_dout_intc,
          P_VR       => i_vr,
+         P_EI       => i_ei,
          P_INTR     => i_intr,
          P_INT_BIT  => i_int_bit
       );
@@ -475,58 +529,70 @@ begin
   -- TaC CPU
   TAC_CPU1 : TAC_CPU
   port map (
-         P_CLK0     => P_CLK0,
-         P_CLK90    => P_CLK90,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
 
-         P_ADDR     => i_cpu_addr,
+         P_ADDR     => i_addr,
          P_DIN      => i_din_cpu,
          P_DOUT     => i_dout_cpu,
 
          P_RW       => i_rw,
          P_IR       => i_ir,
-         P_MR       => i_cpu_mr,
+         P_MR       => i_mr,
          P_LI       => i_li,
          P_VR       => i_vr,
          P_HL       => i_hl,
          P_BT       => i_bt,
          P_PR       => i_pr,
+         P_EI       => i_ei,
+         P_SVC      => i_int_bit(15),
+         P_ZDIV     => i_int_bit(12),
+         P_PRIVIO   => i_int_bit(13),
+         P_INVINST  => i_int_bit(14),
+         P_IDLE     => i_idle,
+         P_CON      => i_con,
          P_INTR     => i_intr,
-         P_STOP     => i_stop
+         P_WAIT     => i_wait,
+         P_STOP     => i_stop,
+         P_TLBMISS  => i_int_bit(10)
   );
 
-  i_iow       <= i_ir and i_rw and (not i_li);
-  i_ior       <= i_ir and (not i_rw) and (not i_li);
-  i_en_tmr0   <= '1' when (i_addr(7 downto 2)="000000") else '0'; -- 00‾03
-  i_en_tmr1   <= '1' when (i_addr(7 downto 2)="000001") else '0'; -- 04‾07
-  i_en_sio1   <= '1' when (i_addr(7 downto 2)="000010") else '0'; -- 08‾0b
-  i_en_sio2   <= '1' when (i_addr(7 downto 2)="000011") else '0'; -- 0c‾0f
-  i_en_spi    <= '1' when (i_addr(7 downto 3)="00010")  else '0'; -- 10‾17
-  i_en_pio    <= '1' when (i_addr(7 downto 3)="00011" or          -- 18‾1f
-                           i_addr(7 downto 3)="00100")  else '0'; -- 20‾27
-  i_en_rn     <= '1' when (i_addr(7 downto 3)="00101")  else '0'; -- 28‾2f
-  i_en_tec    <= '1' when (i_addr(7 downto 3)="00110")  else '0'; -- 30‾37
-  i_en_ram    <= '1' when (i_addr(7 downto 1)="1111000")else '0'; -- f0‾f1
-  i_en_mmu    <= '1' when (i_addr(7 downto 3)="11110" and
-                      (i_addr(2)='1' or i_addr(1)='1')) else '0'; -- f2‾f7
+  i_iow      <= i_ir and i_rw;
+  i_ior      <= i_ir and (not i_rw);
+  i_en_tmr0  <= '1' when (i_addr(7 downto 2)="000000") else '0';  -- 00‾03
+  i_en_tmr1  <= '1' when (i_addr(7 downto 2)="000001") else '0';  -- 04‾07
+  i_en_sio1  <= '1' when (i_addr(7 downto 2)="000010") else '0';  -- 08‾0b
+  i_en_sio2  <= '1' when (i_addr(7 downto 2)="000011") else '0';  -- 0c‾0f
+  i_en_spi   <= '1' when (i_addr(7 downto 3)="00010")  else '0';  -- 10‾17
+  i_en_pio   <= '1' when (i_addr(7 downto 3)="00011" or           -- 18‾1f
+                          i_addr(7 downto 3)="00100")  else '0';  -- 20‾27
+  i_en_rn    <= '1' when (i_addr(7 downto 3)="00101")  else '0';  -- 28‾2f
+  i_en_tec   <= '1' when (i_addr(7 downto 3)="00110")  else '0';  -- 30‾37
+  i_en_mmu   <= '1' when (i_addr(7 downto 5)="100" or             -- 80‾9f
+                          i_addr(7 downto 3)="10100" or           -- a0‾a7
+                          i_addr(7 downto 1)="1010100") else '0'; -- a8‾a9
+  i_en_panel <= '1' when (i_addr(7 downto 3)="11111")  else '0';  -- f8‾ff
 
-  i_din_cpu <= i_dout_ram   when (i_mr='1') else
-               i_dout_panel when (i_ir='1' and i_addr(7 downto 3)="11111") else
-               i_dout_tmr0  when (i_ir='1' and i_en_tmr0='1') else
-               i_dout_tmr1  when (i_ir='1' and i_en_tmr1='1') else
-               ("00000000"&i_dout_sio1) when (i_ir='1' and i_en_sio1='1') else
-               ("00000000"&i_dout_sio2) when (i_ir='1' and i_en_sio2='1') else
-               i_dout_spi when (i_ir='1' and i_en_spi='1') else
-               ("00000000"&i_dout_pio) when (i_ir='1' and i_en_pio='1') else
-               ("00000000"&i_dout_rn) when (i_ir='1' and i_en_rn='1') else
-               ("00000000"&i_dout_tec) when (i_ir='1' and i_en_tec='1') else
-               i_dout_intc when (i_vr='1') else
-               "0000000000000000";
+  i_din_cpu <=
+           i_dout_mmu               when ((i_ir='1' and i_en_mmu='1')
+                                          or i_mr='1')                  else
+           i_dout_panel             when ((i_ir='1' and i_en_panel='1')
+                                          or i_con/="00")               else
+           i_dout_tmr0              when (i_ir='1' and i_en_tmr0='1')   else
+           i_dout_tmr1              when (i_ir='1' and i_en_tmr1='1')   else
+           ("00000000"&i_dout_sio1) when (i_ir='1' and i_en_sio1='1')   else
+           ("00000000"&i_dout_sio2) when (i_ir='1' and i_en_sio2='1')   else
+           i_dout_spi               when (i_ir='1' and i_en_spi='1')    else
+           ("00000000"&i_dout_pio)  when (i_ir='1' and i_en_pio='1')    else
+           ("00000000"&i_dout_rn)   when (i_ir='1' and i_en_rn='1')     else
+           ("00000000"&i_dout_tec)  when (i_ir='1' and i_en_tec='1')    else
+           i_dout_intc              when (i_vr='1')                     else
+           "0000000000000000";
 
   -- TaC PANEL
   TAC_PANEL1 : TAC_PANEL
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET_IN => P_RESET,
          P_1kHz     => i_1kHz,
 
@@ -537,10 +603,17 @@ begin
          P_RW       => i_rw,
          P_IR       => i_ir,
          P_MR       => i_mr,
-         P_LI       => i_li,
          P_HL       => i_hl,
+         P_IDLE     => i_idle,
+         P_CON      => i_con,
          P_STOP     => i_stop,
          P_RESET    => i_reset,
+
+         -- DMA BUS
+         P_AOUT_DMA => i_aout_panel_dma,
+         P_DIN_DMA  => i_dout_ram_dma,
+         P_DOUT_DMA => i_dout_panel_dma,
+         P_RW_DMA   => i_rw_panel_dma,
 
          -- console switchs(inputs)
          P_DATA_SW  => P_DATA_SW,
@@ -574,46 +647,67 @@ begin
 
   TAC_MMU1: TAC_MMU
   port map (
-         P_CLK         => P_CLK0,
+         P_CLK         => P_CLK,
          P_RESET       => i_reset,
          P_EN          => i_en_mmu,
+         P_IOR         => i_ior,
          P_IOW         => i_iow,
-         P_MMU_MR      => i_cpu_mr,
-         P_BT          => i_bt,
+
+         P_LI          => i_li,
          P_PR          => i_pr,
-         P_STOP        => i_stop,
+         P_WAIT        => i_wait,
          P_VIO_INT     => i_int_bit(11),
-         P_ADR_INT     => i_int_bit(10),
-         P_MR          => i_mr,
+         P_TLB_INT     => i_int_bit(10),
+
          P_ADDR        => i_addr,
-         P_MMU_ADDR    => i_cpu_addr,
-         P_DIN         => i_dout_cpu
+         P_MR          => i_mr,
+         P_RW          => i_rw,
+         P_BT          => i_bt,
+         P_DIN         => i_dout_cpu,
+         P_DOUT        => i_dout_mmu,
+
+         P_ADDR_MEM    => i_addr_ram,
+         P_MR_MEM      => i_mr_ram,
+         P_RW_MEM      => i_rw_ram,
+         P_BT_MEM      => i_bt_ram,
+         P_BANK_MEM    => i_bank_ram,
+         P_DIN_MEM     => i_dout_ram,
+         P_DOUT_MEM    => i_din_ram
   );
 
   -- RAM
   TAC_RAM1 : TAC_RAM
   port map (
-         P_CLK      => P_CLK0,
-         P_RESET    => i_reset,
-         P_IOE      => i_en_ram,
-         P_IOW      => i_iow,
-         P_AIN1     => i_addr,
-         P_DIN1     => i_dout_cpu,
+         P_CLK      => P_CLK,
+
+         P_AIN1     => i_addr_ram,
+         P_DIN1     => i_din_ram,
          P_DOUT1    => i_dout_ram,
-         P_RW1      => i_rw,
-         P_MR1      => i_mr,
-         P_BT       => i_bt,
-         P_AIN2     => i_addr_dma,
-         P_DIN2     => i_dout_dma,
+         P_RW1      => i_rw_ram,
+         P_MR1      => i_mr_ram,
+         P_BT       => i_bt_ram,
+         P_BANK     => i_bank_ram,
+
+         P_AIN2     => i_ain_ram_dma,
+         P_DIN2     => i_din_ram_dma,
          P_DOUT2    => i_dout_ram_dma,
-         P_RW2      => i_rw_dma,
-         P_MR2      => i_mr_dma
+         P_RW2      => i_rw_ram_dma,
+         P_MR2      => i_mr_ram_dma
   );
+
+  i_ain_ram_dma <= i_aout_spi_dma when i_idle_spi_dma='0' else
+                   i_aout_panel_dma;
+  i_din_ram_dma <= i_dout_spi_dma when i_idle_spi_dma='0' else
+                   i_dout_panel_dma;
+  i_rw_ram_dma  <= i_rw_spi_dma   when i_idle_spi_dma='0' else
+                   i_rw_panel_dma;
+  i_mr_ram_dma  <= i_mr_spi_dma   when i_idle_spi_dma='0' else
+                   '1';
 
   -- I/O
   TAC_SIO1 : TAC_SIO                    -- FT232RL
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_IOW      => i_iow,
          P_IOR      => i_ior,
@@ -629,7 +723,7 @@ begin
 
   TAC_SIO2 : TAC_SIO                    -- TeC
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_IOW      => i_iow,
          P_IOR      => i_ior,
@@ -645,7 +739,7 @@ begin
 
   TAC_RN1 : TAC_RN4020                    -- Bluetooth
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_IOW      => i_iow,
          P_IOR      => i_ior,
@@ -666,7 +760,7 @@ begin
 
   TAC_SPI1 : TAC_SPI
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_EN       => i_en_spi,
          P_IOR      => i_ior,
@@ -676,11 +770,12 @@ begin
          P_DIN      => i_dout_cpu(15 downto 0),
          P_DOUT     => i_dout_spi,
 
-         P_ADDR_DMA => i_addr_dma,
+         P_ADDR_DMA => i_aout_spi_dma,
          P_DIN_DMA  => i_dout_ram_dma,
-         P_DOUT_DMA => i_dout_dma,
-         P_RW_DMA   => i_rw_dma,
-         P_MR_DMA   => i_mr_dma,
+         P_DOUT_DMA => i_dout_spi_dma,
+         P_RW_DMA   => i_rw_spi_dma,
+         P_MR_DMA   => i_mr_spi_dma,
+         P_IDLE_DMA => i_idle_spi_dma,
 
          P_SCLK     => P_SPI_SCLK,
          P_DI       => P_SPI_DIN,
@@ -692,7 +787,7 @@ begin
 
   TAC_PIO1 : TAC_PIO
   port map (
-         P_CLK      => P_CLK0,
+         P_CLK      => P_CLK,
          P_RESET    => i_reset,
          P_EN       => i_en_pio,
 --       P_IOR      => i_ior,
@@ -711,7 +806,7 @@ begin
 
   TAC_TIMER0: TAC_TIMER
   port map (
-      P_CLK         => P_CLK0,
+      P_CLK         => P_CLK,
       P_RESET       => i_reset,
       P_EN          => i_en_tmr0,
       P_IOR         => i_ior,
@@ -726,7 +821,7 @@ begin
 
   TAC_TIMER1: TAC_TIMER
   port map (
-      P_CLK         => P_CLK0,
+      P_CLK         => P_CLK,
       P_RESET       => i_reset,
       P_EN          => i_en_tmr1,
       P_IOR         => i_ior,
@@ -741,7 +836,7 @@ begin
 
   TAC_TEC1: TAC_TEC
   port map (
-      P_CLK         => P_CLK0,
+      P_CLK         => P_CLK,
       P_RESET       => i_reset,
       P_EN          => i_en_tec,
 --    P_IOR         => i_ior,

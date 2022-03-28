@@ -1,0 +1,83 @@
+% 自分のスタイルファイル
+\ProvidesPackage{mySty}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{framed}
+\usepackage{listings}
+\usepackage{lltjp-tascmac}
+\usepackage{ascmac}
+%\usepackage[usenames]{color}
+%\usepackage{arydshln}
+\usepackage{multirow}
+\usepackage{array}
+
+%------------------------------------------------------------------------------
+% 図表のキャプションを太字に
+%\usepackage{caption}
+%\captionsetup[figure]{labelsep=space,font=bf}
+%\captionsetup[table]{labelsep=space,font=bf}
+
+%------------------------------------------------------------------------------
+% ハイパーリンク設定（印刷用では色使いに注意）
+\usepackage[unicode=true,colorlinks,
+  linkcolor=blue,urlcolor=blue]{hyperref}     % PDF用
+%\usepackage{hyperref}                                              % 印刷用
+%\usepackage{pxjahyper}                                        % lualatex 以外の場合
+
+%------------------------------------------------------------------------------
+% この文書独特のキーワード等
+\newcommand{\tecS}{\textrm{TeC7}}
+\newcommand{\tec}{\textrm{TeC}}
+\newcommand{\tac}{\textrm{TaC}}
+\newcommand{\cmm}{\texttt{C--}}
+
+%------------------------------------------------------------------------------
+% 便利マクロ
+\newcommand{\lw}[1]{\smash{\lower2.0ex\hbox{#1}}}
+\newcommand{\figref}[1]{図~\ref{fig:#1}}
+\newcommand{\tabref}[1]{表~\ref{tab:#1}}
+\newcommand{\bs}{\texttt{\char'134}}  % バックスラッシュを表示するコマンド
+\def\|{\verb|} %|
+
+%------------------------------------------------------------------------------
+% 図コマンド
+\newcommand{\myfigure}[5]{
+\begin{figure}[#1]
+\begin{center}
+\includegraphics[#2]{#3}
+\caption{#4}
+\label{fig:#5}
+\end{center}
+\end{figure}
+}
+
+%------------------------------------------------------------------------------
+% 図環境
+\makeatletter
+\newenvironment{myfig}[3]
+{\def\@tmpTwo{#2}\def\@tmpThree{#3}
+\begin{figure}[#1]\begin{center}}
+{\caption{\@tmpTwo}\label{fig:\@tmpThree}\end{center}\end{figure}}
+\makeatother
+
+%------------------------------------------------------------------------------
+% 表環境
+\newenvironment{mytable}[3]
+{\begin{table}[#1]\begin{center}
+\caption{#2}\vspace{0.2cm}\label{tab:#3}}
+{\end{center}\end{table}}
+
+%------------------------------------------------------------------------------
+% リスト環境
+%\lstloadlanguages{Assembler}
+\def\lstlistingname{リスト}
+\lstset{language=,
+  numbers=left,
+%  numbers=none,
+  basicstyle={\small\ttfamily},
+  columns=[l]{fullflexible},
+  keepspaces=true,
+%  frame=shadowbox,
+  frame=single,
+  commentstyle=\slshape
+}

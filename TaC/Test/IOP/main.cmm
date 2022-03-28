@@ -2,7 +2,7 @@
  * TaC Test Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2010 by
+ * Copyright (C) 2009-2022 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,7 +22,8 @@
 /*
  * main.cmm : テストプログラムの main
  *
- * 2013.01.07 v.1.0     : TeC-CPU V2 対応
+ * 2020.03.05 v.2.0     : TaC-CPU V3 対応
+ * 2013.01.07 v.1.0     : TaC-CPU V2 対応
  * 2012.01.11 v.0.0     : 初期バージョン
  *
  * $Id$
@@ -64,11 +65,6 @@ void error() {
   halt();
 }
 
-void wait(int n) {
-  for (int i=0; i<n; i=i+1)
-   wait1m();
-}
-
 // ここからスタート
 interrupt prvInt() {
   putstr("ERROR\n");
@@ -82,15 +78,16 @@ public void main() {
   putstr("Priv + I/O\n");
   out(0xf8, in(0xf8));                   // データレジスタに書く
 
-#ifndef IOP
-  putstr("IOPriv + I/O\n");
-  setPri(0x0020);                        // I/O 特権モード
+  if ((in(0xf8)&1)==0) {
+    putstr("IOPriv + I/O\n");            // DSWのb0=0なら
+    setPri(0x0020);                      //   I/O 特権モード
+  } else {
+    putstr("NonPriv + I/O\n");           // DSWのb0=1なら
+    setPri(0x0000);                      //   ユーザモード
+  }
+
   out(0xf8, in(0xf8));                   // データレジスタに書く
-#else
-  putstr("NonPriv + I/O\n");
-  setPri(0x0000);                        // ユーザモード
-  out(0xf8, in(0xf8));                   // データレジスタに書く
-#endif
+                                         // ユーザモードなら例外が発生
 
   putstr("END\n");
   for (;;) {}                            // 特権モードではないので止まれない

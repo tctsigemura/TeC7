@@ -218,7 +218,7 @@ component TEC_CPU
 end component;
 
 component TEC_IO
-  port ( P_CLK      : in  std_logic;                      -- CLK  
+  port ( P_CLK      : in  std_logic;                      -- CLK
          P_2_4kHz  : in  std_logic;                       -- Pi!
          P_75Hz     : in  std_logic;                      -- 75Hz(タイマー用)
          P_RESET    : in  std_logic;                      -- Reset
@@ -277,7 +277,7 @@ begin
       I_CNT <= I_CNT + 1;
     end if;
   end process;
-  
+
   -- I/O とパネルのスピーカ出力を合成する
   P_BUZ <= I_SPK_I xor I_SPK_P;
 
@@ -361,7 +361,7 @@ cpu0 : TEC_CPU
                P_G2D   => I_G2D,
                P_SPD   => I_SPD,
                P_PCD   => I_PCD,
-               
+
                P_MODE  => P_MODE(1)
               );
 
@@ -379,7 +379,7 @@ cpu0 : TEC_CPU
                P_SEL   => I_RS_SEL,
                P_WRITE => I_WRITE,
                P_MMD   => I_MMD,
-               
+
                P_MODE  => P_MODE
               );
 
@@ -424,7 +424,7 @@ cpu0 : TEC_CPU
                I_SPD when "011",       -- SP
                I_PCD when "100",       -- PC
                I_MMD when others;      -- MM
-  
+
   -- ロータリースイッチの表示
   with I_RS_SEL select
     I_RS_DEC <= "100000" when "000",   -- G0
@@ -439,5 +439,5 @@ cpu0 : TEC_CPU
   P_SP_LED <= I_RS_DEC(2);
   P_PC_LED <= I_RS_DEC(1);
   P_MM_LED <= I_RS_DEC(0);
-  
+
 end RTL;

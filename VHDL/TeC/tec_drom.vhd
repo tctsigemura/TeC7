@@ -49,7 +49,7 @@ architecture BEHAVE of TEC_DROM is
       return ram;
     end function;
   signal mem : memory := read_file("tec_drom.txt");
-  
+
   begin		
 	 process(P_CLK, P_RESET)
 	   begin
