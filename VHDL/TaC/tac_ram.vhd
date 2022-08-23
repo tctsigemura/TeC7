@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2011 - 2021 by
+-- Copyright (C) 2011 - 2022 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,7 @@
 --
 
 --
+-- 2022.08.23 : データ読出しのマルチプレクサを簡単化
 -- 2021.12.31 : バンクの切換えFFをMMUに移動
 -- 2019.08.28 : IPLを4KiB*2構成から8KiB*1構成に変更
 -- 2019.07.30 : Mem1k のアドレス範囲，アドレスビット数のバグ訂正
@@ -143,9 +144,8 @@ architecture BEHAVE of TAC_RAM is
     P_DOUT1 <= memB0 when (csB0='1')                 -- 0000H - 7FFFH
           else memB1 when (csB1='1')                 -- 8000H - BFFFH
           else memB2 when (csB2='1')                 -- C000H - DFFFH
-          else memBI when (csB3='1' and P_BANK='0')  -- E000H - FFFFH(ROM)
-          else memB3 when (csB3='1')                 -- E000H - FFFFH(RAM)
-          else "0000000000000000";
+          else memBI when (P_BANK='0')               -- E000H - FFFFH(ROM)
+          else memB3;                                -- E000H - FFFFH(RAM)
 
     -- write control
     weB0  <= csB0 and P_MR1 and P_RW1;
@@ -271,8 +271,7 @@ architecture BEHAVE of TAC_RAM is
     P_DOUT2 <= memB0_dma when (csB0_dma='1')         -- 0000H - 7FFFH
           else memB1_dma when (csB1_dma='1')         -- 8000H - BFFFH
           else memB2_dma when (csB2_dma='1')         -- C000H - DFFFH
-          else memB3_dma when (csB3_dma='1')         -- E000H - FFFFH
-          else "0000000000000000";
+          else memB3_dma;                            -- E000H - FFFFH
 
     -- Bank0H(DMA)
     process(P_CLK)
