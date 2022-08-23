@@ -21,6 +21,8 @@
 --
 -- TaC/tac_cpu_sequencer.vhd : TaC CPU Sequencer VHDL Source Code
 --
+-- 2022.08.23           : RETI命令でM(SP+2)アクセス時にTLB missが発生すると
+--                        PCが破壊されるバグを訂正
 -- 2022.02.27           : 一応の完成
 -- 2021.04.12           : 新規作成
 --
@@ -223,7 +225,7 @@ begin
                               P_OP1(4 downto 1)="1011")) or         --   IN/OUT
                             I_STATE=S_ALU1 or I_STATE=S_ST1 else
                  "110" when I_STATE=S_INTR3 or I_STATE=S_INTR4 or   -- PC<-Din
-                            I_STATE=S_RETI1 or I_STATE=S_RET or
+                            I_STATE=S_RETI3 or I_STATE=S_RET or
                             (I_STATE=S_CON3 and P_OP2(1 downto 0)="11") else
                  "111" when (I_STATE=S_DEC2 and                     -- PC<-EA
                              P_OP1="10100" and I_JMP_GO='1') or     --   JMP
@@ -262,8 +264,8 @@ begin
                 "001" when I_STATE=S_DEC1 and                      -- PC+2
                            (I_NEXT=S_DEC2 or I_NEXT=S_ALU1) else
                 "100" when I_NEXT=S_POP or I_NEXT=S_RET or         -- SP
-                           I_NEXT=S_RETI1 or
-                           I_STATE=S_RET or I_STATE=S_RETI2 else
+                           I_NEXT=S_RETI1 or I_STATE=S_RET or
+                           I_STATE=S_RETI2 or I_STATE=S_RETI3 else
                 "101" when I_STATE=S_RETI1 else                    -- SP+2
                 "110" when I_STATE=S_INTR1 or I_STATE=S_INTR2 or   -- SP-2
                            I_NEXT=S_PUSH or I_NEXT=S_CALL else
@@ -295,7 +297,7 @@ begin
                    I_NEXT=S_ST1 or I_NEXT=S_ST2 or I_NEXT=S_PUSH or
                    I_NEXT=S_POP or I_NEXT=S_CALL or I_NEXT=S_RET or
                    I_STATE=S_RET or I_NEXT=S_RETI1 or I_NEXT=S_RETI2 or
-                   I_NEXT=S_RETI3 or I_STATE=S_INTR1 or
+                   I_NEXT=S_RETI3 or I_STATE=S_RETI3 or I_STATE=S_INTR1 or
                    I_STATE=S_INTR2 or I_STATE=S_INTR4 else '0';
 
   -- I/O Request
