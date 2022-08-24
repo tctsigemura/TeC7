@@ -21,7 +21,7 @@
 --
 -- TaC/tac_cpu.vhd : TaC CPU VHDL Source Code
 --
--- 2022.08.23           : ソースコードの見直し（若干の改良）
+-- 2022.08.24           : ソースコードの見直し（若干の改良）
 -- 2022.03.15           : TaC-CPU V3
 -- 2019.08.29           : IPL-ROMを8KiBにしたのでPCの初期値をE000hに変更
 -- 2019.01.29           : MPCの変化タイミングを5ns早く(MROMが間に合わないので）
@@ -314,7 +314,8 @@ begin
                "00000000" & P_DIN(15 downto 8)          when others;
 
   --- MUX B
-  I_ALU_B <= I_RX when I_INST_OP2="100" else I_REG_DR;
+  I_ALU_B <= I_RX when (I_INST_OP1(4 downto 3)/="11" and I_INST_OP2="100")
+        else I_REG_DR;
 
   --- EA
   with I_INST_OP2 select
