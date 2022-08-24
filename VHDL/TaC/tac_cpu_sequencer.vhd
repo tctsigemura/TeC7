@@ -21,6 +21,7 @@
 --
 -- TaC/tac_cpu_sequencer.vhd : TaC CPU Sequencer VHDL Source Code
 --
+-- 2022.08.24           : 条件の簡単化・効率化(I_UPDATE_PC, P_SELECT_D, P_MR)
 -- 2022.08.23           : RETI命令でM(SP+2)アクセス時にTLB missが発生すると
 --                        PCが破壊されるバグを訂正
 -- 2022.02.27           : 一応の完成
@@ -215,11 +216,10 @@ begin
            "00";
 
   P_UPDATE_PC <= "000" when P_WAIT='1' else I_UPDATE_PC;
-  I_UPDATE_PC <= "100" when (I_STATE=S_DEC1 and                     -- PC+=2
-                             (I_NEXT=S_FETCH or I_NEXT=S_IN2)) or
-                            I_STATE=S_ALU2 or I_STATE=S_ST2 or
-                            I_STATE=S_PUSH or I_STATE=S_POP or
-                            I_STATE=S_SVC else
+  I_UPDATE_PC <= "100" when (I_STATE=S_DEC1 and I_NEXT=S_FETCH) or  -- PC+=2
+                            I_NEXT=S_IN2 or I_STATE=S_ALU2 or
+                            I_STATE=S_ST2 or I_STATE=S_PUSH or
+                            I_STATE=S_POP or I_STATE=S_SVC else
                  "101" when (I_STATE=S_DEC2 and                     -- PC+=4
                              ((P_OP1="10100" and I_JMP_GO='0') or   --   JMP
                               P_OP1(4 downto 1)="1011")) or         --   IN/OUT
@@ -272,15 +272,11 @@ begin
                 "010";                                             -- EA
 
   -- DOUT
-  P_SELECT_D <= "010" when I_NEXT=S_CALL else                      -- PC+4
-                "101" when (I_NEXT=S_ST1 or I_NEXT=S_ST2) and 
-                          P_OP2="111" and P_ADDR0='0' else       -- GR[Rd]>>>8
-                "100" when ((I_STATE=S_DEC1 or I_STATE=S_DEC2) and -- GR[Rd]
-                            I_NEXT=S_FETCH) or
-                           I_NEXT=S_PUSH or I_NEXT=S_ST1 or
-                           I_NEXT=S_ST2 or I_STATE=S_CON2 else
-                "111" when I_STATE=S_INTR2 else                   -- TMP
-                "000";                                            -- PC
+  P_SELECT_D <= "000" when I_STATE=S_INTR1 or I_STATE=S_CON3 else  -- PC
+                "111" when I_STATE=S_INTR2 else                    -- TMP
+                "010" when P_OP1="10101" else                      -- PC+4
+                "101" when P_OP2="111" and P_ADDR0='0' else       -- GR[Rd]>>>8
+                "100";                                            -- GR[Rd]
 
   -- DIN から DR
   P_SELECT_W <= "01" when I_STATE=S_FETCH else                    -- S4
@@ -296,8 +292,8 @@ begin
                    (I_NEXT=S_ALU2 and I_IS_INDR='1') or
                    I_NEXT=S_ST1 or I_NEXT=S_ST2 or I_NEXT=S_PUSH or
                    I_NEXT=S_POP or I_NEXT=S_CALL or I_NEXT=S_RET or
-                   I_STATE=S_RET or I_NEXT=S_RETI1 or I_NEXT=S_RETI2 or
-                   I_NEXT=S_RETI3 or I_STATE=S_RETI3 or I_STATE=S_INTR1 or
+                   I_STATE=S_RET or I_NEXT=S_RETI1 or I_STATE=S_RETI1 or
+                   I_STATE=S_RETI2 or I_STATE=S_RETI3 or I_STATE=S_INTR1 or
                    I_STATE=S_INTR2 or I_STATE=S_INTR4 else '0';
 
   -- I/O Request
