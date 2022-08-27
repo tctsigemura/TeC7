@@ -21,6 +21,7 @@
 --
 -- TaC/tac_panel.vhd : TaC Console Panel
 --
+-- 2022.07.27 : 使用していない信号Mdを削除
 -- 2022.03.28 : SETA, INCA, DECAをMD, MM以外を選択時も操作可能にする
 -- 2021.11.19 : TaC-CPU V3 対応
 -- 2019.08.30 : 命令フェッチだけでなくデータのアクセスでもBREAKする
@@ -107,7 +108,6 @@ architecture RTL of TAC_PANEL is
   signal DatReg : std_logic_vector(15 downto 0);  -- data register
   signal Pos    : std_logic_vector( 4 downto 0);  -- rotary sw position
   signal G0     : std_logic;                      -- Pos=G0
-  signal Md     : std_logic;                      -- Pos=MD
   signal Ma     : std_logic;                      -- Pos=MA
   signal Run    : std_logic;                      -- run Flip/Flop
   signal FncReg : std_logic_vector( 3 downto 0);  -- console function reg.
@@ -255,7 +255,6 @@ begin  -- RTL
 
   -- rotary sw
   G0 <= '1' when (Pos="00000") else '0';
-  Md <= '1' when (Pos="10000") else '0';
   Ma <= '1' when (Pos="10001") else '0';
   process(P_CLK)
   begin
