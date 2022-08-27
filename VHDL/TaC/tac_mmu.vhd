@@ -195,12 +195,12 @@ begin
   badAdr  <= memReq and offs(0) and (not bytAdr);
 
   -- 例外が発生していなければメモリをアクセスする
-  P_MR_MEM <= memReq and not (tlbMiss or badAdr or memVio);
+  -- P_MR_MEM <= memReq and not (tlbMiss or badAdr or memVio);
 
   --   タイミングが厳しい場合は
   --     アドレス違反やメモリ保護違反でメモリを破壊しても
   --     プロセスを打ち切ればよいので妥協することにする．
-  -- P_MR_MEM <= memReq and not tlbMiss;
+  P_MR_MEM <= memReq and not tlbMiss;
 
   -- メモリ関係の例外をCPUに知らせる
   P_VIO_INT <= badAdr or memVio;            -- 割り込みコントローラだけに接続
