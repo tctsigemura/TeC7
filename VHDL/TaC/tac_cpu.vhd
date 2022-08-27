@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2021 by
+-- Copyright (C) 2002-2022 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,8 @@
 --
 -- TaC/tac_cpu.vhd : TaC CPU VHDL Source Code
 --
+-- 2022.08.24           : ソースコードの見直し（若干の改良）
+-- 2022.03.15           : TaC-CPU V3
 -- 2019.08.29           : IPL-ROMを8KiBにしたのでPCの初期値をE000hに変更
 -- 2019.01.29           : MPCの変化タイミングを5ns早く(MROMが間に合わないので）
 -- 2019.01.17           : I/O特権モード（隅田の成果）を取り込む
@@ -281,7 +283,7 @@ begin
                      I_INST_OP2="111" else '0';
   P_LI   <= I_LOAD_IR;
   P_EI   <= I_FLAG_E;
-  P_IDLE <= I_ALU_BUSY or P_WAIT;
+  P_IDLE <= I_WAIT;
   P_CON  <= I_CON;
 
   -- マルチプレクサ
@@ -312,14 +314,8 @@ begin
                "00000000" & P_DIN(15 downto 8)          when others;
 
   --- MUX B
-  process(I_INST_OP1(4 downto 3), I_INST_OP2, I_RX, I_REG_DR)
-  begin
-    if (I_INST_OP1(4 downto 3)/="11" and I_INST_OP2="100") then
-      I_ALU_B <= I_RX;
-    else
-      I_ALU_B <= I_REG_DR;
-    end if;
-  end process;
+  I_ALU_B <= I_RX when (I_INST_OP1(4 downto 3)/="11" and I_INST_OP2="100")
+        else I_REG_DR;
 
   --- EA
   with I_INST_OP2 select
