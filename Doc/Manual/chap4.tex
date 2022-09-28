@@ -151,10 +151,11 @@ TeCとシリアルデータ通信ができる．
 \end{center}
 
 \begin{description}
-\item[ステータス]（\texttt{IE00 0000}）
+\item[ステータス]（\texttt{IE00 000C}）
   ホストコントローラの状態を表す．
   \texttt{I}はアイドル状態を表す．
   \texttt{E}はエラーが発生したことを表す．
+  \texttt{C}はカードが挿入されて\textbf{いない}ことを表す．
 \item[制御]（\texttt{E000 0IRW}）
   \texttt{I}に`1'を書き込むと，
   マイクロSDをSPIモードに切り換え使用できるように初期化する動作を開始する．
