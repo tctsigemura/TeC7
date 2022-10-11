@@ -1,5 +1,6 @@
 TeC7の歴史
 
+2022.10.11 : TeC7d v2.0.1 (IPL Ver.4.5.1) IPLのバグ，MMUのタイミング見直し
 2022.03.28 : TeC7d v2.0.0 (IPL Ver.4.5.0) TaC-CPU V3 に変更
 2021.06.29 : TeC7d v1.2.5 (IPL Ver.4.4.3) 組み立て途中でもファームが書き込める
 2020.12.21 : TeC7d v1.2.4 (IPL Ver.4.4.3) tec_panel の RUN 点滅機能実装忘れ
