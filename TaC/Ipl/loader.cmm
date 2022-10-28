@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2020 by
+ * Copyright (C) 2009-2022 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -23,6 +23,7 @@
  * loader.cmm(ブートローダ)： FAT16 のルートディレクトリから KERNEL ファイルを
  *                            探し読み込む
  *
+ * 2022.10.28  v4.4.4   : FATを手繰る部分のバイトオーダーに関するバグ訂正
  * 2020.12.21  v4.4.3   : 32KiB以上のkernel.binも起動可能にする
  * 2019.02.10  v4.2.0   : TaCモード以外でエラー発生ならIPLに戻る
  * 2016.01.07  v3.0.0   : 重村版に統合
@@ -230,8 +231,9 @@ void fillBuf() {
       readSct(tmp[0], tmp[1], fatCch);  //     FATセクタを読む
       fSct = s;                         //     現在キャッシュしているFATセクタ
     }
-    int offs = nClst & 0xff;            //   キャッシュ中のオフセット
-    nClst = fatCch[offs];               //   FATから次のクラスタ番号を求める
+    int nClstLe = fatCch[nClst & 0xff]; //   キャッシュ中のFATから読み出す
+    nClst = (nClstLe << 8) |            //   バイトオーダーを変更し
+            ((nClstLe >> 8) & 0xff);    //     次のクラスタ番号を求める
     sctCnt = 0;                         //   クラスタ内のセクタ位置をリセット
   }
 }
