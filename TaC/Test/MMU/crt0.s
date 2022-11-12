@@ -136,7 +136,7 @@ _svc				; SVC命令を実行する
 _setJmp				; ユーザモードで実行する
 	ld	g0,2,sp		; 実行開始アドレス
 	push	g0
-	ld	g0,4,sp		; 実行時のフラグ
+	ld	g0,6,sp		; 実行時のフラグ
 	push	g0
 	reti			; PCとフラグを切り替える
 
