@@ -4,6 +4,9 @@
 start	halt
 	ld	sp,#0x0100	; ssp=0100
 	ld	usp,#0x0300	; usp=0300
+	push	usp		; ssp=00fe
+	ld	usp,#0x000	; usp=0000
+	pop	usp		; ssp=0100,usp=0300
 	ld	fp,#0x1234	; fp=1234
 	ld	flag,#0		; flag=0000(ユーザモード)
 	ld	sp,#0x0200	; usp=0200
