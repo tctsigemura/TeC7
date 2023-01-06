@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2022 by
+-- Copyright (C) 2002-2023 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -21,6 +21,8 @@
 --
 -- TaC/tac_cpu_sequencer.vhd : TaC CPU Sequencer VHDL Source Code
 --
+-- 2023.01.05           : RETIで特権モードからユーザモードに戻ったとき，
+--                        SSP+=2, USP+=2(本来はSSP+=4)になるバグ訂正
 -- 2022.08.24           : 条件の簡単化・効率化(I_UPDATE_PC, P_SELECT_D, P_MR)
 -- 2022.08.23           : RETI命令でM(SP+2)アクセス時にTLB missが発生すると
 --                        PCが破壊されるバグを訂正
@@ -113,6 +115,7 @@ signal   I_NEXT      : std_logic_vector(4 downto 0);
 
 signal   I_UPDATE_PC : std_logic_vector(2 downto 0);
 signal   I_UPDATE_SP : std_logic_vector(1 downto 0);
+signal   I_LOAD_GR   : std_logic;
 signal   I_ALU_START : std_logic;
 
 signal   I_IS_INDR   : std_logic;                    -- FP相対,レジスタ間接
@@ -253,9 +256,10 @@ begin
 
   P_LOAD_TMP <= '1' when I_NEXT=S_INTR1 else '0';
 
-  P_LOAD_GR <= '1' when (I_STATE=S_ALU1 and P_OP1 /= "00101") or
-                        (I_STATE=S_ALU2 and P_OP1 /= "00101") or
-                        I_STATE=S_IN1 or I_STATE=S_IN2 or
+  P_LOAD_GR <= '0' when P_WAIT='1' else I_LOAD_GR;                 -- Pフラグが
+  I_LOAD_GR <= '1' when (I_STATE=S_ALU1 and P_OP1 /= "00101") or   -- 変化すると
+                        (I_STATE=S_ALU2 and P_OP1 /= "00101") or   -- RETIで
+                        I_STATE=S_IN1 or I_STATE=S_IN2 or          -- 副作用あり
                         I_STATE=S_POP or I_STATE=S_RETI3 or
                         (I_STATE=S_CON3 and P_OP2(1 downto 0)="10") else '0';
 
