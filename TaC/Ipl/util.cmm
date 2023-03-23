@@ -45,7 +45,9 @@ public boolean msgFSM(FSM fsm, char c) {
       return true;                            //     マッチした
     }
     fsm.stat = stat;
-  } else {                                    // マッチしない
+  } else if (c==msg[0]) {                     // マッチしない
+    fsm.stat = 1;
+  } else {
     fsm.stat = 0;                             //   ステートを最初に戻す
   }
   return false;                               // まだマッチしない
