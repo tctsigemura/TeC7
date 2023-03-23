@@ -51,8 +51,8 @@ entity TAC_RN4020 is
          P_CTS     : in  std_logic;                      -- Clear To Send
          P_RTS     : out std_logic;                      -- Request To Send
 
+         P_SW      : out std_logic;                      -- RN4020_SW
          P_CMD     : out std_logic;                      -- RN4020_CMD/MLDP
-         P_CON     : in  std_logic;                      -- RN4020_CON
          P_HW      : out std_logic                       -- RN4020_HW
        );
 end TAC_RN4020;
@@ -75,7 +75,7 @@ signal i_ior_sta  : std_logic;
 signal i_en_ram   : std_logic;
 signal i_iow_ram  : std_logic;
 --signal i_ior_ram  : std_logic;
-signal i_ram : std_logic_vector(7 downto 1) := "0000000";
+signal i_ram : std_logic_vector(7 downto 0) := "00000000";
 
 -- Internal bus
 signal i_cts      : std_logic;
@@ -164,9 +164,10 @@ begin
   P_DOUT <= ("0000" & i_cmd) when i_ior_cmd='1' else
             i_rx_dat when i_ior_dat='1' else
             ((not i_tx_fll)&(not i_rx_emp)&"000000") when i_ior_sta='1' else
-            i_ram & P_CON;
+            i_ram;
 
   -- CMD
+  P_SW  <= i_cmd(0);
   P_CMD <= i_cmd(1);
   P_HW  <= i_cmd(2);
   i_cts <= (not i_cmd(3)) or P_CTS;     -- ハードウェアフロー制御OFFなら常時ON
@@ -316,7 +317,7 @@ begin
   begin
     if (P_CLK'event and P_CLK='1') then
       if (i_iow_ram='1') then
-        i_ram <= P_DIN(7 downto 1);
+        i_ram <= P_DIN;
       end if;
     end if;
   end process;

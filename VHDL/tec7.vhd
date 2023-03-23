@@ -95,8 +95,8 @@ entity TeC7 is
            RN4020_RTS : in  std_logic;
            RN4020_HW  : out std_logic;
            RN4020_CTS : out std_logic;
-           RN4020_CON : in std_logic;
            RN4020_CMD : out std_logic;
+           RN4020_SW  : out std_logic;
            RN4020_RX  : out std_logic;
            RN4020_TX  : in std_logic
          );
@@ -130,8 +130,8 @@ signal i_ft_txd      : std_logic;
 -- RN4020
 signal i_rn_tx       : std_logic;
 signal i_rn_rx       : std_logic;
+signal i_rn_sw       : std_logic;
 signal i_rn_cmd      : std_logic;
-signal i_rn_con      : std_logic;
 signal i_rn_cts      : std_logic;
 signal i_rn_hw       : std_logic;
 signal i_rn_rts      : std_logic;
@@ -265,8 +265,8 @@ component TAC
            P_RN4020_RTS : in std_logic;
            P_RN4020_HW  : out std_logic;
            P_RN4020_CTS : out std_logic;
-           P_RN4020_CON : in std_logic;
            P_RN4020_CMD : out std_logic;
+           P_RN4020_SW  : out std_logic;
            P_RN4020_RX  : out std_logic;
            P_RN4020_TX  : in std_logic;
 
@@ -316,8 +316,8 @@ begin
   -- RN4020
     i_rn_tx    <= RN4020_TX;
     RN4020_RX  <= i_rn_rx;
+    RN4020_SW  <= i_rn_sw;
     RN4020_CMD <= i_rn_cmd;
-    i_rn_con   <= RN4020_CON;
     RN4020_CTS <= not i_rn_cts;
     RN4020_HW  <= i_rn_hw;
     i_rn_rts   <= not RN4020_RTS;
@@ -470,8 +470,8 @@ begin
          P_RN4020_RTS => i_rn_rts,
          P_RN4020_HW  => i_rn_hw,
          P_RN4020_CTS => i_rn_cts,
-         P_RN4020_CON  => i_rn_con,
          P_RN4020_CMD => i_rn_cmd,
+         P_RN4020_SW  => i_rn_sw,
          P_RN4020_RX  => i_rn_rx,
          P_RN4020_TX  => i_rn_tx,
 
