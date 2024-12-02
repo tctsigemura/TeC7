@@ -156,10 +156,46 @@ architecture Behavioral of TEC_CPU is
     P_LI    <= IrLd;
 
     -- 制御部
-    seq1: Sequencer Port map (P_CLK, P_RESET, OP, Rd, Rx, FlgE, FlgC, FlgS, FlgZ,
-                              P_INTR, P_STOP, IrLd, DrLd, FlgLdA, FlgLdM, FlgOn,
-                              FlgOff, GrLd, SpM1, SpP1, PcP1, PcJmp, PcRet,
-                              Ma, Md, P_IR, P_MR, P_ER, P_WE, P_HL);
+    seq1: Sequencer
+  port map (
+    -- クロックとリセット
+    Clk    => P_CLK,
+    Reset  => P_RESET,
+
+    -- 入力信号のマッピング
+    OP     => P_DIN(3 downto 0), -- OPコードの接続（例: 上位4ビット）
+    Rd     => P_DIN(5 downto 4), -- Rdレジスタ指定（例: 5-4ビット）
+    Rx     => P_DIN(7 downto 6), -- Rxレジスタ指定（例: 7-6ビット）
+    FlagE  => FlagCSZ(2),       -- フラグEに対応
+    FlagC  => FlagCSZ(1),       -- フラグCに対応
+    FlagS  => FlagCSZ(0),       -- フラグSに対応
+    FlagZ  => P_STOP,           -- フラグZ（例: Stop信号に接続）
+    INTR   => P_INTR,
+    STOP   => P_STOP,
+
+    -- 内部制御信号の出力
+    IrLd   => open,             -- 未使用の場合はopenを使用
+    DrLd   => open,
+    FlgLdA => open,
+    FlgLdM => open,
+    FlgOn  => open,
+    FlgOff => open,
+    GrLd   => open,
+    SpM1   => open,
+    SpP1   => open,
+    PcP1   => open,
+    PcJmp  => open,
+    PcRet  => open,
+    Ma     => open,
+    Md     => open,
+
+    -- 外部への出力
+    Ir     => P_IR,
+    Mr     => P_MR,
+    Err    => P_ER,
+    We     => P_WE,
+    Halt   => P_HL
+  );
 
     -- Address Bus へ出力
     P_ADDR <= PC when Ma="00" else               -- PC
