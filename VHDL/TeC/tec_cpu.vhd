@@ -63,7 +63,7 @@ entity TEC_CPU is
 end TEC_CPU;
 
 architecture Behavioral of TEC_CPU is
-  component Sequencer is
+  component TEC_CPU_SEQUENCER is
     Port ( Clk   : in std_logic;
 
            -- 入力
@@ -156,7 +156,7 @@ architecture Behavioral of TEC_CPU is
     P_LI    <= IrLd;
 
     -- 制御部
-    seq1: Sequencer
+    seq1: TEC_CPU_SEQUENCER
   port map (
     -- クロックとリセット
     Clk    => P_CLK,
