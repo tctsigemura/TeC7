@@ -28,11 +28,11 @@ use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
 entity TEC_CPU is
-  Port ( P_CLK     : in std_logic;                     -- Clock
+  Port ( P_CLK     : in std_logic;                      -- Clock
          -- Control
-         P_RESET   : in std_logic;                     -- Reset
-         P_INTR    : in std_logic;                     -- Interrupt
-         P_STOP    : in std_logic;                     -- Stop
+         P_RESET   : in std_logic;                      -- Reset
+         P_INTR    : in std_logic;                      -- Interrupt
+         P_STOP    : in std_logic;                      -- Stop
          P_HL      : out std_logic;                     -- Halt Request
          P_ER      : out std_logic;                     -- Decode Error
          P_IR      : out std_logic;                     -- I/O Request
@@ -41,24 +41,26 @@ entity TEC_CPU is
 
          -- RAM
          P_ADDR    : out std_logic_vector (7 downto 0);  -- Addr Bus
-         P_DIN     : in std_logic_vector (7 downto 0);  -- Data Bus
+         P_DIN     : in std_logic_vector (7 downto 0);   -- Data Bus
          P_DOUT    : out std_logic_vector (7 downto 0);  -- Data Bus
          P_WE      : out std_logic;
 
          -- Console
-         DbgAin    : in std_logic_vector (2 downto 0);   -- Console Rotary Sw
-         DbgDin    : in std_logic_vector (7 downto 0);   -- Console Data
-         DbgDout   : out std_logic_vector (7 downto 0);   -- Register Data
-         DbgWe     : in std_logic;                       -- Console Write
-         FlagCSZ   : out std_logic_vector (2 downto 0)    -- CSZ
+         P_SEL     : in std_logic_vector (2 downto 0);   -- Console Rotary Sw
+         P_PND     : in std_logic_vector (7 downto 0);   -- Console Data
+         DbgDout   : out std_logic_vector (7 downto 0);  -- Register Data
+         P_WRITE   : in std_logic;                       -- Console Write
+         P_C       : out std_logic;                      -- C
+         P_S       : out std_logic;                      -- S
+         P_Z       : out std_logic;                      -- Z
 
-         -- P_G0D   : out std_logic_vector(7 downto 0);     -- G0 out
-         -- P_G1D   : out std_logic_vector(7 downto 0);     -- G1 out
-         -- P_G2D   : out std_logic_vector(7 downto 0);     -- G2 out
-         -- P_SPD   : out std_logic_vector(7 downto 0);     -- SP out
-         -- P_PCD   : out std_logic_vector(7 downto 0);     -- PC out
+         P_G0D   : out std_logic_vector(7 downto 0);     -- G0 out
+         P_G1D   : out std_logic_vector(7 downto 0);     -- G1 out
+         P_G2D   : out std_logic_vector(7 downto 0);     -- G2 out
+         P_SPD   : out std_logic_vector(7 downto 0);     -- SP out
+         P_PCD   : out std_logic_vector(7 downto 0);     -- PC out
 
-         -- P_MODE  : in std_logic                         -- DEMO MODE
+         P_MODE  : in std_logic                         -- DEMO MODE
        );
 end TEC_CPU;
 
@@ -152,8 +154,15 @@ architecture Behavioral of TEC_CPU is
 
   begin
     -- コンソールへの接続
-    FlagCSZ <= FlgC & FlgS & FlgZ;
+    P_C <= FlgC;
+    P_S <= FlgS;
+    P_Z <= FlgZ;
     P_LI    <= IrLd;
+    P_G0D <= G0;
+    P_G1D <= G1;
+    P_G2D <= G2;
+    P_SPD <= SP;
+    P_PCD <= PC;
 
     -- 制御部
     seq1: TEC_CPU_SEQUENCER
@@ -163,18 +172,18 @@ architecture Behavioral of TEC_CPU is
     Reset  => P_RESET,
 
     -- 入力信号のマッピング
-    OP     => P_DIN(3 downto 0), -- OPコードの接続（例: 上位4ビット）
-    Rd     => P_DIN(5 downto 4), -- Rdレジスタ指定（例: 5-4ビット）
-    Rx     => P_DIN(7 downto 6), -- Rxレジスタ指定（例: 7-6ビット）
-    FlagE  => FlagCSZ(2),       -- フラグEに対応
-    FlagC  => FlagCSZ(1),       -- フラグCに対応
-    FlagS  => FlagCSZ(0),       -- フラグSに対応
-    FlagZ  => P_STOP,           -- フラグZ（例: Stop信号に接続）
+    OP     => P_DIN(3 downto 0), -- OP
+    Rd     => P_DIN(5 downto 4), -- Rd
+    Rx     => P_DIN(7 downto 6), -- Rx
+    FlagE  => FlgE,       -- E
+    FlagC  => FlgC,       -- C
+    FlagS  => FlgS,       -- S
+    FlagZ  => FlgZ,       -- Z
     INTR   => P_INTR,
     STOP   => P_STOP,
 
     -- 内部制御信号の出力
-    IrLd   => open,             -- 未使用の場合はopenを使用
+    IrLd   => open,             
     DrLd   => open,
     FlgLdA => open,
     FlgLdM => open,
@@ -257,8 +266,8 @@ architecture Behavioral of TEC_CPU is
           PC <=P_DIN;
         elsif (PcP1='1') then
           PC <= PC + 1;
-        elsif (DbgWe='1' and DbgAin="100") then   -- Console からの書き込み
-          PC <= DbgDin;
+        elsif (P_WRITE='1' and P_SEL="100") then   -- Console からの書き込み
+          PC <= P_PND;
         end if;
       end if;
     end process;
@@ -291,12 +300,12 @@ architecture Behavioral of TEC_CPU is
           SP <= SP + 1;
         elsif (SpM1='1') then
           SP <= Sp - 1;
-        elsif (DbgWe='1') then                    -- Console からの書き込み
-          case DbgAin is
-            when "000" => G0 <= DbgDin;
-            when "001" => G1 <= DbgDin;
-            when "010" => G2 <= DbgDin;
-            when "011" => SP <= DbgDin;
+        elsif (P_WRITE='1') then                    -- Console からの書き込み
+          case P_SEL is
+            when "000" => G0 <= P_PND;
+            when "001" => G1 <= P_PND;
+            when "010" => G2 <= P_PND;
+            when "011" => SP <= P_PND;
             when others => null;
           end case;
         end if;
@@ -325,23 +334,23 @@ architecture Behavioral of TEC_CPU is
           FlgE <= '1';                   -- Enable
         elsif (FlgOff='1') then
           FlgE <= '0';                   -- Disable
-        elsif (DbgWe='1') then           -- Console からの書き込み
-          if (DbgAin="110") then         --  Flag
-            FlgE <= DbgDin(7);           --   Enable
-            FlgC <= DbgDin(2);           --   Carry
-            FlgS <= DbgDin(1);           --   Sign
-            FlgZ <= DbgDin(0);           --   Zero
+        elsif (P_WRITE='1') then           -- Console からの書き込み
+          if (P_SEL="110") then         --  Flag
+            FlgE <= P_PND(7);           --   Enable
+            FlgC <= P_PND(2);           --   Carry
+            FlgS <= P_PND(1);           --   Sign
+            FlgZ <= P_PND(0);           --   Zero
           end if;
         end if;
       end if;
     end process;
 
     -- コンソール接続
-    DbgDout <= G0 when DbgAin="000" else
-               G1 when DbgAin="001" else
-               G2 when DbgAin="010" else
-               SP when DbgAin="011" else
-               PC when DbgAin="100" else
+    DbgDout <= G0 when P_SEL="000" else
+               G1 when P_SEL="001" else
+               G2 when P_SEL="010" else
+               SP when P_SEL="011" else
+               PC when P_SEL="100" else
                (FlgE & "0000" & FlgC & FlgS & FlgZ);
 
 end Behavioral;
