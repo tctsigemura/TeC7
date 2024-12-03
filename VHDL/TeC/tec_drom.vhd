@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2011 by
+-- Copyright (C) 2002-2024 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -17,8 +17,11 @@
 -- る損害に関しても，その責任を負わない．
 --
 --
--- TeC Microcode
+-- TeC decode ROM
 --
+-- 2024.11.19 : 新バージョン
+--
+
 library IEEE;
 use std.textio.all;
 use ieee.std_logic_1164.all;
@@ -26,12 +29,11 @@ use ieee.std_logic_unsigned.all;
 use ieee.std_logic_textio.all;
 
 entity TEC_DROM is
-  port (
-    P_CLK  : in std_logic;
-    P_RESET: in std_logic;
-    P_ADDR : in  std_logic_vector(7 downto 0);
-    P_DOUT : out std_logic_vector(25 downto 0)
-  );
+  port (P_CLK   : in  std_logic;
+        P_RESET : in  std_logic;
+        P_ADDR  : in  std_logic_vector(7 downto 0);
+        P_DOUT  : out std_logic_vector(25 downto 0)
+        );
 end TEC_DROM;
 
 architecture BEHAVE of TEC_DROM is
@@ -44,19 +46,20 @@ architecture BEHAVE of TEC_DROM is
     begin
       for i in 0 to 255 loop
         readline (data_in, line_in);
-		  read(line_in, ram(i));
+        read(line_in, ram(i));
       end loop;
       return ram;
     end function;
-  signal mem : memory := read_file("tec_drom.txt");
+  signal mem : memory := read_file("tec_drom.txt"); --memの初期化
 
-  begin		
-	 process(P_CLK, P_RESET)
-	   begin
-		  if (P_RESET='0') then
-		    P_DOUT <= (others => '0');
-		  elsif (P_CLK'event and P_CLK='0') then
-	       P_DOUT <= mem( conv_integer(P_ADDR) );
-		  end if;
-		end process;
-  end BEHAVE;
+  begin
+    process(P_CLK, P_RESET)
+    begin
+      if (P_RESET='1') then
+        Dout <= (others => '0');
+      elsif (P_CLK'event and P_CLK='0') then
+        P_DOUT <= mem( conv_integer(P_ADDR) );
+      end if;
+    end process;
+
+end BEHAVE;
