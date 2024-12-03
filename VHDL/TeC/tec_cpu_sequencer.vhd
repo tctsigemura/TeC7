@@ -131,10 +131,10 @@ architecture Behavioral of TEC_CPU_SEQUENCER is
     DAddr <= OP & Rd & Rx;
 
     drom0: TEC_DROM
-      port map( Clk   => Clk,
-                Reset => Reset,
-                Addr  => DAddr,
-                Dout  => Dcode);
+      port map( P_CLK   => Clk,
+                P_RESET => Reset,
+                P_ADDR  => DAddr,
+                P_DOUT  => Dcode);
 
     -- State machine
     NxtSt <=  Dcode  when State(1)='1' else                 -- Inst. Decode

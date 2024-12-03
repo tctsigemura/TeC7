@@ -56,7 +56,7 @@ architecture BEHAVE of TEC_DROM is
     process(P_CLK, P_RESET)
     begin
       if (P_RESET='1') then
-        Dout <= (others => '0');
+        P_DOUT <= (others => '0');
       elsif (P_CLK'event and P_CLK='0') then
         P_DOUT <= mem( conv_integer(P_ADDR) );
       end if;
