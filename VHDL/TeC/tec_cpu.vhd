@@ -43,7 +43,7 @@ entity TEC_CPU is
          P_ADDR    : out std_logic_vector (7 downto 0);  -- Addr Bus
          P_DIN     : in std_logic_vector (7 downto 0);   -- Data Bus
          P_DOUT    : out std_logic_vector (7 downto 0);  -- Data Bus
-         P_WE      : out std_logic;
+         P_RW      : out std_logic;
 
          -- Console
          P_SEL     : in std_logic_vector (2 downto 0);   -- Console Rotary Sw
@@ -202,7 +202,7 @@ architecture Behavioral of TEC_CPU is
     Ir     => P_IR,
     Mr     => P_MR,
     Err    => P_ER,
-    We     => P_WE,
+    We     => P_RW,
     Halt   => P_HL
   );
 
