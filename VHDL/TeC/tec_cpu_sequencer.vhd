@@ -75,10 +75,10 @@ architecture Behavioral of TEC_CPU_SEQUENCER is
   signal Dcode : Stat;
 
   component TEC_DROM
-    port ( Clk   : in  std_logic;
-           Reset : in  std_logic;
-           Addr  : in  std_logic_vector(7 downto 0);
-           Dout  : out Stat
+    port ( P_CLK   : in  std_logic;
+           P_RESET : in  std_logic;
+           P_ADDR  : in  std_logic_vector(7 downto 0);
+           P_DOUT  : out std_logic_vector(25 downto 0)
          );
   end component;
 
