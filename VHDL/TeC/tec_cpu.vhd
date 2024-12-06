@@ -222,7 +222,7 @@ architecture Behavioral of TEC_CPU is
     -- PC の制御
     process(P_CLK,P_RESET)
     begin
-      if (P_RESET='1') then
+      if (P_RESET='0') then
         PC <= "00000000";
       elsif (P_CLK'event and P_CLK='1') then
         if (PcJmp='1') then
@@ -248,7 +248,7 @@ architecture Behavioral of TEC_CPU is
     -- CPU レジスタの制御
     process(P_CLK,P_RESET)
     begin
-      if (P_RESET='1') then
+      if (P_RESET='0') then
         G0  <= "00000000";
         G1  <= "00000000";
         G2  <= "00000000";
@@ -280,7 +280,7 @@ architecture Behavioral of TEC_CPU is
     -- フラグの制御
     process(P_CLK,P_RESET)
     begin
-      if (P_RESET='1') then
+      if (P_RESET='0') then
         FlgE <= '0';
         FlgC <= '0';
         FlgS <= '0';

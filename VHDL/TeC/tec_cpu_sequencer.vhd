@@ -164,7 +164,7 @@ architecture Behavioral of TEC_CPU_SEQUENCER is
 
     process(Clk, Reset)
     begin
-      if (Reset='1') then
+      if (Reset='0') then
         State <= STAT00;
       elsif (Clk'event and Clk='1') then
         State <= NxtSt;
