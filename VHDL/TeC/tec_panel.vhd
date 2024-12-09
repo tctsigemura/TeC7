@@ -88,6 +88,7 @@ architecture RTL of TEC_PANEL is
   signal Pos    : std_logic_vector(2 downto 0);   -- ロータリースイッチの位置
   signal G0     : std_logic;                      -- G0 選択中
   signal Mm     : std_logic;                      -- MM 選択中
+  signal Flg    : std_logic;                      -- FLAG 選択中
   signal Run    : std_logic;                      -- CPU 実行/停止
   signal Err    : std_logic;                      -- 命令コードエラー
   signal Rst    : std_logic;                      -- リセットの内部配線
@@ -125,7 +126,7 @@ begin
           BtnDly2 <= "000000000";                 --   一旦，ボタンを戻す
         end if;
         BtnDbnc <= (not BtnDly2) and BtnDly1 and
-                   ('1' & not G0 & not Mm         -- (Rst)  (<-)   (->)
+                   ('1' & not G0 & not Flg        -- (Rst)  (<-)   (->)
                     & not Run & Run & Mm          -- (Run)  (Stop) (SetA)
                     & Mm  & Mm  & not Run);       -- (IncA) (DecA) (Write)
         BtnDly1 <= P_RESET_SW & P_RCCW_SW         -- 押しボタンの入力を
@@ -201,8 +202,9 @@ begin
 
 -- ロータリースイッチの位置
   P_SEL <= Pos;                                   -- 外部端子に接続
-  G0 <= '1' when Pos="000" else '0';              -- G0 表示中
-  Mm <= '1' when Pos="101" else '0';              -- メモリ表示中
+  G0  <= '1' when Pos="000" else '0';             -- G0 表示中
+  Mm  <= '1' when Pos="101" else '0';             -- メモリ表示中
+  Flg <= '1' when Pos="110" else '0';             -- FLAG 表示中
 
   process(P_CLK)
   begin

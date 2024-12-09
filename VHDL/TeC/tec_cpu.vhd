@@ -59,6 +59,7 @@ entity TEC_CPU is
          P_G2D   : out std_logic_vector(7 downto 0);     -- G2 out
          P_SPD   : out std_logic_vector(7 downto 0);     -- SP out
          P_PCD   : out std_logic_vector(7 downto 0);     -- PC out
+         P_FLD   : out std_logic_vector(7 downto 0);     -- FLAG out
 
          P_MODE  : in std_logic                         -- DEMO MODE
        );
@@ -163,6 +164,7 @@ architecture Behavioral of TEC_CPU is
     P_G2D <= G2;
     P_SPD <= SP;
     P_PCD <= PC;
+    P_FLD <= FlgE & "0000" & FlgC & FlgS & FlgZ;
 
     -- 制御部
     seq1: TEC_CPU_SEQUENCER
@@ -286,25 +288,25 @@ architecture Behavioral of TEC_CPU is
         FlgS <= '0';
         FlgZ <= '0';
       elsif (P_CLK'event and P_CLK='1') then
-        if (FlgLdA='1') then
-          FlgC <= Alu(8);                -- Carry
-          FlgS <= Alu(7);                -- Sign
-          FlgZ <= Zero;                  -- Zero
-        elsif (FlgLdM='1') then
-          FlgE <=P_DIN(7);                -- Enable
-          FlgC <=P_DIN(2);                -- Carry
-          FlgS <=P_DIN(1);                -- Sign
-          FlgZ <=P_DIN(0);                -- Zero
-        elsif (FlgOn='1') then
-          FlgE <= '1';                   -- Enable
-        elsif (FlgOff='1') then
-          FlgE <= '0';                   -- Disable
-        elsif (P_WRITE='1') then           -- Console からの書き込み
-          if (P_SEL="110") then         --  Flag
-            FlgE <= P_PND(7);           --   Enable
-            FlgC <= P_PND(2);           --   Carry
-            FlgS <= P_PND(1);           --   Sign
-            FlgZ <= P_PND(0);           --   Zero
+        if (FlgLdA='1') then             -- 計算結果
+          FlgC <= Alu(8);                --  Carry
+          FlgS <= Alu(7);                --  Sign
+          FlgZ <= Zero;                  --  Zero
+        elsif (FlgLdM='1') then          -- RETI
+          FlgE <=P_DIN(7);               --  Enable
+          FlgC <=P_DIN(2);               --  Carry
+          FlgS <=P_DIN(1);               --  Sign
+          FlgZ <=P_DIN(0);               --  Zero
+        elsif (FlgOn='1') then           -- EI
+          FlgE <= '1';                   --  Enable
+        elsif (FlgOff='1') then          -- DI
+          FlgE <= '0';                   --  Disable
+        elsif (P_WRITE='1') then         -- Console からの書き込み
+          if (P_SEL="110") then          --  Flag
+            FlgE <= P_PND(7);            --   Enable
+            FlgC <= P_PND(2);            --   Carry
+            FlgS <= P_PND(1);            --   Sign
+            FlgZ <= P_PND(0);            --   Zero
           end if;
         end if;
       end if;
