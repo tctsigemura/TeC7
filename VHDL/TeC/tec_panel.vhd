@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002 - 2020 by
+-- Copyright (C) 2002 - 2024 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -20,6 +20,7 @@
 --  TeC Panel
 --
 --
+-- 2024.12.09 : 条件の重複を削除
 -- 2020.12.21 : エラー時にRUNを点滅させる機能の実装漏れを訂正
 -- 2019.08.05 : パワーオン時に「ピ」音を鳴らすために，起動後にリセットし直す
 -- 2019.07.30 : 外部インタフェースを残して，新しい設計に置き換え
@@ -196,7 +197,7 @@ begin
   P_RESET <= not Rst;                             -- 外部では負論理
 
 -- WRITE
-  P_WRITE  <= (not Run) and BtnDbnc(0);           -- Btn0(Write) 停止中は書込み
+  P_WRITE  <= BtnDbnc(0);                         -- Btn0(Write) 停止中は書込み
 
 -- ロータリースイッチの位置
   P_SEL <= Pos;                                   -- 外部端子に接続
