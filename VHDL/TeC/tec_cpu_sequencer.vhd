@@ -219,7 +219,7 @@ architecture Behavioral of TEC_CPU_SEQUENCER is
     We    <= State(4)  or State(8) or                          -- ST, OUT
              State(10) or State(13) or                         -- CALL, PUSH
              State(22) or State(23);                           -- Intr
-    Mr    <= State(0)  or State(1) or                          -- Fetch
+    Mr    <= (State(0) and not Stop) or State(1) or            -- Fetch
              State(2)  or State(4) or                          -- LD/..., ST
              State(10) or State(13) or                         -- CALL, PUSH
              State(14) or State(16) or                         -- POP, RET
