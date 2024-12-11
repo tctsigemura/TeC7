@@ -193,13 +193,13 @@ architecture Behavioral of TEC_CPU_SEQUENCER is
     FlgLdA <= '1' when State(3)='1' and OP/="0001" else '0';   -- OP /=LD
     FlgLdM <= State(17);                                       -- RETI
     FlgOn  <= State(11);                                       -- EI
-    FlgOff <= State(12) or State(22);                          -- DI, Intr
+    FlgOff <= State(12) or State(24);                          -- DI, Intr
     GrLd  <= '1' when (State(3)='1' and OP/="0101") or         -- OP /=CMP
                       State(7)='1' or                          -- IN
                       State(15)='1' else '0';                  -- POP
     SpP1  <= State(14) or State(16) or State(17) or State(18); -- POP, RET, RETI
     SpM1  <= State(9)  or State(13) or                         -- CALL, PUSH
-             State(21) or State(23);                           -- Intr
+             State(21) or State(22);                           -- Intr
     PcP1  <= (State(0) and not Stop) or                        -- Stop
              State(2) or                                       -- LD/ADD/.../XOR
              State(4) or (State(5) and not JmpCnd) or          -- ST, JMP
