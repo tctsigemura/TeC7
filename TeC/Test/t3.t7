@@ -1,0 +1,17 @@
+;
+; NO命令、シフト命令とフラグのテスト
+; (ステップ実行、または、halt命令を挿入して実行する)
+;
+
+	ld	g0,#0aah	; G0[AA]
+	ld	g1,#055h	; G1[55]
+	ld	g2,#0aah	; G2[AA]
+	ld	sp,#01h		; SP[01]
+	shla	g0		; G0[54] CSZ[100]
+	shll	g1		; G1[AA] CSZ[010]
+	shra	g2		; G2[D5] CSZ[010]
+	shrl	g2		; G2[6A] CSZ[100]
+	shra	g2		; G2[35] CSZ[000]
+	shrl	sp		; SP[00] CSZ[101]
+	no			; 何も変化しない
+	halt
