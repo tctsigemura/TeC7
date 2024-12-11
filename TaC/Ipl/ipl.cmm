@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2023 by
+ * Copyright (C) 2009-2024 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -22,6 +22,7 @@
 /*
  * ipl0.cmm : C-- 言語版の TaC IPL
  *
+ * 2024.12.10 v4.6.0    : TeCのコンソールがフラグ操作可能になったことに対応
  * 2022.01.17 v4.5.0    : TaC-CPU V3 対応
  *                        32bit 積・商 ソフトウェア化, I/O アドレス変更
  * 2020.07.18 v4.4.2    : TWRITEに入る際のバッファクリア忘れバグ訂正
@@ -126,6 +127,9 @@ void pushCtlSw(int sw) {                      // 制御スイッチを操作す�
 
 void twConsole(int addr, int cnt, char[] buf) {
   pushCtlSw(RESET);                           // RESET スイッチを押す
+  for (int i=0; i<6; i=i+1) {                 // 6回左矢印スイッチを押す
+    pushCtlSw(LEFT);                          // （G0の位置になるはず）
+  }
   for (int i=0; i<5; i=i+1) {                 // 5回右矢印スイッチを押す
     pushCtlSw(RIGHT);                         // （MMの位置になるはず）
   }
