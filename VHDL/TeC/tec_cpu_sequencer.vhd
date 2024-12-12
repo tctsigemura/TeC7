@@ -200,7 +200,8 @@ architecture Behavioral of TEC_CPU_SEQUENCER is
     SpP1  <= State(14) or State(16) or State(17) or State(18); -- POP, RET, RETI
     SpM1  <= State(9)  or State(13) or                         -- CALL, PUSH
              State(21) or State(22);                           -- Intr
-    PcP1  <= (State(0) and not Stop) or                        -- Stop
+    PcP1  <= (State(0) and not Stop and 
+             (not Intr or not FlagE)) or                       -- Stop
              State(2) or                                       -- LD/ADD/.../XOR
              State(4) or (State(5) and not JmpCnd) or          -- ST, JMP
              State(6) or State(8) or State(9);                 -- IN, OUT, CALL
@@ -225,7 +226,7 @@ architecture Behavioral of TEC_CPU_SEQUENCER is
              State(14) or State(16) or                         -- POP, RET
              State(17) or State(18) or                         -- RETI
              State(22) or State(23) or State(25);              -- Intr
-    Ir    <= State(6)  or State(8) or State(24);               -- OUT, IN, Intr
+    Ir    <= State(6)  or State(8) or State(24) or State(25);  -- OUT, IN, Intr
     Halt  <= State(19) or State(20);                           -- HALT, ERROR
     Err   <= State(20);                                        -- ERROR
 
