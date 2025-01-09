@@ -31,10 +31,8 @@ wait
 flg	dc	0
 val	dc	0
 
-tmrint	pushf
-	push	g0
+tmrint	push	g0
 	ld	g0,#1
 	st	g0,flg
 	pop	g0
-	popf
 	reti
