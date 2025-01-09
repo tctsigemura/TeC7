@@ -225,7 +225,7 @@ architecture Behavioral of TEC_CPU is
     process(P_CLK,P_RESET)
     begin
       if (P_RESET='0') then
-        PC <= "00000000";
+        PC <= P_MODE & "0000000";
       elsif (P_CLK'event and P_CLK='1') then
         if (PcJmp='1') then
           PC <= Ea;
