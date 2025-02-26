@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2016 by
+-- Copyright (C) 2002-2024 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -17,9 +17,9 @@
 -- る損害に関しても，その責任を負わない．
 --
 --
--- TeC Microcode
+-- TeC decode ROM
 --
--- 2016.01.08 : P_ADDR を 7bit に変更
+-- 2024.11.19 : 新バージョン
 --
 
 library IEEE;
@@ -28,40 +28,38 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_textio.all;
 
-entity TEC_MROM is
-  port (
-    P_CLK   : in std_logic;
-    P_RESET : in std_logic;
-    P_ADDR  : in  std_logic_vector(6 downto 0);
-    P_DOUT  : out std_logic_vector(31 downto 0)
-  );
-end TEC_MROM;
+entity TEC_DROM is
+  port (P_CLK   : in  std_logic;
+        P_RESET : in  std_logic;
+        P_ADDR  : in  std_logic_vector(7 downto 0);
+        P_DOUT  : out std_logic_vector(25 downto 0)
+        );
+end TEC_DROM;
 
-architecture BEHAVE of TEC_MROM is
-  subtype word is std_logic_vector(31 downto 0);
-  type memory is array(0 to 127) of word;
-
+architecture BEHAVE of TEC_DROM is
+  subtype word is std_logic_vector(25 downto 0);
+  type memory is array(0 to 255) of word;
   function read_file (fname : in string) return memory is
     file data_in : text is in fname;
     variable line_in: line;
     variable ram : memory;
     begin
-      for i in 0 to 127 loop
-		  readline(data_in, line_in);
+      for i in 0 to 255 loop
+        readline (data_in, line_in);
         read(line_in, ram(i));
       end loop;
       return ram;
     end function;
-
-    signal mem : memory := read_file("tec_mrom.txt");
+  signal mem : memory := read_file("tec_cpu_drom.txt"); --memの初期化
 
   begin
     process(P_CLK, P_RESET)
     begin
-      if (P_RESET='0') then    -- make distribute RAM
-        P_DOUT <= "00000000000000000000000000000000";
+      if (P_RESET='0') then
+        P_DOUT <= (others => '0');
       elsif (P_CLK'event and P_CLK='0') then
         P_DOUT <= mem( conv_integer(P_ADDR) );
       end if;
     end process;
-  end BEHAVE;
+
+end BEHAVE;

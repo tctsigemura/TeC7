@@ -126,6 +126,7 @@ signal I_G1D    : std_logic_vector(7 downto 0);  -- CPU から G1 の値を出�
 signal I_G2D    : std_logic_vector(7 downto 0);  -- CPU から G2 の値を出力
 signal I_SPD    : std_logic_vector(7 downto 0);  -- CPU から SP の値を出力
 signal I_PCD    : std_logic_vector(7 downto 0);  -- CPU から PC の値を出力
+signal I_FLD    : std_logic_vector(7 downto 0);  -- CPU から FLAG の値を出力
 signal I_MMD    : std_logic_vector(7 downto 0);  -- RAM からの値出力
 
 -- 内部配線
@@ -212,6 +213,7 @@ component TEC_CPU
          P_G2D   : out std_logic_vector(7 downto 0);     -- G2 out
          P_SPD   : out std_logic_vector(7 downto 0);     -- SP out
          P_PCD   : out std_logic_vector(7 downto 0);     -- PC out
+         P_FLD   : out std_logic_vector(7 downto 0);     -- FLAG out
 
          P_MODE  : in std_logic                          -- DEMO MODE
         );
@@ -361,6 +363,7 @@ cpu0 : TEC_CPU
                P_G2D   => I_G2D,
                P_SPD   => I_SPD,
                P_PCD   => I_PCD,
+               P_FLD   => I_FLD,
 
                P_MODE  => P_MODE(1)
               );
@@ -423,7 +426,8 @@ cpu0 : TEC_CPU
                I_G2D when "010",       -- G2
                I_SPD when "011",       -- SP
                I_PCD when "100",       -- PC
-               I_MMD when others;      -- MM
+               I_MMD when "101",       -- MM
+               I_FLD when others;      -- FLAG
 
   -- ロータリースイッチの表示
   with I_RS_SEL select
@@ -432,7 +436,8 @@ cpu0 : TEC_CPU
                 "001000" when "010",   -- G2
                 "000100" when "011",   -- SP
                 "000010" when "100",   -- PC
-                "000001" when others;  -- MM
+                "000001" when "101",   -- MM
+                "111111" when others;  -- FLAG
   P_G0_LED <= I_RS_DEC(5);
   P_G1_LED <= I_RS_DEC(4);
   P_G2_LED <= I_RS_DEC(3);
