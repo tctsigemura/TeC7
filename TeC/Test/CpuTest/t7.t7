@@ -1,0 +1,17 @@
+; 総合的なテストプログラム
+; 10 + 9 + 8 + ... + 1 を求める
+
+start	ld	g0,#0
+	ld	g1,#10
+loop	cmp	g1,#0
+	jz	owari
+	st	g1,tmp
+	add	g0,tmp
+	sub	g1,#1
+	jmp	loop
+
+owari	st	g0,sum
+	halt
+
+tmp	ds	1
+sum	ds	1

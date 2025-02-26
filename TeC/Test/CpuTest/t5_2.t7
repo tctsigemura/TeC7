@@ -1,0 +1,7 @@
+loop	add	g0,one
+	jc	stop
+	jmp	loop
+stop	halt
+one	dc	1
+;JC命令のテスト
+;フラグが101
