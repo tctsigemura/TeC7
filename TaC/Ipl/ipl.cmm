@@ -2,7 +2,7 @@
  * TaC IPL Source Code
  *    Tokuyama kousen Educational Computer 16bit Ver.
  *
- * Copyright (C) 2009-2024 by
+ * Copyright (C) 2009-2025 by
  *                      Dept. of Computer Science and Electronic Engineering,
  *                      Tokuyama College of Technology, JAPAN
  *
@@ -314,7 +314,7 @@ public void main() {
   putstr("(build date : ");
   putstr( DATE );
   putstr(")\n");
-  putstr("Copyright(c) 2009-2023 Tokuyama College of Technology\n");
+  putstr("Copyright(c) 2009-2025 Tokuyama College of Technology\n");
   putstr("All rights reserved.\n\n");
 
   int mode = in(0x1e);
