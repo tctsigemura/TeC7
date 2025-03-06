@@ -1,0 +1,7 @@
+loop	add	g0,one
+	jz	stop
+	jmp	loop
+stop	halt
+one	dc	1
+;JZ、JMP命令テスト
+;結果が0なら停止。フラグが101

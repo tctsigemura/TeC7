@@ -44,21 +44,18 @@ l2
 	jmp	l0
 
 ; wait 100us
-us100	push	g0		; 6
-	ld	g0,#14		; 5
-wait	sub	g0,#1		; 5
-	jz	fin		; 4/5
-	jmp	wait		; 5
-fin	pop	g0		; 6
-	ret			; 6
+us100	push	g0		; 4
+	ld	g0,#33		; 4
+wait	sub	g0,#1		; 4
+	jnz	wait		; 3
+	pop	g0		; 4
+	ret			; 3
 
 flg	dc	0
 
 ; timer interrupt
-tmrint	pushf
-	push	g0
+tmrint	push	g0
 	ld	g0,#1
 	st	g0,flg
 	pop	g0
-	popf
 	reti

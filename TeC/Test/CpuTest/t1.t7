@@ -1,0 +1,17 @@
+;
+; アドレッシングモードのテスト
+; (実行後の各レジスタの値を確認する)
+
+	ld	g0,aa		; G0[AA]
+	ld	g1,#1		; G1[01]
+	ld	g2,#2		; G2[02]
+	ld	sp,gg		; SP[55]
+	add	g0,array,g1	; G0[BB]
+	ld	g1,array,g2	; G1[CC]
+	halt
+
+aa	dc	0aah
+gg	dc	055h
+array	dc	0ffh
+	dc	011h
+	dc	0cch

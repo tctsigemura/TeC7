@@ -1,0 +1,6 @@
+loop	add	g0,one
+	jnz	loop
+	halt
+one	dc	1
+;jnzのテスト
+;フラグが101

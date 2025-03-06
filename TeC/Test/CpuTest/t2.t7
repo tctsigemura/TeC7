@@ -1,0 +1,13 @@
+;
+; 演算命令とフラグのテスト
+; (ステップ実行、または、halt命令を挿入して実行する)
+;
+
+	ld	g0,#0ffh	; G0[FF]
+	add	g0,#1		; G0[00] CSZ[101]
+	sub	g0,#1		; G0[FF] CSZ[110]
+	cmp	g0,#0ffh	; G0[FF] CSZ[001]
+	and	g0,#00fh	; G0[0F] CSZ[000]
+	or	g0,#055h	; G0[5F] CSZ[000]
+	xor	g0,#0aah	; G0[F5] CSZ[010]
+	halt

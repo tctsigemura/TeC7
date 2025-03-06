@@ -2,7 +2,7 @@
 -- TeC7 VHDL Source Code
 --    Tokuyama kousen Educational Computer Ver.7
 --
--- Copyright (C) 2002-2019 by
+-- Copyright (C) 2002-2024 by
 --                      Dept. of Computer Science and Electronic Engineering,
 --                      Tokuyama College of Technology, JAPAN
 --
@@ -19,6 +19,7 @@
 --
 -- TeC RAM
 --
+-- 2024.12.09 : 清書
 -- 2019.03.01 : シングルポート分散RAMに書き換える
 --              （もとはデュアルポートブロックRAMだったがリソース不足）
 --
@@ -68,24 +69,13 @@ architecture BEHAVE of TEC_RAM is
 
   signal dec   : std_logic;                     -- アドレスデコード結果
   signal we     : std_logic;                    -- 書き込み信号
-  signal addr10 : std_logic_vector(9 downto 0); -- 10ビットにしたアドレス
-
   signal ain    : std_logic_vector(9 downto 0); -- RAMのアドレス
   signal din    : std_logic_vector(7 downto 0); -- RAMの書き込みデータ
   signal dout   : std_logic_vector(7 downto 0); -- RAMの読み出しデータ
 
   begin
     -- CPUがBUS命令実行ならCPUのアドレス
-    addr10 <= (P_MODE & P_ADDR) when (P_MR='1') else (P_MODE & P_PNA);
-
-    -- アドレスをラッチすると(BLOCK RAMになる)
-    ain <= addr10;
---  process(P_CLK)
---    begin
---      if (P_CLK'event and P_CLK='0') then
---        ain <= addr10;
---      end if;
---    end process;
+    ain <= (P_MODE & P_ADDR) when (P_MR='1') else (P_MODE & P_PNA);
 
     -- 書き込みアドレスのデコード
     -- MODE=0,1 の時は E0H〜FFH が書き込み不可

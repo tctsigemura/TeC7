@@ -1,0 +1,15 @@
+;
+; ST 命令のテスト
+;
+
+	ld	g0,aa		; G0[AA]
+	ld	g1,#1		; G1[01]
+	ld	g2,#2		; G2[02]
+	ld	sp,gg		; SP[55]
+	st	g0,array,g1	; array[1]<=G0[AA]
+	st	sp,array,g2	; array[2]<=SP[55]
+	halt
+
+aa	dc	0aah
+gg	dc	055h
+array	ds	3

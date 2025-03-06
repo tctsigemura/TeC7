@@ -1,0 +1,19 @@
+;
+; スタック関連のテスト
+;
+
+	ld	sp,#eos
+	call	sub
+	halt			; ここで停止するはず
+
+sub	ld	g0,#1		; G0[01]
+	push	g0
+	pop	g1
+	add	g1,#1		; G1[02]
+	push	g1
+	pop	g2
+	add	g2,#1		; G2[03]
+	ret
+
+stack	ds	10		; スタックに残骸が残るはず
+eos

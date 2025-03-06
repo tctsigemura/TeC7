@@ -23,23 +23,19 @@ wait
 	jmp	wait		; 無限ループ
 
 	; コンソール割込ルーチン
-conint	pushf			; コンテキストを
-	push	g0		; 保存する
+conint	push	g0		; 保存する
 	ld	g0,#01h		; 
 	out	g0,buz		; beep on
 	ld	g0,#81h		;
 	out	g0,tmrctr	; timer start
-	pop	g0		; コンテキストを
-	popf			; 復旧する
+	pop	g0		; 復旧する
 	reti			; 戻る
 
 	; タイマ割込ルーチン
-tmrint	pushf			; コンテキストを
-	push	g0		; 保存する
+tmrint	push	g0		; 保存する
 	ld	g0,#00h		; 
 	out	g0,buz		; beep off
 	ld	g0,#00h		;
 	out	g0,tmrctr	; timer stop
-	pop	g0		; コンテキストを
-	popf			; 復旧する
+	pop	g0		; 復旧する
 	reti			; 戻る

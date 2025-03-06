@@ -1,0 +1,8 @@
+	ld	g0,#10
+loop	sub	g0,one
+	jm	stop
+	jmp	loop
+stop	halt
+one	dc	1
+;JM命令テスト
+;結果フラグが110
